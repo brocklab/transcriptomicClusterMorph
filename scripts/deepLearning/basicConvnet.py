@@ -106,10 +106,10 @@ def fwd_pass(X, y, train=False):
 
     if train:
         net.zero_grad()
-    outputs = net(X)
-    matches  = [torch.argmax(i)==torch.argmax(j) for i, j in zip(outputs, y)]
-    acc = matches.count(True)/len(matches)
-    loss = loss_function(outputs, y)
+        outputs = net(X)
+        matches  = [torch.argmax(i)==torch.argmax(j) for i, j in zip(outputs, y)]
+        acc = matches.count(True)/len(matches)
+        loss = loss_function(outputs, y)
         loss.backward()
         optimizer.step()
 
