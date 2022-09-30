@@ -18,8 +18,7 @@ from sklearn.cluster import KMeans
 esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"rb"))
 esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
 coculture = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E7.pickle',"rb"))
-# %%
-# Constrain to low confluency
+# %% Constrain to low confluency
 esamNeg = [cell for cell in esamNeg if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 esamPos = [cell for cell in esamPos if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]
 coculture = [cell for cell in coculture if cell.date < datetime.datetime(2022, 4, 8, 16, 0)]

@@ -37,7 +37,7 @@ normalized_df=(df-df.min())/(df.max()-df.min())
 normalized_df = normalized_df.dropna(axis='columns')
 # %%
 fit = umap.UMAP()
-u = fit.fit_transform(features.values)
+u = fit.fit_transform(normalized_df)
 # %%
 wells = [cell['well'] for cell in featureRes[2]]
 colorWell = [f'{well}_{color}' for well, color in zip(wells, colors)]
