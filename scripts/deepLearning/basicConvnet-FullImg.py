@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-# -åç
+# -
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
     print("running on GPU")
@@ -27,7 +27,7 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, 5)
         self.conv3 = nn.Conv2d(64, 128, 5)
         
-        x = torch.randn(150,150).view(-1,1,150,150)
+        x = torch.randn(1040,1408).view(-1,1,1040,1408)
         self._to_linear = None
         self.convs(x)
         
@@ -49,7 +49,7 @@ class Net(nn.Module):
 
 
 # +
-X = torch.Tensor([i[0] for i in training_data]).view(-1,150,150)
+X = torch.Tensor([i[0] for i in training_data]).view(-1,1040,1408)
 X = X/255.0
 y = torch.Tensor([i[1] for i in training_data])
 
@@ -68,7 +68,7 @@ optimizer = optim.Adam(net.parameters(), lr=0.001)
 loss_function = nn.MSELoss()
 
 # +
-MODEL_NAME = f"model-{int(time.time())}"
+MODEL_NAME = f"convNetFullImg-{int(time.time())}"
 
 def fwd_pass(X, y, train=False):
     """
@@ -92,7 +92,7 @@ def fwd_pass(X, y, train=False):
 
 def test(size=32):
     X, y = test_X[:size], test_y[:size]
-    val_acc, val_loss = fwd_pass(X.view(-1, 1, 150, 150).to(device), y.to(device))
+    val_acc, val_loss = fwd_pass(X.view(-1, 1, 1040,1408).to(device), y.to(device))
     return val_acc, val_loss
 
 def train(net):
@@ -106,7 +106,7 @@ def train(net):
                 # Generally not all the data can fit on the GPU
                 # So we send data to a batch
 
-                batch_X = train_X[i:i+BATCH_SIZE].view(-1, 1, 150, 150).to(device)
+                batch_X = train_X[i:i+BATCH_SIZE].view(-1, 1, 1040,1408).to(device)
                 batch_y = train_y[i:i+BATCH_SIZE].to(device)
 
                 net.zero_grad()
