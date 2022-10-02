@@ -4,11 +4,11 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import matplotlib
-
+# %matplotlib inline
 from scipy import interpolate
 from scipy.signal import savgol_filter
 # %%
-modelRes = pd.read_csv('../../data/esamMonoSegmented/logs/model-1664487976.log', header=None)
+modelRes = pd.read_csv('../../data/esamMonoSegmented/logs/classifyFullIms-1664639287.log', header=None)
 modelRes.columns = ['model', 'time', 'trainAcc','trainLoss', 'valAcc', 'valLoss']
 
 for metric in ['trainAcc','trainLoss', 'valAcc', 'valLoss']:
@@ -45,7 +45,8 @@ plt.ylabel('Validation Accuracy')
 plt.grid()
 
 plt.suptitle('Small CNN Training Results')
+# plt.savefig('../../results/figs/smallCNN.png', dpi=600)
+plt.show()
 
-plt.savefig('../../results/figs/smallCNN.png', dpi=600)
 
 # %%
