@@ -88,7 +88,7 @@ test_y = y[-val_size:]
 import torch
 net = Net()
 net = net.to(device)
-optimizer = optim.Adam(net.parameters(), lr=0.01)
+optimizer = optim.Adam(net.parameters(), lr=0.0001)
 loss_function = nn.MSELoss()
 MODEL_NAME = f"classifyFullIms-{int(time.time())}"
 

@@ -78,6 +78,7 @@ for pcFile in pcIms:
             imgBases.append(imgBase)
 # %% Load and segment data
 idx = 0
+cellData = []
 for imgBase in tqdm(imgBases):
     # Grab image
     well = imgBase.split('_')[0]
@@ -91,7 +92,6 @@ for imgBase in tqdm(imgBases):
     outputs = predictor(pcImg)['instances'].to("cpu")
     nCells = len(outputs)
 
-    cellData = []
     # Go through each cell
     for cellNum in range(nCells):
         mask = outputs[cellNum].pred_masks.numpy()[0]
@@ -173,5 +173,3 @@ np.save('../../data/esamMonoSegmented/cellUncrop.npy', cellData)
 # maxCols = 150
 # pcCrop = torch.rand((160,900))
 # pcCrop = torch.rand((160,170))
-
-

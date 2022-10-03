@@ -8,7 +8,7 @@ import matplotlib
 from scipy import interpolate
 from scipy.signal import savgol_filter
 # %%
-modelRes = pd.read_csv('../../data/esamMonoSegmented/logs/classifyFullIms-1664639287.log', header=None)
+modelRes = pd.read_csv('../../data/esamMonoSegmented/logs/modelCellUncrop-1664832998.log', header=None)
 modelRes.columns = ['model', 'time', 'trainAcc','trainLoss', 'valAcc', 'valLoss']
 
 for metric in ['trainAcc','trainLoss', 'valAcc', 'valLoss']:
