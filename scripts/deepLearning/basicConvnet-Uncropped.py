@@ -1,4 +1,3 @@
-# +
 import os
 import cv2
 import numpy as np
@@ -6,8 +5,6 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import time
 # %matplotlib inline
-
-from skimage.transform import rescale
 
 import torch
 import torch.nn as nn
@@ -18,27 +15,7 @@ import torch.optim as optim
 assert torch.cuda.is_available()
 device = torch.device("cuda:0")
 print("running on GPU")
-training_data = np.load('../../data/esamMonoSegmented/training_data_fullIms.npy', allow_pickle=True)
-
-# +
-imNum = 6
-
-plt.figure(figsize=(20,30))
-plt.subplot(131)
-plt.imshow(training_data[imNum][0], cmap='Greys')
-plt.subplot(132)
-plt.imshow(rescale(training_data[imNum][0], 0.5), cmap='Greys')
-plt.subplot(133)
-plt.imshow(rescale(training_data[imNum][0], 0.25), cmap='Greys')
-# -
-
-for im in training_data:
-    im[0] = rescale(im[0], 0.5)
-
-global rNum
-global cNum
-rNum = im[0].shape[0]
-cNum = im[0].shape[1]
+training_data = np.load('../../data/esamMonoSegmented/cellUncrop.npy', allow_pickle=True)
 
 
 class Net(nn.Module):
@@ -49,7 +26,8 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(1, 32, 5) #inputs 1, outputs 32 using a 5x5
         self.conv2 = nn.Conv2d(32, 64, 5)
         self.conv3 = nn.Conv2d(64, 128, 5)
-        x = torch.randn(rNum,cNum).view(-1,1,rNum,cNum)
+
+        x = torch.randn(150,150).view(-1,1,150,150)
         self._to_linear = None
         self.convs(x)
 
@@ -71,11 +49,11 @@ class Net(nn.Module):
 
 
 # +
-X = torch.Tensor([i[0] for i in training_data]).view(-1,rNum,cNum)
+X = torch.Tensor([i[0] for i in training_data]).view(-1,150,150)
 X = X/255.0
 y = torch.Tensor([i[1] for i in training_data])
 
-VAL_PCT = 0.1  # Reserve 10% of our data for validation
+VAL_PCT = 0.2  # Reserve 10% of our data for validation
 val_size = int(len(X)*VAL_PCT)
 
 train_X = X[:-val_size]
@@ -83,17 +61,14 @@ train_y = y[:-val_size]
 
 test_X = X[-val_size:]
 test_y = y[-val_size:]
-# -
 
-import torch
+# +
 net = Net()
 net = net.to(device)
 optimizer = optim.Adam(net.parameters(), lr=0.0001)
 loss_function = nn.MSELoss()
-MODEL_NAME = f"classifyFullIms-{int(time.time())}"
+MODEL_NAME = f"modelCellUncrop-{int(time.time())}"
 
-
-# +
 def fwd_pass(X, y, train=False):
 
     if train:
@@ -111,17 +86,17 @@ def fwd_pass(X, y, train=False):
 
 def test(size=32):
     X, y = test_X[:size], test_y[:size]
-    val_acc, val_loss = fwd_pass(X.view(-1, 1,rNum,cNum).to(device), y.to(device))
+    val_acc, val_loss = fwd_pass(X.view(-1, 1, 150, 150).to(device), y.to(device))
     return val_acc, val_loss
 
 def train(net):
-    BATCH_SIZE = 4
+    BATCH_SIZE = 100
     EPOCHS = 30
 
     with open(f"../../data/esamMonoSegmented/logs/{MODEL_NAME}.log", "a") as f:
         for epoch in range(EPOCHS):
             for i in tqdm(range(0, len(train_X), BATCH_SIZE)):
-                batch_X = train_X[i:i+BATCH_SIZE].view(-1,1,rNum,cNum)
+                batch_X = train_X[i:i+BATCH_SIZE].view(-1,1,150,150)
                 batch_y = train_y[i:i+BATCH_SIZE]
 
                 batch_X, batch_y = batch_X.to(device), batch_y.to(device)
@@ -136,10 +111,3 @@ def train(net):
                     f.write(f"{MODEL_NAME},{round(time.time(),3)},{round(float(acc),2)},{round(float(loss), 4)},{round(float(val_acc),2)},{round(float(val_loss),4)}\n")
             print(f'Loss: {loss:0.7f} \t Accuracy: {acc:0.4}')
 train(net)
-# -
-
-print(MODEL_NAME)
-
-test(43)
-
-# !squeue -u tjost
