@@ -8,8 +8,9 @@ In this notebook, I will load the model, apply it to every appropriate* image of
 ESAM +/- cells, then save these images *with the background set to black*.\
 \
 *Appropriate meaning the cells is not significantly cut off by the edge, the cell is fluorescing
-properly, and the date is appropriate. 
+properly, and the date is appropriate.
 """
+
 # %%
 import sys, importlib
 sys.path.append('../')
@@ -90,6 +91,7 @@ for imgBase in tqdm(imgBases):
     outputs = predictor(pcImg)['instances'].to("cpu")
     nCells = len(outputs)
 
+    cellData = []
     # Go through each cell
     for cellNum in range(nCells):
         mask = outputs[cellNum].pred_masks.numpy()[0]
@@ -102,7 +104,7 @@ for imgBase in tqdm(imgBases):
         maskCrop = mask[bb[1]:bb[3], bb[0]:bb[2]].copy().astype('bool')
         color = findFluorescenceColor(compositeCrop, maskCrop)
 
-        pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
+        # pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
         pcCrop = torch.tensor(pcCrop[:,:,0])
         # Keep aspect ratio and scale down data to be 150x150 (should be rare)
         if pcCrop.shape[0]>maxRows:
@@ -119,13 +121,16 @@ for imgBase in tqdm(imgBases):
 
         # Save in appropriate folder
         if well == 'E2' and color == 'red':
-            saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
-            imsave(saveFile, pcCrop)
+            # saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
+            # imsave(saveFile, pcCrop)
+            cellData.append([np.array(pcCrop), np.eye(2)[0]])
             idx += 1
         elif well == 'D2' and color == 'green':
-            saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
-            imsave(saveFile, pcCrop)
+            # saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
+            # imsave(saveFile, pcCrop)
+            cellData.append([np.array(pcCrop), np.eye(2)[1]])
             idx += 1
+np.save('../../data/esamMonoSegmented/cellUncrop.npy', cellData)
 # %%
 # bb = list(outputs.pred_boxes[4])[0].numpy()
 # bb = [int(corner) for corner in bb]
