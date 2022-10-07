@@ -118,19 +118,21 @@ for imgBase in tqdm(imgBases):
         pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
         # Resize in case the difference was not actually an integer
         pcCrop = resize(pcCrop, (maxRows, maxCols))
-
-        # Save in appropriate folder
-        if well == 'E2' and color == 'red':
-            # saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
-            # imsave(saveFile, pcCrop)
-            cellData.append([np.array(pcCrop), np.eye(2)[0]])
-            idx += 1
-        elif well == 'D2' and color == 'green':
-            # saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
-            # imsave(saveFile, pcCrop)
-            cellData.append([np.array(pcCrop), np.eye(2)[1]])
-            idx += 1
-np.save('../../data/esamMonoSegmented/cellUncrop.npy', cellData)
+        cellData.append([np.array(pcCrop), np.eye(2)[1]])
+        # break
+    break
+#         # Save in appropriate folder
+#         if well == 'E2' and color == 'red':
+#             # saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
+#             # imsave(saveFile, pcCrop)
+#             cellData.append([np.array(pcCrop), np.eye(2)[0]])
+#             idx += 1
+#         elif well == 'D2' and color == 'green':
+#             # saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
+#             # imsave(saveFile, pcCrop)
+#             cellData.append([np.array(pcCrop), np.eye(2)[1]])
+#             idx += 1
+# np.save('../../data/esamMonoSegmented/cellUncrop.npy', cellData)
 # %%
 # bb = list(outputs.pred_boxes[4])[0].numpy()
 # bb = [int(corner) for corner in bb]
