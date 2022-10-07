@@ -593,6 +593,14 @@ def alignPerimeters(cells: list):
     return cells
 
 def filterCells(cells, confluencyDate=False, edge=False, color=False):
+    """
+    Filters cells on commonly-occuring issues. 
+    Inputs:
+    cells: List of cells of class cellPerims
+    confluencyDate: Datetime object, will filter cells before date
+    edge: Checks if cell is split across multiple images
+    color: Makes sure that fluorescence is correct
+    """
     nCells = len(cells)
     if confluencyDate  != False:
         cells = [cell for cell in cells if cell.date < confluencyDate]
