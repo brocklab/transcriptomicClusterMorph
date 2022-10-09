@@ -12,7 +12,7 @@ esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"r
 esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"rb"))
 # %%
 esamNeg = cellMorphHelper.filterCells(esamNeg, confluencyDate=datetime.datetime(2022, 4, 8, 16, 0), color='red', edge=True)
-esampos = cellMorphHelper.filterCells(esamNeg, confluencyDate=datetime.datetime(2022, 4, 8, 16, 0), color='green', edge=True)
+esamPos = cellMorphHelper.filterCells(esamPos, confluencyDate=datetime.datetime(2022, 4, 8, 16, 0), color='green', edge=True)
 
 cells = esamNeg+esamPos
 ecc = []
