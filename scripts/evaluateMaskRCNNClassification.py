@@ -1,8 +1,3 @@
-# %% [markdown]
-"""
-Second attempt to segment and then classify cells
-"""
-# %%
 # %%
 import cellMorphHelper
 
@@ -37,6 +32,7 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
+from detectron2.utils.visualizer import ColorMode
 # %%
 def findFluorescenceColor(RGB, mask):
     """
@@ -135,38 +131,6 @@ def getCells(experiment, imgType, stage=None):
             datasetDicts.append(record)
             idx+=1
     return datasetDicts
-
-
-# %%
-experiment = 'TJ2201'
-imgType = 'phaseContrast'
-stage = 'train'
-if 'cellMorph_train' in DatasetCatalog:
-    DatasetCatalog.remove('cellMorph_train')
-    print('Removing training')
-if 'cellMorph_test' in DatasetCatalog:
-    DatasetCatalog.remove('cellMorph_test')
-    print('Removing testing')
-inputs = [experiment, imgType, 'train']
-
-DatasetCatalog.register("cellMorph_train", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
-MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["esamNeg", "esamPos"])
-
-DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
-MetadataCatalog.get("cellMorph_" + "test").set(thing_classes=["esamNeg", "esamPos"])
-
-
-cell_metadata = MetadataCatalog.get("cellMorph_train")
-
-datasetDicts = getCells(inputs[0], inputs[1])
-# %%
-# for d in random.sample(datasetDicts, 2):
-#     print(d["file_name"])
-#     img = cv2.imread(d["file_name"])
-#     visualizer = Visualizer(img[:, :, ::-1], metadata=cell_metadata, scale=0.5)
-#     out = visualizer.draw_dataset_dict(d)
-#     plt.imshow(out.get_image()[:, :, ::-1])
-#     plt.show()
 # %%
 from detectron2.engine import DefaultTrainer
 
@@ -187,25 +151,24 @@ cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2  # only has one class (cell). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
 cfg.OUTPUT_DIR = '../output/TJ2201Split16Classify'
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
+predictor = DefaultPredictor(cfg)
 # %%
-os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-trainer = DefaultTrainer(cfg)
-trainer.resume_or_load(resume=False)
-trainer.train()
 # %%
 experiment = 'TJ2201'
 imgType = 'phaseContrast'
 inputs = [experiment, imgType]
 datasetDicts = getCells(inputs[0], inputs[1], stage='test')
 # %%
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
-predictor = DefaultPredictor(cfg)
-# %%
 nIms = 1
 imSpace = 1
 lines = []
-for d in random.sample(datasetDicts, nIms): 
+random.seed(1234)
+for d in random.sample(datasetDicts, 3): 
     im = cv2.imread(d["file_name"])
+    pcName = d["file_name"]
+    compositeName = pcName.replace('phaseContrast', 'composite')
+
     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
     v = Visualizer(im[:, :, ::-1],
                    metadata=MetadataCatalog.get('allCells_test'),
@@ -213,5 +176,41 @@ for d in random.sample(datasetDicts, nIms):
                    instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
     )
     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    plt.figure(figsize=(20,10))
+    plt.subplot(121)
     plt.imshow(out.get_image()[:, :, ::-1])
-    plt.title(d['file_name'])
+    # plt.title(d['file_name'])
+    plt.subplot(122)
+    imComposite = imread(compositeName)
+    plt.imshow(imComposite)
+
+# %%
+wells = []
+for i, d in enumerate(datasetDicts):
+    fname = d['file_name']
+    fname = fname.split('_')[1]
+    wells.append(fname)
+    if fname == 'D2':
+        print(i)
+print(set(wells))
+
+# %%
+d = datasetDicts[88]
+im = cv2.imread(d["file_name"])
+pcName = d["file_name"]
+compositeName = pcName.replace('phaseContrast', 'composite')
+
+outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+v = Visualizer(im[:, :, ::-1],
+                metadata=MetadataCatalog.get('allCells_test'),
+                scale=1,
+                instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+)
+out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+plt.figure(figsize=(20,10))
+plt.subplot(121)
+plt.imshow(out.get_image()[:, :, ::-1])
+# plt.title(d['file_name'])
+plt.subplot(122)
+imComposite = imread(compositeName)
+plt.imshow(imComposite)
