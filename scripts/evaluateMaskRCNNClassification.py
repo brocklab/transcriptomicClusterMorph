@@ -51,7 +51,7 @@ def findFluorescenceColor(RGB, mask):
         return "red"
     else:
         return "NaN"
-# %% Getting/reading *.npy
+# %% Getting/reading *.npy segmentations
 def getCells(experiment, imgType, stage=None):
     segDir = os.path.join('../data',experiment,'segmentedIms')
     segFiles = os.listdir(segDir)
@@ -105,9 +105,9 @@ def getCells(experiment, imgType, stage=None):
                 cellMask = mask == cellNum
                 color = findFluorescenceColor(composite.copy(), cellMask.copy())
 
-                if color == 'red':
+                if color == 'red': # ESAM Negative
                     catID = 0
-                elif color == 'green':
+                elif color == 'green': # ESAM Positive
                     catID = 1
                 else:
                     continue
@@ -131,7 +131,7 @@ def getCells(experiment, imgType, stage=None):
             datasetDicts.append(record)
             idx+=1
     return datasetDicts
-# %%
+# %% Build model
 from detectron2.engine import DefaultTrainer
 
 cfg = get_cfg()
@@ -153,64 +153,134 @@ cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2  # only has one class (cell). (see https://d
 cfg.OUTPUT_DIR = '../output/TJ2201Split16Classify'
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
 predictor = DefaultPredictor(cfg)
-# %%
-# %%
+# %% Load all images
 experiment = 'TJ2201'
 imgType = 'phaseContrast'
-inputs = [experiment, imgType]
-datasetDicts = getCells(inputs[0], inputs[1], stage='test')
 # %%
-nIms = 1
-imSpace = 1
-lines = []
-random.seed(1234)
-for d in random.sample(datasetDicts, 3): 
-    im = cv2.imread(d["file_name"])
-    pcName = d["file_name"]
-    compositeName = pcName.replace('phaseContrast', 'composite')
-
-    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-    v = Visualizer(im[:, :, ::-1],
-                   metadata=MetadataCatalog.get('allCells_test'),
-                   scale=1,
-                   instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
-    )
-    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-    plt.figure(figsize=(20,10))
-    plt.subplot(121)
-    plt.imshow(out.get_image()[:, :, ::-1])
-    # plt.title(d['file_name'])
-    plt.subplot(122)
-    imComposite = imread(compositeName)
-    plt.imshow(imComposite)
-
+saveData = 0
+if saveData:
+    inputs = [experiment, imgType]
+    datasetDicts = getCells(inputs[0], inputs[1], stage='test')
+    allOutputs, images = [], []
+    for i,d in tqdm(enumerate(datasetDicts)):
+        im = cv2.imread(d["file_name"])
+        allOutputs.append(predictor(im))
+        images.append(d['file_name'])
+        if i%10 == 0:
+            np.save('../data/esamMonoSegmented/maskRCNNResults.npy', [allOutputs, images])
+    np.save('../data/esamMonoSegmented/maskRCNNResults.npy', [allOutputs, images])
+else:
+    predictorOutput = np.load('../data/esamMonoSegmented/maskRCNNResults.npy', allow_pickle=True)
 # %%
-wells = []
-for i, d in enumerate(datasetDicts):
-    fname = d['file_name']
-    fname = fname.split('_')[1]
-    wells.append(fname)
-    if fname == 'D2':
-        print(i)
-print(set(wells))
+# D2 - ESAM + Monoculture
+# E2 - ESAM - Monoculture
+# E7 - Coculture
+ESAMPosActual, ESAMPosLabel = 0, 0
+ESAMNegActual, ESAMNegLabel = 0, 0
+ESAMPosScore, ESAMNegScore = [], []
+for output, imgPhase in zip(predictorOutput[0], predictorOutput[1]):
+    imgComposite = imgPhase.replace('phaseContrast', 'composite')
+    well = imgPhase.split('_')[1]
+    
 
-# %%
-d = datasetDicts[88]
-im = cv2.imread(d["file_name"])
-pcName = d["file_name"]
-compositeName = pcName.replace('phaseContrast', 'composite')
+    img = imread(imgComposite)
 
-outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-v = Visualizer(im[:, :, ::-1],
-                metadata=MetadataCatalog.get('allCells_test'),
-                scale=1,
-                instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
-)
-out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-plt.figure(figsize=(20,10))
-plt.subplot(121)
-plt.imshow(out.get_image()[:, :, ::-1])
-# plt.title(d['file_name'])
-plt.subplot(122)
-imComposite = imread(compositeName)
-plt.imshow(imComposite)
+    # Threshold out low quality cells
+    minThresh = 0.9
+    instances = output['instances']
+    idxDelete = [idx for idx, score in enumerate(instances.scores) if score<minThresh]
+
+    scores = np.delete(instances.scores, idxDelete)
+    pred_classes = np.delete(instances.pred_classes, idxDelete)
+    pred_masks = np.delete(instances.pred_masks.numpy(), idxDelete, axis=0)
+
+    nPreds = len(scores)
+    if well == 'E2': # ESAM -, class 0
+        ESAMNegActual += nPreds
+        ESAMNegLabel += np.sum(pred_classes.numpy() == 0)
+    elif well == 'D2': # ESAM +, class 1
+        ESAMPosActual += nPreds
+        ESAMPosLabel += np.sum(pred_classes.numpy() == 1)
+
+    # Find accuracy 
+# # %%
+# nIms = 1
+# imSpace = 1
+# lines = []
+# random.seed(1234)
+# for d in random.sample(datasetDicts, 3): 
+#     im = cv2.imread(d["file_name"])
+#     pcName = d["file_name"]
+#     compositeName = pcName.replace('phaseContrast', 'composite')
+
+#     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+#     v = Visualizer(im[:, :, ::-1],
+#                    metadata=MetadataCatalog.get('allCells_test'),
+#                    scale=1,
+#                    instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+#     )
+#     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+#     plt.figure(figsize=(20,10))
+#     plt.subplot(121)
+#     plt.imshow(out.get_image()[:, :, ::-1])
+#     # plt.title(d['file_name'])
+#     plt.subplot(122)
+#     imComposite = imread(compositeName)
+#     plt.imshow(imComposite)
+
+# # %%
+
+# # %%
+# wells = []
+# for i, d in enumerate(datasetDicts):
+#     fname = d['file_name']
+#     fname = fname.split('_')[1]
+#     wells.append(fname)
+#     if fname == 'D2':
+#         print(i)
+# print(set(wells))
+
+# # %%
+# d = datasetDicts[88]
+# im = cv2.imread(d["file_name"])
+# pcName = d["file_name"]
+# compositeName = pcName.replace('phaseContrast', 'composite')
+
+# outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+# v = Visualizer(im[:, :, ::-1],
+#                 metadata=MetadataCatalog.get('allCells_test'),
+#                 scale=1,
+#                 instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+# )
+# out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+# plt.figure(figsize=(20,10))
+# plt.subplot(121)
+# plt.imshow(out.get_image()[:, :, ::-1])
+# # plt.title(d['file_name'])
+# plt.subplot(122)
+# imComposite = imread(compositeName)
+# plt.imshow(imComposite)
+# # %%
+# masks = outputs['instances'].pred_masks
+# plt.imshow(masks[-2])
+# # %%
+# from skimage.measure import label
+# from skimage.color import label2rgb
+# minThresh = 0.9
+# instances = outputs['instances']
+# idxDelete = [idx for idx, score in enumerate(instances.scores) if score<minThresh]
+
+# scores = np.delete(instances.scores, idxDelete)
+# pred_classes = np.delete(instances.pred_classes, idxDelete)
+# pred_masks = np.delete(instances.pred_masks.numpy(), idxDelete, axis=0)
+
+# # Plotting outputs
+# fullMask = np.zeros(np.shape(pred_masks[0]))
+# cellNum = 1
+# for mask in pred_masks:
+#     isCell = np.where(mask == True)
+#     fullMask[isCell[0], isCell[1]] = cellNum
+#     cellNum += 1
+# labelImg = label(fullMask)
+# label_overlay = label2rgb(labelImg, im)
+# plt.imshow(label_overlay)
