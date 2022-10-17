@@ -36,7 +36,24 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
 from detectron2.utils.visualizer import ColorMode
 from detectron2.engine import DefaultTrainer
-
+# %%
+def findFluorescenceColor(RGB, mask):
+    """
+    Finds the fluorescence of a cell
+    Input: RGB image location
+    Output: Color
+    """
+    # RGB = imread(RGBLocation)
+    mask = mask.astype('bool')
+    RGB[~np.dstack((mask,mask,mask))] = 0
+    nGreen, BW = cellMorphHelper.segmentGreen(RGB)
+    nRed, BW = cellMorphHelper.segmentRed(RGB)
+    if nGreen>=(nRed+100):
+        return "green"
+    elif nRed>=(nGreen+100):
+        return "red"
+    else:
+        return "NaN"
 # %%
 predictorClassify = cellMorphHelper.getSegmentModel('../output/TJ2201Split16Classify', numClasses=2)
 # %%
@@ -53,6 +70,8 @@ for i, im in enumerate(tqdm(allIms)):
     if date not in dateAccuracy[well].keys():
         dateAccuracy[well][date] = {'predicted': [], 'actual': [], 'score': [], 'nCorrect': 0, 'total': 0}
     imPath = os.path.join('../data/TJ2201Split16/phaseContrast', im)
+    imPathComposite = imPath.replace('phaseContrast', 'composite')
+    compositeImg = imread(imPathComposite)
     # Get outputs from model
     outputs = predictorClassify(imread(imPath))
     outputs = outputs['instances']
@@ -70,15 +89,15 @@ for i, im in enumerate(tqdm(allIms)):
             continue
         
         # List elements
-        dateAccuracy[well][date][0].append(pred_class)
-        dateAccuracy[well][date][1].append(classification)
-        dateAccuracy[well][date][2].append(score)
+        dateAccuracy[well][date]['predicted'].append(pred_class)
+        dateAccuracy[well][date]['actual'].append(classification)
+        dateAccuracy[well][date]['score'].append(score)
 
         if classification == pred_class:
-            dateAccuracy[well][date][3] += 1
-        dateAccuracy[well][date][4] += 1
-    break
+            dateAccuracy[well][date]['nCorrect'] += 1
+        dateAccuracy[well][date]['total'] += 1
     if i%10 == 0:
         pickle.dump(dateAccuracy, open('../data/longitudinalAccuracyCoculture', "wb"))
 
 pickle.dump(dateAccuracy, open('../data/longitudinalAccuracyCoculture', "wb"))
+# %%
