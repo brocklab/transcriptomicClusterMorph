@@ -677,7 +677,7 @@ def viewPredictorResult(predictor, imPath: str):
     plt.title(imBase)
     plt.show()
 
-def getSegmentModel(modelPath: str):
+def getSegmentModel(modelPath: str, numClasses = 1):
     """
     Gets a segmentation model that can be used to output masks
     Inputs:
@@ -699,7 +699,7 @@ def getSegmentModel(modelPath: str):
     cfg.SOLVER.MAX_ITER = 10000    # 300 iterations seems good enough for this toy dataset you will need to train longer for a practical dataset
     cfg.SOLVER.STEPS = []        # do not decay learning rate
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = numClasses
     cfg.OUTPUT_DIR = modelPath
     cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold
