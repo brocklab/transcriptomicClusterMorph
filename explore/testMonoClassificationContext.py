@@ -147,37 +147,4 @@ for img in tqdm(testIms['E7']):
         if classification == pred_class:
             nCorrect+=1
         nTotal += 1
-        
-# %% Calculate monoculture accuracy over time - wells E2 and D2
-
-# Grab all images associated with relevant monoculture wells
-wells = ['E2', 'D2']
-esamPosWells = ['E2']
-esamNegWells = ['D2']
-wellClass = {'E2': 0, 'D2': 1}
-allIms = os.listdir('../data/TJ2201Split16/phaseContrast')
-allIms = [im for im in allIms if im.split('_')[1] in wells]
-dateAccuracy = {well: {} for well in wells}
-# For each image calculate accuracy
-for im in tqdm(allIms):
-    nCorrect, nTotal = 0, 0
-    date = '_'.join(im.split('_')[3:5])
-    well = im.split('_')[1]
-    if date not in dateAccuracy[well].keys():
-        dateAccuracy[well][date] = []
-    imPath = os.path.join('../data/TJ2201Split16/phaseContrast', im)
-    outputs = predictorClassify(imread(imPath))
-    outputs = outputs['instances']
-
-    desiredClass = wellClass[well]
-
-    predictions = outputs.pred_classes.numpy()
-    nCorrect += sum(predictions == desiredClass)
-    nTotal += len(predictions)   
-
-    dateAccuracy[well][date] = [nCorrect, nTotal]
-# %% Test against "synthetic image"
-imgName = 'testMono2.png'
-cellMorphHelper.viewPredictorResult(predictorClassify, imgName)
-cellMorphHelper.viewPredictorResult(predictorSegment, imgName)
-outputs = predictor(imread(imgName))
+# %%
