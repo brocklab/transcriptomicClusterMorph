@@ -63,7 +63,7 @@ def findFluorescenceColor(RGB, mask):
         return "NaN"
 # %% Get Predictor
 predictorSegment = cellMorphHelper.getSegmentModel('../output/TJ2201Split16', numClasses=1)
-predictorClassify = cellMorphHelper.getSegmentModel('../output/TJ2201Split16Classify', numClasses=2)
+predictorClassify = cellMorphHelper.getSegmentModel('../output/TJ2201Split16ClassifyFull', numClasses=2)
 # %% Get images/known segmentations
 
 # Set information for desired experiment/well
