@@ -60,7 +60,7 @@ for image in tqdm(images):
     masks = outputs.pred_masks.numpy()
     pred_classes = outputs.pred_classes.numpy()
     # For each mask, compare its identity to the predicted class
-    for mask, pred_class in zip(masks, pred_class):
+    for mask, pred_class in zip(masks, pred_classes):
         actualColor = findFluorescenceColor(imgComp.copy(), mask.copy())
         if actualColor == 'red':
             classification = 0
