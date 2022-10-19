@@ -146,25 +146,25 @@ inputs = [experiment, predictor, 'train']
 DatasetCatalog.register("cellMorph_train", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
 MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["esamNeg", "esamPos"])
 
-DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
+DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], 'test'))
 MetadataCatalog.get("cellMorph_" + "test").set(thing_classes=["esamNeg", "esamPos"])
 
 # %% Write data
-convert_to_coco_json('cellMorph_train', '../data/cocoFiles/TJ2201Split16FullWellTrain.json', allow_cached=False)
+# convert_to_coco_json('cellMorph_train', '../data/cocoFiles/TJ2201Split16FullWellTrain.json', allow_cached=False)
 convert_to_coco_json('cellMorph_test', '../data/cocoFiles/TJ2201Split16FullWellTest.json', allow_cached=False)
 # %% Loading example
-# experiment = 'TJ2201'
-# stage = 'train'
-# if 'cellMorph_train' in DatasetCatalog:
-#     DatasetCatalog.remove('cellMorph_train')
-#     MetadataCatalog.remove('cellMorph_train')
+experiment = 'TJ2201'
+stage = 'train'
+if 'cellMorph_train' in DatasetCatalog:
+    DatasetCatalog.remove('cellMorph_train')
+    MetadataCatalog.remove('cellMorph_train')
 
-#     print('Removing training')
-# if 'cellMorph_test' in DatasetCatalog:
-#     DatasetCatalog.remove('cellMorph_test')
-#     MetadataCatalog.remove('cellMorph_test')
+    print('Removing training')
+if 'cellMorph_test' in DatasetCatalog:
+    DatasetCatalog.remove('cellMorph_test')
+    MetadataCatalog.remove('cellMorph_test')
 
-#     print('Removing testing')
+    print('Removing testing')
 
-# from detectron2.data.datasets import register_coco_instances
-# register_coco_instances("cellMorph_train", {}, '../data/cocoFiles/TJ2201Split16FullWellTrain.json', "")
+from detectron2.data.datasets import register_coco_instances
+register_coco_instances("cellMorph_train", {}, '../data/cocoFiles/TJ2201Split16FullWellTrain.json', "")
