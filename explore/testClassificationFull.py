@@ -7,7 +7,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-import pickle 
+import pickle
+import matplotlib
 
 from skimage import measure, img_as_float
 from skimage.io import imread
@@ -42,26 +43,30 @@ class imgSegment:
         self.pcImg = fileName
         self.compositeImg = self.pcImg.replace('phaseContrast', 'composite')
 
+        date = '_'.join(self.pcImg.split('_')[3:5])
+        self.date = cellMorphHelper.convertDate(date)
         self.well = self.pcImg.split('_')[1]
 
-        masks, pred_classes, actualClassifications = self.assignPhenotype(predictor)
+        masks, pred_classes, actualClassifications, scores = self.assignPhenotype(predictor)
 
+        assert len(pred_classes) == len(actualClassifications)
         self.masks = masks
         self.pred_classes = pred_classes
         self.actualClassifications = actualClassifications
-
+        self.scores = scores
     def assignPhenotype(self, predictor):
         """
         Compares predicted and output phenotype assignments. Stores mask as well. 
         """
         imgPc = imread(self.pcImg)
         imgComp = imread(self.compositeImg)
-        outputs = predictor(imgPc)['instances']
+        outputs = predictor(imgPc)['instances']        
         masks = outputs.pred_masks.numpy()
         pred_classes = outputs.pred_classes.numpy()
-        actualClassifications, fluorescentPredClasses = [], []
+        scores = outputs.scores.numpy()
+        actualClassifications, fluorescentPredClasses, classScores = [], [], []
         # For each mask, compare its identity to the predicted class
-        for mask, pred_class in zip(masks, pred_classes):
+        for mask, pred_class, score in zip(masks, pred_classes, scores):
             actualColor = findFluorescenceColor(imgComp.copy(), mask.copy())
             if actualColor == 'red':
                 classification = 0
@@ -71,7 +76,8 @@ class imgSegment:
                 continue
             actualClassifications.append(classification)
             fluorescentPredClasses.append(pred_class)
-        return (masks, pred_classes, actualClassifications)
+            classScores.append(score)
+        return (masks, fluorescentPredClasses, actualClassifications, scores)
 
     def imshow(self):
         """Temp function to show image, TODO: Add labels"""
@@ -81,6 +87,7 @@ class imgSegment:
 writeData = 1
 
 if writeData:
+    print('Grabbing classifications')
     predictor = cellMorphHelper.getSegmentModel('../output/TJ2201Split16ClassifyFull', numClasses=2)
 
     imgLog = []
@@ -96,3 +103,49 @@ if writeData:
             pickle.dump(imgLog, open('../data/fullClassificationAccuracy.pickle', "wb"))
 
         c += 1
+else:
+    imgLog=pickle.load(open('../data/fullClassificationAccuracy.pickle',"rb"))
+# %%
+
+# %%
+matplotlib.rcParams.update({'font.size': 12})
+dateAccuracy = {'E2': {}, 'D2': {}, 'E7': {}}
+for img in imgLog:
+    date = '_'.join(img.pcImg.split('_')[3:5])
+    date = cellMorphHelper.convertDate(date)
+    well = img.well
+    if date not in dateAccuracy[well].keys():
+        dateAccuracy[well][date] = [0, 0]
+    
+    dateAccuracy[well][date][0] += np.sum(np.array(img.actualClassifications) == np.array(img.pred_classes))
+    dateAccuracy[well][date][1] += len(img.actualClassifications)
+
+wells = dateAccuracy.keys()
+wellColors = {'E2': 'red', 'D2': 'green', 'E7': 'magenta'}
+plt.figure(figsize=(10,5))
+for well in wells:
+    dates, accuracies = [], []
+    for date in dateAccuracy[well].keys():
+        dates.append(date)
+        accuracies.append(dateAccuracy[well][date][0]/dateAccuracy[well][date][1])
+    plt.scatter(dates, accuracies, c=wellColors[well], label=well)
+
+plt.legend()
+plt.xlabel('Date')
+plt.ylabel('Accuracy')
+
+
+# %%
+total = 0
+correct = 0
+for img in imgLog:
+    if img.well == 'E7':
+        total += len(img.actualClassifications)
+        if len(img.actualClassifications)>0:
+            correct += np.sum(np.array(img.actualClassifications) == np.array(img.pred_classes))
+print(correct/total)
+
+# %%
+total = 0
+for img in x:
+    total += len(img['annotations'])
