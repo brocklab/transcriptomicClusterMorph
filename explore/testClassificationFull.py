@@ -12,7 +12,7 @@ import matplotlib
 
 from skimage import measure, img_as_float
 from skimage.io import imread
-
+from skimage.measure import regionprops
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.data.datasets import register_coco_instances
 # %%
@@ -51,8 +51,8 @@ class imgSegment:
 
         assert len(pred_classes) == len(actualClassifications)
         self.masks = masks
-        self.pred_classes = pred_classes
-        self.actualClassifications = actualClassifications
+        self.predClasses = pred_classes
+        self.actualClasses = actualClassifications
         self.scores = scores
     def assignPhenotype(self, predictor):
         """
@@ -64,7 +64,7 @@ class imgSegment:
         masks = outputs.pred_masks.numpy()
         pred_classes = outputs.pred_classes.numpy()
         scores = outputs.scores.numpy()
-        actualClassifications, fluorescentPredClasses, classScores = [], [], []
+        actualClassifications, fluorescentPredClasses, classScores, finalMasks = [], [], [], []
         # For each mask, compare its identity to the predicted class
         for mask, pred_class, score in zip(masks, pred_classes, scores):
             actualColor = findFluorescenceColor(imgComp.copy(), mask.copy())
@@ -77,14 +77,15 @@ class imgSegment:
             actualClassifications.append(classification)
             fluorescentPredClasses.append(pred_class)
             classScores.append(score)
-        return (masks, fluorescentPredClasses, actualClassifications, scores)
+            finalMasks.append(mask)
+        return (finalMasks, fluorescentPredClasses, actualClassifications, scores)
 
     def imshow(self):
         """Temp function to show image, TODO: Add labels"""
         imgPc = imread(self.pcImg)
         plt.imshow(imgPc)
 # %%
-writeData = 1
+writeData = 0
 
 if writeData:
     print('Grabbing classifications')
@@ -106,8 +107,6 @@ if writeData:
 else:
     imgLog=pickle.load(open('../data/fullClassificationAccuracy.pickle',"rb"))
 # %%
-
-# %%
 matplotlib.rcParams.update({'font.size': 12})
 dateAccuracy = {'E2': {}, 'D2': {}, 'E7': {}}
 for img in imgLog:
@@ -117,8 +116,8 @@ for img in imgLog:
     if date not in dateAccuracy[well].keys():
         dateAccuracy[well][date] = [0, 0]
     
-    dateAccuracy[well][date][0] += np.sum(np.array(img.actualClassifications) == np.array(img.pred_classes))
-    dateAccuracy[well][date][1] += len(img.actualClassifications)
+    dateAccuracy[well][date][0] += np.sum(np.array(img.actualClasses) == np.array(img.predClasses))
+    dateAccuracy[well][date][1] += len(img.actualClasses)
 
 wells = dateAccuracy.keys()
 wellColors = {'E2': 'red', 'D2': 'green', 'E7': 'magenta'}
@@ -134,15 +133,28 @@ plt.legend()
 plt.xlabel('Date')
 plt.ylabel('Accuracy')
 
+# %% Filter out low eccentricity cells
+minEcc = 0.85
+imgLogEccentric = []
+pred, actual = [], []
+for img in imgLog:
+    for i, mask in enumerate(img.masks):
+        region = regionprops(mask.astype(np.uint8))
+        region = region[0]
+        if region.eccentricity>minEcc:
+            pred.append(img.predClasses[i])
+            actual.append(img.actualClasses[i])
 
+percentAccuracy = np.sum(np.array(pred) == np.array(actual))/len(actual)
+print(f'Accuracy: {percentAccuracy:0.3f}')
 # %%
 total = 0
 correct = 0
 for img in imgLog:
     if img.well == 'E7':
-        total += len(img.actualClassifications)
-        if len(img.actualClassifications)>0:
-            correct += np.sum(np.array(img.actualClassifications) == np.array(img.pred_classes))
+        total += len(img.actualClasses)
+        if len(img.actualClasses)>0:
+            correct += np.sum(np.array(img.actualClasses) == np.array(img.predClasses))
 print(correct/total)
 
 # %%
