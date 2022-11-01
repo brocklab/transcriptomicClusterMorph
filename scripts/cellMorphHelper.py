@@ -357,17 +357,17 @@ def segmentRed(RGB):
     nRed = np.sum(BW)
     return nRed, BW
 
-def findFluorescenceColor(RGBLocation, mask):
+def findFluorescenceColor(RGB, mask):
     """
     Finds the fluorescence of a cell
     Input: RGB image location
     Output: Color
     """
-    RGB = imread(RGBLocation)
+    # RGB = imread(RGBLocation)
     mask = mask.astype('bool')
     RGB[~np.dstack((mask,mask,mask))] = 0
-    nGreen, BW = segmentGreen(RGB)
-    nRed, BW = segmentRed(RGB)
+    nGreen, BW = cellMorphHelper.segmentGreen(RGB)
+    nRed, BW = cellMorphHelper.segmentRed(RGB)
     if nGreen>=(nRed+100):
         return "green"
     elif nRed>=(nGreen+100):

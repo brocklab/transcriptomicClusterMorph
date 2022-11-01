@@ -18,29 +18,11 @@ from skimage.color import label2rgb
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.data.datasets import register_coco_instances
 # %%
-def findFluorescenceColor(RGB, mask):
-    """
-    Finds the fluorescence of a cell
-    Input: RGB image location
-    Output: Color
-    """
-    # RGB = imread(RGBLocation)
-    mask = mask.astype('bool')
-    RGB[~np.dstack((mask,mask,mask))] = 0
-    nGreen, BW = cellMorphHelper.segmentGreen(RGB)
-    nRed, BW = cellMorphHelper.segmentRed(RGB)
-    if nGreen>=(nRed+100):
-        return "green"
-    elif nRed>=(nGreen+100):
-        return "red"
-    else:
-        return "NaN"
-
 class imgSegment:
     """
     Stores information about cell output from image
     """
-    def __init__(self, fileName, predictor):
+    def __init__(self, fileName, predictor, modelType):
         assert 'phaseContrast' in fileName
         self.pcImg = fileName
         self.compositeImg = self.pcImg.replace('phaseContrast', 'composite')
@@ -49,17 +31,27 @@ class imgSegment:
         self.date = cellMorphHelper.convertDate(date)
         self.well = self.pcImg.split('_')[1]
 
-        masks, pred_classes, actualClassifications, scores = self.assignPhenotype(predictor)
+        if modelType == 'classify':
+            masks, pred_classes, actualClassifications, scores = self.assignPhenotype(predictor)
 
-        assert len(pred_classes) == len(actualClassifications)
-        self.masks = masks
-        self.predClasses = pred_classes
-        self.actualClasses = actualClassifications
-        self.scores = scores
+            self.masks = masks
+            self.predClasses = pred_classes
+            self.actualClasses = actualClassifications
+            self.scores = scores
+        elif modelType == 'segment':
+            masks = self.grabSegmentation(predictor)
+            self.masks = masks
 
+    def grabSegmentation(self, predictor):
+        """Stores segmentation masks using predictor"""
+        imgPc = imread(self.pcImg)
+        outputs = predictor(imgPc)['instances']        
+        masks = outputs.pred_masks.numpy()
+        return masks
+        
     def assignPhenotype(self, predictor):
         """
-        Compares predicted and output phenotype assignments. Stores mask as well. 
+        Compares predicted and output phenotype assignments. 
         """
         imgPc = imread(self.pcImg)
         imgComp = imread(self.compositeImg)
@@ -96,10 +88,6 @@ class imgSegment:
         imgOverlay = label2rgb(labeled_image, image=imgPc)
         # plt.imshow(fullMask)
         plt.imshow(imgOverlay)
-
-# %%
-imgLog=pickle.load(open('../data/fullClassificationAccuracy.pickle',"rb"))
-imgLog[3].imshow()
 # %%
 writeData = 0
 
@@ -115,7 +103,7 @@ if writeData:
     c = 0
     # For each image, catalog model outputs and their predicted/actual classes
     for image in tqdm(images):
-        imgLog.append(imgSegment(image['file_name'], predictor))
+        imgLog.append(imgSegment(image['file_name'], predictor, type='classify'))
         if c % 10 == 0:
             pickle.dump(imgLog, open('../data/fullClassificationAccuracy.pickle', "wb"))
 

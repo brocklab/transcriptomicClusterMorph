@@ -12,6 +12,7 @@ from skimage.measure import find_contours
 from skimage.color import rgb2hsv
 
 from scipy.interpolate import interp1d
+import cellMorphHelper
 # %%
 def interpolatePerimeter(perim: np.array, nPts: int=150):
     """
@@ -185,3 +186,75 @@ class cellPerims:
 # If something bad happened where you need to pickle a new object, fix it with this:
 # for cell in cells:
 #     cell.__class__ = eval(cell.__class__.__name__)`
+
+# %% 
+class imgSegment:
+    """
+    Stores information about cell output from image
+    """
+    def __init__(self, fileName, predictor, modelType):
+        assert 'phaseContrast' in fileName
+        self.pcImg = fileName
+        self.compositeImg = self.pcImg.replace('phaseContrast', 'composite')
+
+        date = '_'.join(self.pcImg.split('_')[3:5])
+        self.date = cellMorphHelper.convertDate(date)
+        self.well = self.pcImg.split('_')[1]
+
+        if modelType == 'classify':
+            masks, pred_classes, actualClassifications, scores = self.assignPhenotype(predictor)
+
+            self.masks = masks
+            self.predClasses = pred_classes
+            self.actualClasses = actualClassifications
+            self.scores = scores
+        elif modelType == 'segment':
+            masks = self.grabSegmentation(predictor)
+            self.masks = masks
+
+    def grabSegmentation(self, predictor):
+        """Stores segmentation masks using predictor"""
+        imgPc = imread(self.pcImg)
+        outputs = predictor(imgPc)['instances']        
+        masks = outputs.pred_masks.numpy()
+        return masks
+        
+    def assignPhenotype(self, predictor):
+        """
+        Compares predicted and output phenotype assignments. 
+        """
+        imgPc = imread(self.pcImg)
+        imgComp = imread(self.compositeImg)
+        outputs = predictor(imgPc)['instances']        
+        masks = outputs.pred_masks.numpy()
+        pred_classes = outputs.pred_classes.numpy()
+        scores = outputs.scores.numpy()
+        actualClassifications, fluorescentPredClasses, classScores, finalMasks = [], [], [], []
+        # For each mask, compare its identity to the predicted class
+        for mask, pred_class, score in zip(masks, pred_classes, scores):
+            actualColor = cellMorphHelper.findFluorescenceColor(imgComp.copy(), mask.copy())
+            if actualColor == 'red':
+                classification = 0
+            elif actualColor == 'green':
+                classification = 1
+            else:
+                continue
+            actualClassifications.append(classification)
+            fluorescentPredClasses.append(pred_class)
+            classScores.append(score)
+            finalMasks.append(mask)
+        return (finalMasks, fluorescentPredClasses, actualClassifications, scores)
+
+    def imshow(self):
+        """Shows labeled image"""
+        imgPc = imread(self.pcImg)
+        n = 1
+        # Merge masks
+        fullMask = np.zeros(self.masks[0].shape)
+        for mask in self.masks:
+            fullMask[mask] = n
+            n+=1
+        labeled_image = label(fullMask)
+        imgOverlay = label2rgb(labeled_image, image=imgPc)
+        # plt.imshow(fullMask)
+        plt.imshow(imgOverlay)
