@@ -12,7 +12,9 @@ import matplotlib
 
 from skimage import measure, img_as_float
 from skimage.io import imread
-from skimage.measure import regionprops
+from skimage.measure import regionprops, label
+from skimage.color import label2rgb
+
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.data.datasets import register_coco_instances
 # %%
@@ -54,6 +56,7 @@ class imgSegment:
         self.predClasses = pred_classes
         self.actualClasses = actualClassifications
         self.scores = scores
+
     def assignPhenotype(self, predictor):
         """
         Compares predicted and output phenotype assignments. Stores mask as well. 
@@ -81,9 +84,22 @@ class imgSegment:
         return (finalMasks, fluorescentPredClasses, actualClassifications, scores)
 
     def imshow(self):
-        """Temp function to show image, TODO: Add labels"""
+        """Shows labeled image"""
         imgPc = imread(self.pcImg)
-        plt.imshow(imgPc)
+        n = 1
+        # Merge masks
+        fullMask = np.zeros(self.masks[0].shape)
+        for mask in self.masks:
+            fullMask[mask] = n
+            n+=1
+        labeled_image = label(fullMask)
+        imgOverlay = label2rgb(labeled_image, image=imgPc)
+        # plt.imshow(fullMask)
+        plt.imshow(imgOverlay)
+
+# %%
+imgLog=pickle.load(open('../data/fullClassificationAccuracy.pickle',"rb"))
+imgLog[3].imshow()
 # %%
 writeData = 0
 
