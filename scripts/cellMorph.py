@@ -8,8 +8,8 @@ import os
 import matplotlib.pyplot as plt
 import datetime
 from skimage.io import imread
-from skimage.measure import find_contours
-from skimage.color import rgb2hsv
+from skimage.measure import find_contours, label
+from skimage.color import rgb2hsv, label2rgb
 
 from scipy.interpolate import interp1d
 import cellMorphHelper
@@ -250,11 +250,14 @@ class imgSegment:
         imgPc = imread(self.pcImg)
         n = 1
         # Merge masks
-        fullMask = np.zeros(self.masks[0].shape)
-        for mask in self.masks:
-            fullMask[mask] = n
-            n+=1
-        labeled_image = label(fullMask)
-        imgOverlay = label2rgb(labeled_image, image=imgPc)
+        if len(self.masks) > 0:
+            fullMask = np.zeros(self.masks[0].shape)
+            for mask in self.masks:
+                fullMask[mask] = n
+                n+=1
+            labeled_image = label(fullMask)
+            imgOverlay = label2rgb(labeled_image, image=imgPc)
         # plt.imshow(fullMask)
-        plt.imshow(imgOverlay)
+            plt.imshow(imgOverlay)
+        else:
+            plt.imshow(imgPc)
