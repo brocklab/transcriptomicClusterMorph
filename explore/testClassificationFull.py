@@ -165,3 +165,4 @@ print(correct/total)
 total = 0
 for img in x:
     total += len(img['annotations'])
+

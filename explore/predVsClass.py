@@ -7,6 +7,7 @@ from cellMorph import imgSegment
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from skimage.measure import regionprops
 from skimage.io import imread
@@ -56,3 +57,31 @@ plt.show()
 classesDict[fnames[n]].imshow()
 
 # %%
+experiment = 'TJ2201'
+segDir = os.path.join('../data',experiment,'segmentedIms')
+segFiles = os.listdir(segDir)
+segFiles = [segFile for segFile in segFiles if segFile.endswith('.npy')]
+
+trainingEcc = []
+for segFile in tqdm(segFiles):
+
+    # Load in cellpose output
+    segFull = os.path.join(segDir, segFile)
+    seg = np.load(segFull, allow_pickle=True)
+    seg = seg.item()
+
+    mask = seg['masks']
+    cellNums = np.unique(mask)
+    cellNums = cellNums[cellNums != 0]
+
+    for cellNum in cellNums:
+        region = regionprops(mask.astype(np.uint8))
+        if len(region)>1:
+            region = sorted(region, key = lambda allprops: allprops.area)
+        region = region[0]
+        trainingEcc.append(region.eccentricity)
+# %%
+plt.violinplot([classEcc, segEcc, trainingEcc])
+plt.xticks([1, 2, 3], ['Classification \n Model', 'Segmentation \n Model', 'Training Data'])
+plt.ylabel('Eccentricity')
+plt.show()
