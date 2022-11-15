@@ -20,6 +20,7 @@ import detectron2
 import datetime
 import random
 import itertools
+from tqdm import tqdm
 
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
@@ -142,11 +143,10 @@ def splitExpIms(experiment, nIms=16):
     if os.path.isdir(pcDir):
         imNames = os.listdir(pcDir)
 
-        for imName in imNames:
+        for imName in tqdm(imNames):
             # Read and split mask
             im = cv2.imread(os.path.join(dataDir, 'phaseContrast', imName))
             tiles = imSplit(im, nIms)
-            print(f'{imName}')
             # For each mask append a number, then save it
             for num, im in enumerate(tiles):
                 newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
@@ -159,7 +159,7 @@ def splitExpIms(experiment, nIms=16):
     if os.path.isdir(compositeDir):
         imNames = os.listdir(compositeDir)
 
-        for imName in imNames:
+        for imName in tqdm(imNames):
             # Read and split mask
             im = cv2.imread(os.path.join(dataDir, 'composite', imName))
             tiles = imSplit(im, nIms)
