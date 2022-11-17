@@ -163,7 +163,6 @@ def splitExpIms(experiment, nIms=16):
             # Read and split mask
             im = cv2.imread(os.path.join(dataDir, 'composite', imName))
             tiles = imSplit(im, nIms)
-            print(f'{imName}')
             # For each mask append a number, then save it
             for num, im in enumerate(tiles):
                 newImName =  '.'.join([imName.split('.')[0]+'_'+str(num+1), imName.split('.')[1]])
