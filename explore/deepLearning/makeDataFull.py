@@ -13,7 +13,7 @@ properly, and the date is appropriate.
 
 # %%
 import sys, importlib
-sys.path.append('../')
+sys.path.append('../../scripts')
 # importlib.reload(sys.modules['cellMorphHelper'])
 import pickle
 import os
@@ -59,7 +59,7 @@ maxSize = 150
 maxRows, maxCols = maxSize, maxSize
 savePath = '../../data/esamMonoSegmented'
 
-expPath = f'../data/{experiment}/'
+expPath = f'../../data/{experiment}/'
 pcPath = os.path.join(expPath, 'phaseContrast')
 compositePath = os.path.join(expPath, 'composite')
 
@@ -116,7 +116,7 @@ for imgBase in tqdm(imgBases):
         # Resize in case the difference was not actually an integer
         pcCrop = resize(pcCrop, (maxRows, maxCols))
         cellData.append([np.array(pcCrop), np.eye(2)[1]])
-        # break
+        break
     break
 #         # Save in appropriate folder
 #         if well == 'E2' and color == 'red':
