@@ -9,6 +9,8 @@ ESAM +/- cells, then save these images *with the background set to black*.\
 \
 *Appropriate meaning the cells is not significantly cut off by the edge, the cell is fluorescing
 properly, and the date is appropriate.
+
+# TODO: Generalize this?
 """
 
 # %%
@@ -19,6 +21,7 @@ import pickle
 import os
 import cv2
 import numpy as np
+import random
 from tqdm import tqdm
 from skimage.io import imread, imsave
 from skimage.transform import rescale, resize
@@ -57,7 +60,6 @@ experiment = 'TJ2201Split16'
 finalDate = datetime.datetime(2022, 4, 8, 16, 0)
 maxSize = 150
 maxRows, maxCols = maxSize, maxSize
-savePath = '../../data/esamMonoSegmented'
 
 expPath = f'../../data/{experiment}/'
 pcPath = os.path.join(expPath, 'phaseContrast')
@@ -73,12 +75,42 @@ for pcFile in tqdm(pcIms):
     date = cellMorphHelper.convertDate('_'.join(imgBase.split('_')[2:4]))
     if date < finalDate:
         imgBases.append(imgBase)
+        
+random.seed(1234)
+random.shuffle(imgBases)
+# %% Define structure and phenotype to well
+
+# Make save structure
+savePath = f'../../data/{experiment}SingleCell'
+os.makedirs(savePath, exist_ok=True)
+os.makedirs(f'{savePath}/monoPos', exist_ok=True)
+os.makedirs(f'{savePath}/monoNeg', exist_ok=True)
+os.makedirs(f'{savePath}/coPos', exist_ok=True)
+os.makedirs(f'{savePath}/coNeg', exist_ok=True)
+
+# 
+monoPos = ['B2','B3','B4','B5','B6','C2','C3','C4','C5','C6','D2','D3','D4','D5','D6']
+monoNeg = ['E2','E3','E4','E5','E6','F2','F3','F4','F5','F6','G2','G3','G4','G5','G6']
+co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
+wellTypes = {}
+for well in monoPos:
+    wellTypes[well] = 'monoPos'
+for well in monoNeg:
+    wellTypes[well] = 'monoNeg'
+for well in co:
+    wellTypes[well] = 'co'
+phenoCounts = {'monoPos': 0, 'monoNeg': 0, 'co': 0}
 # %% Load and segment data
+maxCount = 100000
 idx = 0
-cellData = []
+usedBases = []
 for imgBase in tqdm(imgBases):
     # Grab image
     well = imgBase.split('_')[0]
+    print(well)
+    # Early stopping
+    if phenoCounts[wellTypes[well]] > maxCount:
+        continue
     pcFile = f'phaseContrast_{imgBase}.png'
     compositeFile = f'composite_{imgBase}.png'
 
@@ -101,7 +133,7 @@ for imgBase in tqdm(imgBases):
         maskCrop = mask[bb[1]:bb[3], bb[0]:bb[2]].copy().astype('bool')
         color = findFluorescenceColor(compositeCrop, maskCrop)
 
-        # pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
+        pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
         pcCrop = torch.tensor(pcCrop[:,:,0])
         # Keep aspect ratio and scale down data to be 150x150 (should be rare)
         if pcCrop.shape[0]>maxRows:
@@ -115,60 +147,28 @@ for imgBase in tqdm(imgBases):
         pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
         # Resize in case the difference was not actually an integer
         pcCrop = resize(pcCrop, (maxRows, maxCols))
-        cellData.append([np.array(pcCrop), np.eye(2)[1]])
+        
+        # Determine save folder
+        saveFlag = 0
+        if wellTypes[well] == 'monoPos' and color == 'green':
+            phenoFolder = wellTypes[well]
+            saveFlag = 1
+        elif wellTypes[well] == 'monoNeg' and color == 'red':
+            phenoFolder = wellTypes[well]
+            saveFlag = 1
+        elif wellTypes[well] == 'co' and color == 'green':
+            phenoFolder = wellTypes[well]+'Pos'
+            saveFlag = 1
+        elif wellTypes[well] == 'co' and color == 'red':
+            phenoFolder = wellTypes[well]+'Neg'
+            saveFlag = 1
+        
+
+        saveFile = os.path.join(savePath, phenoFolder, f'{imgBase}-{idx}.png')
+        print(saveFile)
         break
-    break
-#         # Save in appropriate folder
-#         if well == 'E2' and color == 'red':
-#             # saveFile = os.path.join(savePath, 'esamNegative', f'{imgBase}-{idx}.png')
-#             # imsave(saveFile, pcCrop)
-#             cellData.append([np.array(pcCrop), np.eye(2)[0]])
-#             idx += 1
-#         elif well == 'D2' and color == 'green':
-#             # saveFile = os.path.join(savePath, 'esamPositive', f'{imgBase}-{idx}.png')
-#             # imsave(saveFile, pcCrop)
-#             cellData.append([np.array(pcCrop), np.eye(2)[1]])
-#             idx += 1
-# np.save('../data/esamMonoSegmented/cellUncrop.npy', cellData)
-# %%
-# bb = list(outputs.pred_boxes[4])[0].numpy()
-# bb = [int(corner) for corner in bb]
+        if saveFlag:
+            imsave(saveFile, pcCrop)
+        
 
-# plt.figure(figsize=(10,30))
-# plt.subplot(131)
-# plt.imshow(compositeImg[bb[1]:bb[3], bb[0]:bb[2]])
-# plt.title(bb)
-
-# pixExpand = 20
-
-# if bb[1] > pixExpand:
-#     bb[1] = bb[1] - pixExpand
-# if bb[3] < (imSize[0]-20):
-#     bb[3] = bb[3] + pixExpand
-# if bb[0] > pixExpand:
-#     bb[0] = bb[0] - pixExpand
-# if bb[2] < (imSize[1]-20):
-#     bb[2] = bb[2] + pixExpand
-
-# plt.subplot(132)
-# plt.imshow(compositeImg[bb[1]:bb[3], bb[0]:bb[2]])
-# plt.title(bb)
-
-# plt.subplot(133)
-# plt.imshow(compositeImg)
-
-# # %% 
-# import torch
-
-# source = torch.tensor(pcCrop[:,:,0].copy())
-
-# source_pad = F.pad(source, pad=(70,70, 70, 70))
-
-# plt.imshow(source_pad)
-
-# source_pad.shape
-
-# # %%
-# maxCols = 150
-# pcCrop = torch.rand((160,900))
-# pcCrop = torch.rand((160,170))
+        usedBases.append(imgBase)
