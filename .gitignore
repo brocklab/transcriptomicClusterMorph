@@ -1,8 +1,13 @@
+# Data folders with large files
 balloon/
 data/
 output/
-.ipynb_checkpoints/
 results/
+# Annoying add ons
+.ipynb_checkpoints/
 .vscode/
 __pycache__/
+
+# Data that might be hanging around
 *.png
+*.npy

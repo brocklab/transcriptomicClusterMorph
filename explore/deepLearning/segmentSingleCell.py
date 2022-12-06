@@ -11,6 +11,7 @@ ESAM +/- cells, then save these images *with the background set to black*.\
 properly, and the date is appropriate.
 
 # TODO: Generalize this?
+# TODO: Fix 
 """
 
 # %%
@@ -33,8 +34,7 @@ import datetime
 from skimage import data, measure
 from skimage.segmentation import clear_border
 
-import torch
-import torch.nn.functional as F
+from detectron2.structures import BoxMode
 # %%
 def findFluorescenceColor(RGB, mask):
     """
@@ -56,12 +56,12 @@ def findFluorescenceColor(RGB, mask):
 # %%
 predictor = cellMorphHelper.getSegmentModel('../../output/TJ2201Split16')
 # %% Filter out basics
-experiment = 'TJ2201Split16'
+experiment = 'TJ2201'
 finalDate = datetime.datetime(2022, 4, 8, 16, 0)
 maxSize = 150
 maxRows, maxCols = maxSize, maxSize
 
-expPath = f'../../data/{experiment}/'
+expPath = f'../../data/{experiment}Split16/'
 pcPath = os.path.join(expPath, 'phaseContrast')
 compositePath = os.path.join(expPath, 'composite')
 
@@ -99,76 +99,125 @@ for well in monoNeg:
     wellTypes[well] = 'monoNeg'
 for well in co:
     wellTypes[well] = 'co'
-phenoCounts = {'monoPos': 0, 'monoNeg': 0, 'co': 0}
+phenoCounts = {'monoPos': 0, 'monoNeg': 0, 'coNeg': 0, 'coPos': 0}
+# %%
+n = 200
+imgBase = imgBases[n]
+
+pcFile = f'phaseContrast_{imgBase}.png'
+
+pcImg = imread(os.path.join(pcPath, pcFile))
+
+pcImg.shape
 # %% Load and segment data
-maxCount = 100000
+maxCount = 5000
 idx = 0
-usedBases = []
-for imgBase in tqdm(imgBases):
+datasetDicts = []
+
+categoryDict = {'green': 0, 'red': 1}
+for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
     # Grab image
     well = imgBase.split('_')[0]
-    print(well)
     # Early stopping
-    if phenoCounts[wellTypes[well]] > maxCount:
-        continue
+    if well in monoPos or well in monoNeg:
+        if phenoCounts[wellTypes[well]] > maxCount:
+            continue
     pcFile = f'phaseContrast_{imgBase}.png'
     compositeFile = f'composite_{imgBase}.png'
 
     pcImg = imread(os.path.join(pcPath, pcFile))
     compositeImg = imread(os.path.join(compositePath, compositeFile))
 
-    imSize = pcImg.shape
+    # Make sure it's a grayscale image
+    # if len(pcImg.shape)>2:
+    #     pcImg = rgb2gray(pcImg)
+        
     outputs = predictor(pcImg)['instances'].to("cpu")
     nCells = len(outputs)
+    # Go through each cell in each cropped image
+    record = {}
+    record['file_name'] = os.path.join(pcPath, pcFile)
+    record['image_id'] = idx
+    record['height'] = pcImg.shape[0]
+    record['width'] =  pcImg.shape[1]
 
-    # Go through each cell
+    cells = []
     for cellNum in range(nCells):
         mask = outputs[cellNum].pred_masks.numpy()[0]
+        color = findFluorescenceColor(compositeImg, mask)
+        if color not in ['red', 'green']:
+            continue
+        contours = measure.find_contours(mask, .5)
+        fullContour = np.vstack(contours)
 
-        # Crop to bounding box
-        bb = list(outputs.pred_boxes[cellNum])[0].numpy()
-        bb = [int(corner) for corner in bb]
-        compositeCrop = compositeImg[bb[1]:bb[3], bb[0]:bb[2]].copy()
-        pcCrop = pcImg[bb[1]:bb[3], bb[0]:bb[2]].copy()
-        maskCrop = mask[bb[1]:bb[3], bb[0]:bb[2]].copy().astype('bool')
-        color = findFluorescenceColor(compositeCrop, maskCrop)
-
-        pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
-        pcCrop = torch.tensor(pcCrop[:,:,0])
-        # Keep aspect ratio and scale down data to be 150x150 (should be rare)
-        if pcCrop.shape[0]>maxRows:
-            pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[0])
-        if pcCrop.shape[1]>maxCols:
-            pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[1])
-
-        # Now pad out the amount to make it 150x150
-        diffRows = int((maxRows - pcCrop.shape[0])/2)+1
-        diffCols = int((maxCols - pcCrop.shape[1])/2)
-        pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
-        # Resize in case the difference was not actually an integer
-        pcCrop = resize(pcCrop, (maxRows, maxCols))
+        px = fullContour[:,1]
+        py = fullContour[:,0]
+        poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
+        poly = [p for x in poly for p in x]
         
-        # Determine save folder
-        saveFlag = 0
-        if wellTypes[well] == 'monoPos' and color == 'green':
-            phenoFolder = wellTypes[well]
-            saveFlag = 1
-        elif wellTypes[well] == 'monoNeg' and color == 'red':
-            phenoFolder = wellTypes[well]
-            saveFlag = 1
-        elif wellTypes[well] == 'co' and color == 'green':
-            phenoFolder = wellTypes[well]+'Pos'
-            saveFlag = 1
-        elif wellTypes[well] == 'co' and color == 'red':
-            phenoFolder = wellTypes[well]+'Neg'
-            saveFlag = 1
-        
+        bbox = list(outputs[cellNum].pred_boxes.tensor.numpy()[0])
 
-        saveFile = os.path.join(savePath, phenoFolder, f'{imgBase}-{idx}.png')
-        print(saveFile)
+
+        cell = {
+            "bbox": bbox,
+            "bbox_mode": BoxMode.XYXY_ABS,
+            "segmentation": [poly],
+            "category_id": categoryDict[color],
+        }
+
+        cells.append(cell)
+    record["annotations"] = cells
+    datasetDicts.append(record)
+    idx += 1
+
+    if idx % 100 == 0:
+        np.save(f'./{experiment}DatasetDict.npy', datasetDicts)
         break
-        if saveFlag:
-            imsave(saveFile, pcCrop)
-        
+# %% Old code for saving images
+# # Crop to bounding box
+# bb = list(outputs.pred_boxes[cellNum])[0].numpy()
+# bb = [int(corner) for corner in bb]
+# compositeCrop = compositeImg[bb[1]:bb[3], bb[0]:bb[2]].copy()
+# pcCrop = pcImg[bb[1]:bb[3], bb[0]:bb[2]].copy()
+# maskCrop = mask[bb[1]:bb[3], bb[0]:bb[2]].copy().astype('bool')
+# color = findFluorescenceColor(compositeCrop, maskCrop)
 
-        usedBases.append(imgBase)
+# pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
+# pcCrop = torch.tensor(pcCrop[:,:,0])
+# # Keep aspect ratio and scale down data to be 150x150 (should be rare)
+# if pcCrop.shape[0]>maxRows:
+#     pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[0])
+# if pcCrop.shape[1]>maxCols:
+#     pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[1])
+
+# # Now pad out the amount to make it 150x150
+# diffRows = int((maxRows - pcCrop.shape[0])/2)+1
+# diffCols = int((maxCols - pcCrop.shape[1])/2)
+# pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
+# # Resize in case the difference was not actually an integer
+# pcCrop = resize(pcCrop, (maxRows, maxCols))
+
+# # Determine save folder
+# saveFlag = 0
+# if wellTypes[well] == 'monoPos' and color == 'green':
+#     phenoFolder = wellTypes[well]
+#     saveFlag = 1
+#     phenoCounts[phenoFolder] += 1
+# elif wellTypes[well] == 'monoNeg' and color == 'red':
+#     phenoFolder = wellTypes[well]
+#     saveFlag = 1
+#     phenoCounts[phenoFolder] += 1
+# elif wellTypes[well] == 'co' and color == 'green':
+#     phenoFolder = wellTypes[well]+'Pos'
+#     saveFlag = 1
+#     phenoCounts[phenoFolder] += 1
+# elif wellTypes[well] == 'co' and color == 'red':
+#     phenoFolder = wellTypes[well]+'Neg'
+#     saveFlag = 1
+#     phenoCounts[phenoFolder] += 1
+
+
+# saveFile = os.path.join(savePath, phenoFolder, f'{imgBase}-{idx}.png')
+# if saveFlag and phenoCounts[phenoFolder] <= maxCount:
+#     break
+#     imsave(saveFile, pcCrop)
