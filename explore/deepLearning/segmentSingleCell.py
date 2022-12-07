@@ -112,7 +112,12 @@ pcImg.shape
 # %% Load and segment data
 maxCount = 5000
 idx = 0
-datasetDicts = []
+
+if os.path.isfile(f'./{experiment}DatasetDict.npy'):
+    datasetDicts = np.load(f'./{experiment}DatasetDict.npy', allow_pickle=True)
+    processedFiles = [img['file_name'] for img in datasetDicts]
+else:
+    datasetDicts = []
 
 categoryDict = {'green': 0, 'red': 1}
 for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
@@ -124,19 +129,29 @@ for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
             continue
     pcFile = f'phaseContrast_{imgBase}.png'
     compositeFile = f'composite_{imgBase}.png'
+    
+    pcFileFull = os.path.join(pcPath, pcFile)
+    compositeFileFull = os.path.join(compositePath, compositeFile)
 
-    pcImg = imread(os.path.join(pcPath, pcFile))
-    compositeImg = imread(os.path.join(compositePath, compositeFile))
+    if pcFileFull in processedFiles:
+        continue
+    pcImg = imread(pcFileFull)
+    compositeImg = imread(compositeFileFull)
 
     # Make sure it's a grayscale image
     # if len(pcImg.shape)>2:
     #     pcImg = rgb2gray(pcImg)
-        
+
+
+
+
     outputs = predictor(pcImg)['instances'].to("cpu")
     nCells = len(outputs)
+    if nCells == 0:
+        continue
     # Go through each cell in each cropped image
     record = {}
-    record['file_name'] = os.path.join(pcPath, pcFile)
+    record['file_name'] = pcFileFull
     record['image_id'] = idx
     record['height'] = pcImg.shape[0]
     record['width'] =  pcImg.shape[1]
@@ -172,7 +187,17 @@ for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
 
     if idx % 100 == 0:
         np.save(f'./{experiment}DatasetDict.npy', datasetDicts)
-        break
+        
+# %% Test datasetDicts
+# d = datasetDicts[4]
+# img = imread(d['file_name'])
+# p = d['annotations'][0]['segmentation']
+# plt.imshow(img)
+
+# p1 = [pt for i, pt in enumerate(p[0]) if i%2 == 0]
+# p2 = [pt for i, pt in enumerate(p[0]) if i%2 != 0]
+
+# plt.plot(p1, p2)
 # %% Old code for saving images
 # # Crop to bounding box
 # bb = list(outputs.pred_boxes[cellNum])[0].numpy()
