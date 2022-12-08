@@ -3,6 +3,7 @@ balloon/
 data/
 output/
 results/
+figures/
 # Annoying add ons
 .ipynb_checkpoints/
 .vscode/

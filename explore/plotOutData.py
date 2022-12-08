@@ -41,11 +41,27 @@ def transferLearningRes(filePath, title, plot=True):
     return [trainLoss, trainAcc, testLoss, testAcc]
 # %%
 title='resnet18 Pretrained'
-res = transferLearningRes('../results/TJ2201Split16SingleCell/resnet18Pretrained.out', title=title)
+resRes18Pre = transferLearningRes('../results/TJ2201Split16SingleCell/resnet18Pretrained.out', title=title)
 title = 'resent152 Pretrained'
-res = transferLearningRes('../results/TJ2201Split16SingleCell/resnet152Pretrained.out', title=title)
+resRes152Pre = transferLearningRes('../results/TJ2201Split16SingleCell/resnet152Pretrained.out', title=title)
 # %%
 title = 'resnet152 Not Pretrained'
-res = transferLearningRes('../results/TJ2201Split16SingleCell/resnet152ESAMNoPretrain.out', title=title)
+resRes152NotPre = transferLearningRes('../results/TJ2201Split16SingleCell/resnet152ESAMNoPretrain.out', title=title)
 
 # %%
+experiments = [resRes18Pre, resRes152Pre, resRes152NotPre]
+experimentLabels = ['resnet18 (Pretrained)', 'resnet152 (Pretrained)', 'resnet152 (Not Pretrained)']
+idxLabels = ['Train Loss', 'Train Accuracy', 'Test Loss', 'Test Accuracy']
+idx = 3
+for idx in range(4):
+    plt.figure(figsize=(7,7))
+    plt.rcParams.update({'font.size': 18})
+    for experimentLabel, experiment in zip(experimentLabels, experiments):
+        plt.plot(experiment[idx], linewidth=4, label=experimentLabel)
+
+    plt.grid()
+    plt.legend(loc='lower right')
+    plt.xlabel('Epoch')
+    plt.ylabel(idxLabels[idx])
+    figName = ''.join(idxLabels[idx].split())
+    plt.savefig(f'../figures/temp/esamSingleCell{figName}.png',dpi=600, bbox_inches='tight')
