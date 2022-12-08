@@ -111,13 +111,14 @@ pcImg = imread(os.path.join(pcPath, pcFile))
 pcImg.shape
 # %% Load and segment data
 maxCount = 5000
-idx = 0
 
 if os.path.isfile(f'./{experiment}DatasetDict.npy'):
     datasetDicts = np.load(f'./{experiment}DatasetDict.npy', allow_pickle=True)
     processedFiles = [img['file_name'] for img in datasetDicts]
+    idx = max([img['image_id'] for img in datasetDicts])+1
 else:
     datasetDicts = []
+    idx = 0
 
 categoryDict = {'green': 0, 'red': 1}
 for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
