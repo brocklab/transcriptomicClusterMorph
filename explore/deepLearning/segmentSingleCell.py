@@ -4,12 +4,8 @@
 Now that a suitable segmentation model has been developed, we should save individual images
 of cells. 
 
-In this notebook, I will load the model, apply it to every appropriate* image of monoculture
-ESAM +/- cells, then save these images *with the background set to black*.\
-\
-*Appropriate meaning the cells is not significantly cut off by the edge, the cell is fluorescing
-properly, and the date is appropriate.
-
+In this notebook, I will load the model, apply it to every split image of monoculture
+and save the segmentation. 
 # TODO: Generalize this?
 # TODO: Fix 
 """
