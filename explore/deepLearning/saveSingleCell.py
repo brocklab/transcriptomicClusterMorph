@@ -39,11 +39,11 @@ for img in datasetDict:
     balancedDatasetDict.append(balancedDictImg)
 balancedDatasetDict = [img for img in balancedDatasetDict if len(img['annotations']) != 0]
 # Validate
-phenoCount = {0: 0, 1: 0}
+phenoCountBalanced = {0: 0, 1: 0}
 for img in balancedDatasetDict:
     for annotation in img['annotations']:
-        phenoCount[annotation['category_id']] += 1
-phenoCount
+        phenoCountBalanced[annotation['category_id']] += 1
+phenoCountBalanced
 # %%
 def scaleAndCrop(img, polygon, bb, maxSize=150):
     """

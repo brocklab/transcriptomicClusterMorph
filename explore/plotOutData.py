@@ -65,3 +65,5 @@ for idx in range(4):
     plt.ylabel(idxLabels[idx])
     figName = ''.join(idxLabels[idx].split())
     plt.savefig(f'../figures/temp/esamSingleCell{figName}.png',dpi=600, bbox_inches='tight')
+# %%
+resnetSplit = transferLearningRes('../results/TJ2201Split16SingleCell/splitESAMresnet152Pretrain.out', title='resnet 152 (Pretrained) Split Images', plot=True)

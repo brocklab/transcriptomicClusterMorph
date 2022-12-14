@@ -109,7 +109,7 @@ pcImg.shape
 maxCount = 5000
 
 if os.path.isfile(f'./{experiment}DatasetDict.npy'):
-    datasetDicts = np.load(f'./{experiment}DatasetDict.npy', allow_pickle=True)
+    datasetDicts = list(np.load(f'./{experiment}DatasetDict.npy', allow_pickle=True))
     processedFiles = [img['file_name'] for img in datasetDicts]
     idx = max([img['image_id'] for img in datasetDicts])+1
 else:
@@ -117,16 +117,15 @@ else:
     idx = 0
 
 categoryDict = {'green': 0, 'red': 1}
-for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
+for imgBase in tqdm(imgBases, leave=True):
     # Grab image
     well = imgBase.split('_')[0]
     # Early stopping
-    if well in monoPos or well in monoNeg:
-        if phenoCounts[wellTypes[well]] > maxCount:
-            continue
+    # if well in monoPos or well in monoNeg:
+    #     if phenoCounts[wellTypes[well]] > maxCount:
+    #         continue
     pcFile = f'phaseContrast_{imgBase}.png'
     compositeFile = f'composite_{imgBase}.png'
-    
     pcFileFull = os.path.join(pcPath, pcFile)
     compositeFileFull = os.path.join(compositePath, compositeFile)
 
@@ -144,8 +143,8 @@ for imgBase in tqdm(imgBases, desc=f"imgBase: {imgBase}", leave=False):
 
     outputs = predictor(pcImg)['instances'].to("cpu")
     nCells = len(outputs)
-    if nCells == 0:
-        continue
+    # if nCells == 0:
+    #     continue
     # Go through each cell in each cropped image
     record = {}
     record['file_name'] = pcFileFull
