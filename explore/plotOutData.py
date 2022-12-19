@@ -66,4 +66,39 @@ for idx in range(4):
     figName = ''.join(idxLabels[idx].split())
     plt.savefig(f'../figures/temp/esamSingleCell{figName}.png',dpi=600, bbox_inches='tight')
 # %%
-resnetSplit = transferLearningRes('../results/TJ2201Split16SingleCell/splitESAMresnet152Pretrain.out', title='resnet 152 (Pretrained) Split Images', plot=True)
+sz = 15
+plt.figure(figsize=(sz,sz))
+plt.rcParams.update({'font.size': 18})
+
+perimExpansions = [0, 20, 45]
+for perimExpansion in perimExpansions:
+
+    trainLoss, trainAcc, testLoss, testAcc = transferLearningRes(f'../results/TJ2201SingleCellCrop/singleCellCrop{perimExpansion}.out', title='resnet 152 (Pretrained) Split Images', plot=False)
+
+    plt.subplot(221)
+    plt.plot(trainLoss, label=f'Perim Expansion {perimExpansion}')
+    plt.grid()
+    plt.legend(loc='upper right')
+    plt.xlabel('Epoch')
+    plt.ylabel('Train Loss')
+
+    plt.subplot(222)
+    plt.plot(trainAcc, label=f'Perim Expansion {perimExpansion}')
+    plt.grid()
+    # plt.legend(loc='lower right')
+    plt.xlabel('Epoch')
+    plt.ylabel('Train Accuracy')
+
+    plt.subplot(223)
+    plt.plot(testLoss, label=f'Perim Expansion {perimExpansion}')
+    plt.grid()
+    # plt.legend(loc='lower right')
+    plt.xlabel('Epoch')
+    plt.ylabel('Test Loss')
+
+    plt.subplot(224)
+    plt.plot(testAcc, label=f'Perim Expansion {perimExpansion}')
+    plt.grid()
+    # plt.legend(loc='lower right')
+    plt.xlabel('Epoch')
+    plt.ylabel('Test Accuracy')
