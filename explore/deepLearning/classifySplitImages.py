@@ -123,8 +123,9 @@ imDir = '../../data/TJ2201/phaseContrast'
 seed = 1234
 n = 4860
 
-files = [img['file_name'] for img in datasetDicts if len(img['annotations'])>0]
-
+path = '../../data/TJ2201/TJ2201Split16/phaseContrast'
+files = [img['file_name'].split('/')[-1] for img in datasetDicts if len(img['annotations'])>0]
+files = [os.path.join(path, file) for file in files]
 image_datasets = {x: esamSplit(files, phenoWellDict, n, data_transforms[x], phase=x, seed=1234) 
                     for x in ['train', 'test']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
