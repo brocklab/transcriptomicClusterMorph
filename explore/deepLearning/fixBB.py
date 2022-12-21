@@ -70,3 +70,36 @@ pcCrop = F.pad(torch.tensor(imgCrop[:,:,0]), pad=(diffCols, diffCols, diffRows, 
 pcCrop = resize(pcCrop, (maxRows, maxCols))
 
 plt.imshow(pcCrop, cmap='gray')
+# %% Fix so that we know roughly how many cells per image there are
+
+monoPos = ['B2','B3','B4','B5','B6','C2','C3','C4','C5','C6','D2','D3','D4','D5','D6']
+monoNeg = ['E2','E3','E4','E5','E6','F2','F3','F4','F5','F6','G2','G3','G4','G5','G6']
+
+phenotypes = []
+imgs = []
+for img in datasetDicts:
+    path = img['file_name'].split('/')[-1]
+    well = path.split('_')[1]
+    if well in monoPos or well in monoNeg:
+        for cell in img['annotations']:
+            phenotypes.append(cell['category_id'])
+
+_, phenoCounts = np.unique(phenotypes, return_counts=True)
+minAmt = np.round(min(phenoCounts), -3)
+
+currentCounts = {0: 0, 1: 0}
+datasetDictsBalanced = []
+for img in datasetDicts:
+    path = img['file_name'].split('/')[-1]
+    well = path.split('_')[1]
+    if well in monoPos or well in monoNeg:
+        nAnnotations = len(img['annotations'])
+        if nAnnotations > 0:
+            pheno = img['annotations'][0]['category_id']
+        if currentCounts[pheno]+nAnnotations < minAmt:
+            datasetDictsBalanced.append(img)
+            currentCounts[pheno] += nAnnotations
+        
+
+
+        
