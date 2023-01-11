@@ -1,9 +1,9 @@
 # Data folders with large files
-balloon/
-data/
-output/
-results/
-figures/
+data/**
+output/**
+models/**
+figures/**
+
 # Annoying add ons
 .ipynb_checkpoints/
 .vscode/
@@ -12,3 +12,6 @@ __pycache__/
 # Data that might be hanging around
 *.png
 *.npy
+
+# Keep folder structure
+!.gitkeep
