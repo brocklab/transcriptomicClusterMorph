@@ -1,7 +1,7 @@
 # Data folders with large files
 data/**
-output/**
 models/**
+results/**
 figures/**
 
 # Annoying add ons
