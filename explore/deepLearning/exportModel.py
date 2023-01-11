@@ -45,5 +45,5 @@ model = Net()
 print(model)
 
 dumm_input = torch.randn(1,150,150)
-torch.onnx.export(model, dumm_input, '../../output/smallConvnet.onnx')
+torch.onnx.export(model, dumm_input, '../../models/smallConvnet.onnx')
 # %%

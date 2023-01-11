@@ -137,7 +137,7 @@ cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # %% AG2021Split16
-cfg.OUTPUT_DIR = '../output/AG2021Split16'
+cfg.OUTPUT_DIR = '../models/AG2021Split16'
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
 predictor = DefaultPredictor(cfg)
 
@@ -149,17 +149,17 @@ predictor = DefaultPredictor(cfg)
 # %%
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
 from detectron2.data import build_detection_test_loader
-evaluator = COCOEvaluator('cellMorph_test', output_dir='./output/AG2021Split16')
+evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/AG2021Split16')
 val_loader = build_detection_test_loader(cfg, "cellMorph_test")
 print(inference_on_dataset(predictor.model, val_loader, evaluator))
 # %%
-cfg.OUTPUT_DIR = '../output/TJ2201Split16'
+cfg.OUTPUT_DIR = '../models/TJ2201Split16'
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
 predictor = DefaultPredictor(cfg)
 # %%
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
 from detectron2.data import build_detection_test_loader
-evaluator = COCOEvaluator('cellMorph_test', output_dir='./output/TJ2201Split16')
+evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/TJ2201Split16')
 val_loader = build_detection_test_loader(cfg, "cellMorph_test")
 print(inference_on_dataset(predictor.model, val_loader, evaluator))
 """
@@ -169,4 +169,4 @@ print(inference_on_dataset(predictor.model, val_loader, evaluator))
 """
 # %%
 from detectron2.data.datasets import convert_to_coco_json
-convert_to_coco_json('cellMorph_test', '../output/tj2201Split16/cellMorph_test_coco_format.json')
+convert_to_coco_json('cellMorph_test', '../models/tj2201Split16/cellMorph_test_coco_format.json')

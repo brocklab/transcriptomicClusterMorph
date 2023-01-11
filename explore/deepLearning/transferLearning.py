@@ -120,7 +120,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
         if epoch % 10 == 0:
-            torch.save(model.state_dict(), '../../output/classifySingleCellResnet152.pth')
+            torch.save(model.state_dict(), '../../models/classifySingleCellResnet152.pth')
 
         print()
 
@@ -152,4 +152,4 @@ model = train_model(model, criterion, optimizer, setp_lr_scheduler, num_epochs=5
 # %%
 device = torch.device("cuda")
 model.to(device)
-torch.save(model.state_dict(), '../../output/classifySingleCellResnet152.pth')
+torch.save(model.state_dict(), '../../models/classifySingleCellResnet152.pth')

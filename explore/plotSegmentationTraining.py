@@ -9,9 +9,9 @@ from scipy import interpolate
 from scipy.signal import savgol_filter
 # %%
 AG2021Split16Data = [json.loads(line)
-        for line in open('../output/AG2021Split16/metrics.json', 'r', encoding='utf-8')]
+        for line in open('../models/AG2021Split16/metrics.json', 'r', encoding='utf-8')]
 TJ2201Split16Data = [json.loads(line)
-        for line in open('../output/TJ2201Split16/metrics.json', 'r', encoding='utf-8')]
+        for line in open('../models/TJ2201Split16/metrics.json', 'r', encoding='utf-8')]
 # %%
 def interpolateSignal(jsonFile, metric):
     """Reads json from detectron2 and returns an interpolated function for metric"""

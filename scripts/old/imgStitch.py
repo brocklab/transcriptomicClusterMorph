@@ -26,7 +26,7 @@ def newGrid(n: int) -> list:
             gridNum+=n
     return newGrid
 # %%
-predictor = getSegmentModel('../output/AG2021Split16')
+predictor = getSegmentModel('../models/AG2021Split16')
 # %%
 
 # Get proper grid

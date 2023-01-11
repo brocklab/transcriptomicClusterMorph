@@ -9,8 +9,8 @@ esamPos = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-D2.pickle',"r
 cells = esamNeg+esamPos
 random.shuffle(cells)
 # %%
-predictorPhaseContrast = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
-predictorComposite = cellMorphHelper.getSegmentModel('../output/AG2021Split16Composite')
+predictorPhaseContrast = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
+predictorComposite = cellMorphHelper.getSegmentModel('../models/AG2021Split16Composite')
 
 # %%
 num = random.randint(0, len(cells))

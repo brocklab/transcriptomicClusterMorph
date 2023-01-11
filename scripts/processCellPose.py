@@ -9,7 +9,7 @@ from skimage.measure import label
 from skimage.color import label2rgb
 from skimage.io import imread
 # %%
-model_path = '../output/cellPoseModels/CP_20220907_103108'
+model_path = '../models/cellPoseModels/CP_20220907_103108'
 model = models.CellposeModel(gpu=0, pretrained_model=model_path)
 # %%
 imPath = '../data/TJ2201/composite'

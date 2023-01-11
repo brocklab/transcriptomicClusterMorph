@@ -10,7 +10,7 @@ from skimage.io import imread
 
 import matplotlib.pyplot as plt
 # %%
-predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
 # %% Split Experiment Images
 experiment = 'TJ2201'
 nIms = 16

@@ -269,7 +269,7 @@ if __name__ == '__main__':
     # %%
     model = models.resnet152(pretrained=True)
     nIncrease = image_datasets['train'].nIncrease
-    modelSaveName = f'../../output/classifySingleCellCrop{nIncrease}Resnet152.pth'
+    modelSaveName = f'../../models/classifySingleCellCrop{nIncrease}Resnet152.pth'
     num_ftrs = model.fc.in_features
 
     # Create new layer and assign in to the last layer
@@ -288,4 +288,4 @@ if __name__ == '__main__':
     # %%
     device = torch.device("cuda")
     model.to(device)
-    torch.save(model.state_dict(), '../../output/classifySplitResnet152.pth')
+    torch.save(model.state_dict(), '../../models/classifySplitResnet152.pth')

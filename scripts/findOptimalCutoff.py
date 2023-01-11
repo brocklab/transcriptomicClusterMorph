@@ -97,8 +97,8 @@ for date in dateIdx:
     plt.figure()
     labelImage(cells, cells[imIdx], allImageBases, str(allDates[imIdx]))
 # %%
-predictorComposite = cellMorphHelper.getSegmentModel('../output/AG2021Split16Composite')
-predictorPhaseContrast = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
+predictorComposite = cellMorphHelper.getSegmentModel('../models/AG2021Split16Composite')
+predictorPhaseContrast = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
 
 # %%
 plt.figure()

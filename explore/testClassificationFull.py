@@ -93,7 +93,7 @@ writeData = 0
 
 if writeData:
     print('Grabbing classifications')
-    predictor = cellMorphHelper.getSegmentModel('../output/TJ2201Split16ClassifyFull', numClasses=2)
+    predictor = cellMorphHelper.getSegmentModel('../models/TJ2201Split16ClassifyFull', numClasses=2)
 
     imgLog = []
     if 'cellMorph_test' not in DatasetCatalog:

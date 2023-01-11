@@ -55,7 +55,7 @@ def findFluorescenceColor(RGB, mask):
     else:
         return "NaN"
 # %%
-predictorClassify = cellMorphHelper.getSegmentModel('../output/TJ2201Split16Classify', numClasses=2)
+predictorClassify = cellMorphHelper.getSegmentModel('../models/TJ2201Split16Classify', numClasses=2)
 # %%
 # Grab all images associated with relevant monoculture wells
 wells = ['E7']

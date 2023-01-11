@@ -50,7 +50,7 @@ def findFluorescenceColor(RGB, mask):
     else:
         return "NaN"
 # %%
-predictor = cellMorphHelper.getSegmentModel('../../output/TJ2201Split16')
+predictor = cellMorphHelper.getSegmentModel('../../models/TJ2201Split16')
 # %% Filter out basics
 experiment = 'TJ2201'
 finalDate = datetime.datetime(2022, 4, 8, 16, 0)

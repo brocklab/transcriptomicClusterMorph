@@ -54,7 +54,7 @@ def findFluorescenceColor(RGB, mask):
     else:
         return "NaN"
 # %%
-predictor = cellMorphHelper.getSegmentModel('../output/TJ2201Split16', numClasses=1)
+predictor = cellMorphHelper.getSegmentModel('../models/TJ2201Split16', numClasses=1)
 # %% Getting/reading *.npy
 def getCells(experiment, predictor, stage=None):
     imDir = f'../data/{experiment}Split16/phaseContrast'

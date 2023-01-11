@@ -38,7 +38,7 @@ from detectron2.utils.visualizer import ColorMode
 from detectron2.engine import DefaultTrainer
 
 # %%
-predictorClassify = cellMorphHelper.getSegmentModel('../output/TJ2201Split16Classify', numClasses=2)
+predictorClassify = cellMorphHelper.getSegmentModel('../models/TJ2201Split16Classify', numClasses=2)
 # %%
 makeData = 0
 if makeData:

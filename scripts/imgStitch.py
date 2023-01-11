@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from skimage.io import imread
 # %%
-predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
 # %% Visualize proper order of images
 composite = imread('../data/TJ2201/composite/composite_D2_6_2022y04m07d_00h00m.png')
 pc = imread('../data/TJ2201/phaseContrast/phaseContrast_D2_6_2022y04m07d_00h00m.png')

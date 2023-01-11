@@ -52,7 +52,7 @@ def alignPerimeters(cells: list):
         cell.perimAligned = currentPerim2 - np.mean(currentPerim2, axis=0)
     return cells
 # %%
-predictor = cellMorphHelper.getSegmentModel('../output/TJ2201Split16')
+predictor = cellMorphHelper.getSegmentModel('../models/TJ2201Split16')
 # %% Find masks for experiment
 experiment = sys.argv[1]
 

@@ -19,7 +19,7 @@ from skimage.segmentation import clear_border
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 # %%    
-predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
 # %%
 experiment = 'TJ2201Split16'
 print('Starting Experiment: {}'.format(experiment))

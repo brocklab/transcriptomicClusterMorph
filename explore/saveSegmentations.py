@@ -43,7 +43,7 @@ writeData = 1
 
 if writeData:
     print('Getting segmentations')
-    predictor = cellMorphHelper.getSegmentModel('../output/TJ2201Split16')
+    predictor = cellMorphHelper.getSegmentModel('../models/TJ2201Split16')
 
     imgLog = []
     if 'cellMorph_test' not in DatasetCatalog:

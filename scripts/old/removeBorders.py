@@ -18,7 +18,7 @@ from sklearn.cluster import KMeans
 esamNeg = pickle.load(open('../results/TJ2201Split16/TJ2201Split16-E2.pickle',"rb"))
 esamNeg = [cell for cell in esamNeg if cell.date < datetime.datetime(2022, 4, 8, 16, 0) and cell.color=='red']
 # %%
-predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
 # %%
 im = imread(esamNeg[0].composite)
 cellMorphHelper.viewPredictorResult(predictor, esamNeg[0].phaseContrast)

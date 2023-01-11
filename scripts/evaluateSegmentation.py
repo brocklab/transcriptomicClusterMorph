@@ -28,7 +28,7 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 # %%
 experiment = 'TJ2201Split16'
 cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))
-predictor = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
+predictor = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
 # %%
 # Get dates
 dates = []

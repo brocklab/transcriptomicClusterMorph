@@ -34,9 +34,9 @@ ax.set_xticks([])
 fig.savefig('../results/figs/exampleFullSeg.png', dpi=600)
 
 # %% Example segmentations
-predictorTJ2201Split = cellMorphHelper.getSegmentModel('../output/TJ2201Split16')
-predictorAG2021 = cellMorphHelper.getSegmentModel('../output/AG2021Split16')
-predictorTJ2201 = cellMorphHelper.getSegmentModel('../output/TJ2201')
+predictorTJ2201Split = cellMorphHelper.getSegmentModel('../models/TJ2201Split16')
+predictorAG2021 = cellMorphHelper.getSegmentModel('../models/AG2021Split16')
+predictorTJ2201 = cellMorphHelper.getSegmentModel('../models/TJ2201')
 
 # %%
 imNum = 9
