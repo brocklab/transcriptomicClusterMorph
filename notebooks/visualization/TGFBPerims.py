@@ -1,8 +1,8 @@
 # %%
 import sys
 sys.path.append('../')
-import cellMorphHelper
-import cellMorph
+import src.data.cellMorphHelper as cellMorphHelper
+import src.data.cellMorph as cellMorph
 
 import os
 import pickle

@@ -3,8 +3,8 @@ import pickle
 import random
 import pandas as pd
 # from cellMorphHelper import procrustes
-import cellMorphHelper
-import cellMorph
+import src.data.cellMorphHelper as cellMorphHelper
+import src.data.cellMorph as cellMorph
 import numpy as np
 import datetime
 

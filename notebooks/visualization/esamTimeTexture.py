@@ -5,7 +5,7 @@ import umap
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import cellMorphHelper
+import src.data.cellMorphHelper as cellMorphHelper
 # %%
 featureRes = pickle.load(open('../results/allFeaturesTJ2201.pickle',"rb"))
 colors = pickle.load(open('../results/TJ2201allColors.pickle',"rb"))

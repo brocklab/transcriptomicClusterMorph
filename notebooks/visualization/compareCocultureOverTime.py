@@ -6,8 +6,8 @@ A notebook to compare morphological changes over time in coculture
 import pickle
 import random
 import pandas as pd
-from cellMorphHelper import procrustes
-import cellMorphHelper
+from src.data.cellMorphHelper import procrustes
+import src.data.cellMorphHelper as cellMorphHelper
 import numpy as np
 
 import matplotlib.pyplot as plt

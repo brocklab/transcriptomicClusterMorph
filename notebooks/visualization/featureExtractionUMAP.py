@@ -9,7 +9,7 @@ import numpy
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
-import cellMorphHelper
+import src.data.cellMorphHelper as cellMorphHelper
 # %%
 experiment = 'TJ2201Split16'
 cells=pickle.load(open('../results/{}CellPerims.pickle'.format(experiment),"rb"))

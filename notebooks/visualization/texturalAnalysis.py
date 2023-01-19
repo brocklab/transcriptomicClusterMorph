@@ -7,7 +7,7 @@ import pickle
 import random
 import numpy as np
 
-from cellMorph import cellPerims
+from src.data.cellMorph import cellPerims
 from skimage.color import rgb2gray
 from skimage.measure import find_contours
 from skimage.io import imread

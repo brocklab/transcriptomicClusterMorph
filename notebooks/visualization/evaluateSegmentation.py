@@ -2,8 +2,8 @@
 import torch
 import detectron2
 
-import cellMorph
-import cellMorphHelper
+import src.data.cellMorph as cellMorph
+import src.data.cellMorphHelper as cellMorphHelper
 
 # import some common libraries
 import numpy as np
