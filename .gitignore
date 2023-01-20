@@ -3,6 +3,7 @@ data/**
 models/**
 results/**
 figures/**
+src.egg-info/**
 
 # Annoying add ons
 .ipynb_checkpoints/
