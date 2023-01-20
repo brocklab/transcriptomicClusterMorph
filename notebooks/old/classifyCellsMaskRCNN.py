@@ -1,7 +1,7 @@
 # %%
 import sys
 sys.path.append('../scripts')
-import cellMorphHelper
+import src.data.cellMorphHelper as cellMorphHelper
 
 import torch
 import detectron2

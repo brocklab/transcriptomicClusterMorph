@@ -21,6 +21,7 @@ import datetime
 import random
 import itertools
 from tqdm import tqdm
+import pickle
 
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
@@ -269,6 +270,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     # Print New Line on Complete
     if iteration == total: 
         print()
+
 # Image processing 
 def clearEdgeCells(cell):
     """
@@ -365,8 +367,8 @@ def findFluorescenceColor(RGB, mask):
     # RGB = imread(RGBLocation)
     mask = mask.astype('bool')
     RGB[~np.dstack((mask,mask,mask))] = 0
-    nGreen, BW = cellMorphHelper.segmentGreen(RGB)
-    nRed, BW = cellMorphHelper.segmentRed(RGB)
+    nGreen, BW = segmentGreen(RGB)
+    nRed, BW = segmentRed(RGB)
     if nGreen>=(nRed+100):
         return "green"
     elif nRed>=(nGreen+100):
@@ -610,6 +612,7 @@ def filterCells(cells, confluencyDate=False, edge=False, color=False):
     nCellsNew = len(cells)
     print(f'Filtered out {nCells-nCellsNew} cells')
     return cells
+    
 # Testing
 def validateExperimentData(experiment, splitNum=16):
     """
