@@ -22,8 +22,8 @@ datasetDicts = np.load('./TJ2201DatasetDict.npy', allow_pickle=True)
 # 'phaseContrast_C7_1_2022y04m07d_04h00m_1.png'
 idx = 403
 
-splitDir = '../../data/TJ2201/TJ2201Split16/phaseContrast'
-wholeDir = '../../data/TJ2201/TJ2201Raw/phaseContrast'
+splitDir = '../../data/TJ2201/split16/phaseContrast'
+wholeDir = '../../data/TJ2201/raw/phaseContrast'
 
 imgs = [img['file_name'] for img in datasetDicts]
 
