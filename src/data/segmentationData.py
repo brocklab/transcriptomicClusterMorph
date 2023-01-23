@@ -11,14 +11,10 @@ import numpy as np
 import os
 import random
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-import cv2
 
 from skimage import measure
 from skimage import img_as_float
 
-from detectron2.config import get_cfg
-from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
 # %%
