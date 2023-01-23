@@ -14,6 +14,7 @@ from src.data.imageProcessing import imSplit
 
 def makeNewExperimentDirectory(experimentName):
     """
+    # TODO: Completely rework for new structure
     Properly populates a new blank experiment data directory
     Inputs:
     - experimentName: Name of new experiment
@@ -41,6 +42,7 @@ def makeNewExperimentDirectory(experimentName):
 
 def splitExpIms(experiment, nIms=16):
     """
+    # TODO: Completely rework for new structure
     Splits up Incucyte experiment into given number of chunks. Does this for both masks
     and phase contrast images
     Inputs:
