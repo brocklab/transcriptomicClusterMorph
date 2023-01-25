@@ -4,7 +4,7 @@ setup(
     name='src',
     packages=find_packages(),
     version='0.1.0',
-    description='A set of analysis/structuring files to read, process, and predict Raman spectroscopy data.',
+    description='A set of analysis/structuring files to predict cell phenotype from phase contrast images.',
     author='Tyler Jost',
     license='MIT',
 )
