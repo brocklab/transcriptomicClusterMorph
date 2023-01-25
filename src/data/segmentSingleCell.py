@@ -169,6 +169,5 @@ if __name__ == '__main__':
     experiment = 'TJ2201'
     dataPath = os.path.join('../../data', experiment, 'split16')
     phenoDict = {'green': 0, 'red': 1}
-
     segmentExperiment(dataPath, imgBases, phenoDict, experiment, predictor)
-    #
+# %%

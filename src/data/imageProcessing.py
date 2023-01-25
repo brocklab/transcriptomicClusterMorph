@@ -123,6 +123,7 @@ def findFluorescenceColor(RGB, mask):
     Output: Color
     """
     # RGB = imread(RGBLocation)
+    RGB = RGB.copy()
     mask = mask.astype('bool')
     RGB[~np.dstack((mask,mask,mask))] = 0
     nGreen, BW = segmentGreen(RGB)
