@@ -123,10 +123,11 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
         record["annotations"] = cells
         datasetDicts.append(record)
         idx += 1
+        print(len(datasetDicts))
 
         if idx % 100 == 0:
-            datasetDictName = os.path.join(dataPath, )
-            np.save(f'{experiment}DatasetDict.npy', datasetDicts)
+            print(len(datasetDicts))
+            np.save(datasetDictPath, datasetDicts)
 # %%
 if __name__ == '__main__':
     predictor = modelTools.getSegmentModel('../../models/TJ2201Split16')
