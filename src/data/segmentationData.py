@@ -1,6 +1,6 @@
 # %% [markdown]
 """
-This will take cellpose results and train a segmentation model on them
+This file stores segmentation tools
 """
 
 # %%
@@ -107,8 +107,6 @@ def cellpose2Detectron(experiment, imgType='phaseContrast', stage=None):
     return datasetDicts
         
 def addCellsToCatalog(experiment, name, imgType = 'phaseContrast'):
-
-
     trainName = f'{name}_train'
     testName = f'{name}_test'
     if trainName in DatasetCatalog:
@@ -124,3 +122,6 @@ def addCellsToCatalog(experiment, name, imgType = 'phaseContrast'):
 
     DatasetCatalog.register(testName, lambda x=inputs: cellpose2Detectron(inputs[0], inputs[1], 'test'))
     MetadataCatalog.get(testName).set(thing_classes=["cell"])
+
+
+

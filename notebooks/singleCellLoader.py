@@ -26,36 +26,46 @@ from torch.optim import lr_scheduler
 class singleCellCrop(Dataset):
     """
     Dataloader class for cropping out a cell from an image
+
+    Attributes
+    --------------------
+    dataPath: Relative path to load images
+    phase: Train/test phase
+    seed: Random seed for shuffling
+    transforms: Transforms for reducing overfitting
     """
 
     def __init__(self, datasetDicts, transforms, dataPath, phase, randomSeed = 1234):
         """
         Input: 
-        - datasetDicts, Catalogs images and cell segmentations in detectron2 format
-        - transforms, Transforms images to tensors, resize, etc.
-        - dataPath, Path to grab images
-        - phase, Train or testing
-        - randomSeed, Seed used to shuffle data
+        - datasetDicts: Catalogs images and cell segmentations in detectron2 format
+        - transforms: Transforms images to tensors, resize, etc.
+        - dataPath: Path to grab images
+        - phase: Train or testing
+        - randomSeed: Seed used to shuffle data
+
+        - segmentations: List of polygons of segmentations from datasetDicts
+        - phenotypes: List of phenotypes associated with each segmentation
+        - imgNames: List of paths to load image
+        - bbs: List of bounding boxes for segmentations
         """
         self.dataPath = dataPath
         self.phase = phase
         self.seed = randomSeed
         self.transforms = transforms
-        self.balance(datasetDicts)
-        
+        self.segmentations, self.phenotypes, self.imgNames, self.bbs = self.balance(datasetDicts)
         # Variable parameters for segmentation
-        self.maxImgSize = 150
+        self.maxImgSize = 300
         self.nIncrease = 75
-
-        print(self.nIncrease)
+        
     def __len__(self):
-        return len(self.imgPaths)
+        return len(self.imgNames)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         
-        imgName = self.imgPaths[idx]
+        imgName = self.imgNames[idx]
         label = self.phenotypes[idx]
         fullPath = os.path.join(self.dataPath, imgName)
         maxRows, maxCols = self.maxImgSize, self.maxImgSize
@@ -109,23 +119,23 @@ class singleCellCrop(Dataset):
         Output:
             - segmentation, numpy array of nx2
             - phenotypes, list of encoded phenotypes
-            - imgPaths, list of image names
+            - imgNames, list of image names
         """
         # Reformat dataset dict to most relevant information
-        segmentations, phenotypes, imgPaths, bbs = [], [], [], []
+        segmentations, phenotypes, imgNames, bbs = [], [], [], []
         # Note there is a lot of repeats for images but this is much cleaner
         for img in datasetDicts:
             path = img['file_name'].split('/')[-1]
             for annotation in img['annotations']:
                 segmentations.append(np.array(annotation['segmentation'][0]))
                 phenotypes.append(annotation['category_id'])
-                imgPaths.append(path)
+                imgNames.append(path)
                 bbs.append([int(corner) for corner in annotation['bbox']])
         # Balance dataset
         uniquePheno, cts = np.unique(phenotypes, return_counts=True)
         maxAmt = min(cts)
 
-        segmentations, phenotypes, imgPaths, bbs = self.shuffleLists([segmentations, phenotypes, imgPaths, bbs], self.seed)
+        segmentations, phenotypes, imgNames, bbs = self.shuffleLists([segmentations, phenotypes, imgNames, bbs], self.seed)
         uniqueIdx = []
         for pheno in uniquePheno:
             idx = list(np.where(phenotypes == pheno)[0][0:maxAmt])
@@ -143,11 +153,11 @@ class singleCellCrop(Dataset):
             raise ValueError('Phase must be train or test')
 
         # Get finalized amts
-        self.segmentations = np.array([np.reshape(seg, (int(len(seg)/2), 2)) for seg in segmentations[uniqueIdx]], dtype='object')
-        self.phenotypes = phenotypes[uniqueIdx]
-        self.imgPaths = imgPaths[uniqueIdx]
-        self.bbs = bbs[uniqueIdx]
-
+        segmentations = np.array([np.reshape(seg, (int(len(seg)/2), 2)) for seg in segmentations[uniqueIdx]], dtype='object')
+        phenotypes = phenotypes[uniqueIdx]
+        imgNames = imgNames[uniqueIdx]
+        bbs = bbs[uniqueIdx]
+        return [segmentations, phenotypes, imgNames, bbs]
     @staticmethod
     def shuffleLists(l, seed=1234):
         random.seed(seed)
@@ -157,7 +167,7 @@ class singleCellCrop(Dataset):
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 # %%
 experiment = 'TJ2201'
-datasetDicts = np.load(f'../data/{experiment}/{experiment}DatasetDict.npy', allow_pickle=True)
+datasetDicts = np.load(f'../data/{experiment}/split16/{experiment}DatasetDict.npy', allow_pickle=True)
 mean = np.array([0.5, 0.5, 0.5])
 std = np.array([0.25, 0.25, 0.25])
 data_transforms = {

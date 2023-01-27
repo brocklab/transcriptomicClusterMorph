@@ -62,30 +62,43 @@ def split2WholeCoords(nIms, wholeImgSize):
 
     return coordinates
 
-def expandImageSegmentation(poly, bb, splitNum, coords):
+def expandImageSegmentation(poly, bb, splitNum, coords, padNum=200):
     """
-    Connects split image to whole
+    Takes segmentation information from split image and outputs it for a whole (non-split) image
     
+    Inputs:
+    - poly: Polygn of segmentation from datasetDict
+    - bb: Bounding box of segmentation from datasetDict
+    - padNum: Amount of padding around image
+    - coords: Coordinates to relate split image to whole image
+
+    Outputs:
+    - polyxWhole, polyyWhole: polygon coordinates for whole image
+    - bbWhole: bounding box for whole image
     """
     poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
     polyx = poly[::2]
     polyy = poly[1::2]
 
     cIncrease = coords[int(splitNum)]
-    bbIncrease = bb.copy()
-    bbIncrease[1] += cIncrease[1]
-    bbIncrease[3] += cIncrease[1]
-    bbIncrease[0] += cIncrease[0]
-    bbIncrease[2] += cIncrease[0]
+    bbWhole = bb.copy()
+    bbWhole[1] += cIncrease[1] + padNum
+    bbWhole[3] += cIncrease[1] + padNum
+    bbWhole[0] += cIncrease[0] + padNum
+    bbWhole[2] += cIncrease[0] + padNum
 
-    polyxWhole = polyx + cIncrease[0]
-    polyyWhole = polyy + cIncrease[1]
+    polyxWhole = polyx + cIncrease[0] + padNum
+    polyyWhole = polyy + cIncrease[1] + padNum
     
-    return [polyxWhole, polyyWhole, bbIncrease]
+    return [polyxWhole, polyyWhole, bbWhole]
+
+
 # %%
 datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDict.npy', allow_pickle=True)
 # %%
-# 'phaseContrast_C7_1_2022y04m07d_04h00m_1.png'
+
+
+
 splitDir = '../data/TJ2201/split16/phaseContrast'
 wholeDir = '../data/TJ2201/raw/phaseContrast'
 
@@ -93,6 +106,8 @@ wholeDir = '../data/TJ2201/raw/phaseContrast'
 # np.random.seed(1234)
 imgNum = np.random.randint(len(datasetDicts))
 while True:
+    # imgNum = 211
+    # imgNum = 31
     imgSeg = datasetDicts[imgNum]
     splitNum = int(imgSeg['file_name'].split('_')[-1].split('.')[0])
     fileNameSplit = imgSeg['file_name'].split('/')[-1]
@@ -102,6 +117,7 @@ while True:
     else:
         break
 
+# %%
 imgSplit = imread(os.path.join(splitDir, fileNameSplit))
 imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
 
@@ -111,17 +127,60 @@ bb = imgSeg['annotations'][0]['bbox']
 bb = np.array([int(corner) for corner in bb])
 polyx = poly[::2]
 polyy = poly[1::2]
-polyxWhole, polyyWhole, bbIncrease = expandImageSegmentation(poly, bb, splitNum, coords)
+
+padNum = 200
+imgWhole = np.pad(imgWhole, (padNum,padNum))
+polyxWhole, polyyWhole, bbWhole = expandImageSegmentation(poly, bb, splitNum, coords, padNum=200)
 
 imgBB = imgSplit[bb[1]:bb[3], bb[0]:bb[2]]
-imgBBWhole = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
-plt.subplot(131)
+imgBBWhole = imgWhole[bbWhole[1]:bbWhole[3], bbWhole[0]:bbWhole[2]]
+
+nIncrease = 50
+colMin, rowMin, colMax, rowMax = bbWhole
+rowMin -= nIncrease
+rowMax += nIncrease
+colMin -= nIncrease
+colMax += nIncrease
+
+bbIncrease = [colMin, rowMin, colMax, rowMax]
+imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
+plt.figure(figsize=(75,50))
+plt.subplot(241)
 plt.imshow(imgSplit)
 plt.plot(polyx, polyy, c='red')
-plt.subplot(132)
+plt.subplot(242)
 plt.imshow(imgBB)
-plt.subplot(133)
+plt.subplot(243)
 plt.imshow(imgBBWhole, cmap='gray')
+plt.subplot(244)
+plt.imshow(imgWhole, cmap='gray')
+plt.plot(polyxWhole, polyyWhole, c='red', linewidth=1)
+plt.subplot(245)
+plt.imshow(imgBBWholeExpand, cmap='gray')
+print(imgNum)
+# %%
+imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
+poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
+bb = imgSeg['annotations'][0]['bbox']
+imgName = fileNameSplit
+nIncrease = 50
+def bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50, padNum=200):
+    splitNum = int(imgName.split('_')[-1].split('.')[0])
+    coords = split2WholeCoords(nIms = 16, wholeImgSize = imgWhole.shape)
+    imgWhole = np.pad(imgWhole, (padNum,padNum))
+    polyxWhole, polyyWhole, bbWhole = expandImageSegmentation(poly, bb, splitNum, coords, padNum)
+    bbWhole = [int(corner) for corner in bbWhole]
+    colMin, rowMin, colMax, rowMax = bbWhole
+    rowMin -= nIncrease
+    rowMax += nIncrease
+    colMin -= nIncrease
+    colMax += nIncrease
 
+    bbIncrease = [colMin, rowMin, colMax, rowMax]
+    imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
+    plt.imshow(imgBBWholeExpand)
+    return imgBBWholeExpand
 
+finalCrop = bbIncrease(poly, bb, imgName, imgWhole, nIncrease)
+plt.imshow(finalCrop)
 # %%

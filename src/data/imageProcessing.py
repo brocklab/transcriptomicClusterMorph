@@ -155,6 +155,9 @@ def filterCells(cells, confluencyDate=False, edge=False, color=False):
     print(f'Filtered out {nCells-nCellsNew} cells')
     return cells
 
+# Expanding image segmentation to larger image
+
+
 # Perimeter and "classic" cell morphology
 def interpolatePerimeter(perim: np.array, nPts: int=150):
     """
