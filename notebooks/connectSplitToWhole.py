@@ -76,7 +76,7 @@ def expandImageSegmentation(poly, bb, splitNum, coords, padNum=200):
     - polyxWhole, polyyWhole: polygon coordinates for whole image
     - bbWhole: bounding box for whole image
     """
-    poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
+    poly = np.array(poly)
     polyx = poly[::2]
     polyy = poly[1::2]
 
@@ -92,79 +92,20 @@ def expandImageSegmentation(poly, bb, splitNum, coords, padNum=200):
     
     return [polyxWhole, polyyWhole, bbWhole]
 
-
-# %%
-datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDict.npy', allow_pickle=True)
-# %%
-
-
-
-splitDir = '../data/TJ2201/split16/phaseContrast'
-wholeDir = '../data/TJ2201/raw/phaseContrast'
-
-# Find an image with segmentations
-# np.random.seed(1234)
-imgNum = np.random.randint(len(datasetDicts))
-while True:
-    # imgNum = 211
-    # imgNum = 31
-    imgSeg = datasetDicts[imgNum]
-    splitNum = int(imgSeg['file_name'].split('_')[-1].split('.')[0])
-    fileNameSplit = imgSeg['file_name'].split('/')[-1]
-    fileNameWhole = splitName2Whole(fileNameSplit)
-    if len(imgSeg['annotations']) == 0:
-        imgNum += 1
-    else:
-        break
-
-# %%
-imgSplit = imread(os.path.join(splitDir, fileNameSplit))
-imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
-
-coords = split2WholeCoords(nIms = 16, wholeImgSize = imgWhole.shape)
-poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
-bb = imgSeg['annotations'][0]['bbox']
-bb = np.array([int(corner) for corner in bb])
-polyx = poly[::2]
-polyy = poly[1::2]
-
-padNum = 200
-imgWhole = np.pad(imgWhole, (padNum,padNum))
-polyxWhole, polyyWhole, bbWhole = expandImageSegmentation(poly, bb, splitNum, coords, padNum=200)
-
-imgBB = imgSplit[bb[1]:bb[3], bb[0]:bb[2]]
-imgBBWhole = imgWhole[bbWhole[1]:bbWhole[3], bbWhole[0]:bbWhole[2]]
-
-nIncrease = 50
-colMin, rowMin, colMax, rowMax = bbWhole
-rowMin -= nIncrease
-rowMax += nIncrease
-colMin -= nIncrease
-colMax += nIncrease
-
-bbIncrease = [colMin, rowMin, colMax, rowMax]
-imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
-plt.figure(figsize=(75,50))
-plt.subplot(241)
-plt.imshow(imgSplit)
-plt.plot(polyx, polyy, c='red')
-plt.subplot(242)
-plt.imshow(imgBB)
-plt.subplot(243)
-plt.imshow(imgBBWhole, cmap='gray')
-plt.subplot(244)
-plt.imshow(imgWhole, cmap='gray')
-plt.plot(polyxWhole, polyyWhole, c='red', linewidth=1)
-plt.subplot(245)
-plt.imshow(imgBBWholeExpand, cmap='gray')
-print(imgNum)
-# %%
-imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
-poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
-bb = imgSeg['annotations'][0]['bbox']
-imgName = fileNameSplit
-nIncrease = 50
 def bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50, padNum=200):
+    """
+    Takes in a segmentation from a split image and outputs the segmentation from the whole image. 
+    Inputs: 
+    - poly: Polygon in datasetDict format
+    - bb: Bounding box in datasetDict format
+    - imageName: Name of the image where the segmentation was found
+    - imgWhole: The whole image from which the final crop will come from
+    - nIncrease: The amount to increase the bounding box
+    - padNum: The padding on the whole image, necessary to segment properly
+
+    Outputs:
+    - imgBBWholeExpand: The image cropped from the whole image increased by nIncrease
+    """
     splitNum = int(imgName.split('_')[-1].split('.')[0])
     coords = split2WholeCoords(nIms = 16, wholeImgSize = imgWhole.shape)
     imgWhole = np.pad(imgWhole, (padNum,padNum))
@@ -180,6 +121,95 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50, padNum=200):
     imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
     plt.imshow(imgBBWholeExpand)
     return imgBBWholeExpand
+
+def getImgPath(datasetDicts, imgNum = -1):
+    if imgNum < 0:
+        imgNum = np.random.randint(len(datasetDicts))
+    while True:
+        # imgNum = 211
+        # imgNum = 31
+        imgSeg = datasetDicts[imgNum]
+        splitNum = int(imgSeg['file_name'].split('_')[-1].split('.')[0])
+        fileNameSplit = imgSeg['file_name'].split('/')[-1]
+        fileNameWhole = splitName2Whole(fileNameSplit)
+        if len(imgSeg['annotations']) == 0:
+            imgNum += 1
+        else:
+            break
+
+    return imgSeg, fileNameSplit
+# %%
+datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDict.npy', allow_pickle=True)
+# %%
+splitDir = '../data/TJ2201/split16/phaseContrast'
+wholeDir = '../data/TJ2201/raw/phaseContrast'
+
+# Find an image with segmentations
+# np.random.seed(1234)
+# imgNum = np.random.randint(len(datasetDicts))
+# while True:
+#     # imgNum = 211
+#     # imgNum = 31
+#     imgSeg = datasetDicts[imgNum]
+#     splitNum = int(imgSeg['file_name'].split('_')[-1].split('.')[0])
+#     fileNameSplit = imgSeg['file_name'].split('/')[-1]
+#     fileNameWhole = splitName2Whole(fileNameSplit)
+#     if len(imgSeg['annotations']) == 0:
+#         imgNum += 1
+#     else:
+#         break
+
+# %%
+# imgSplit = imread(os.path.join(splitDir, fileNameSplit))
+# imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
+
+# coords = split2WholeCoords(nIms = 16, wholeImgSize = imgWhole.shape)
+# poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
+# bb = imgSeg['annotations'][0]['bbox']
+# bb = np.array([int(corner) for corner in bb])
+# polyx = poly[::2]
+# polyy = poly[1::2]
+
+# padNum = 200
+# imgWhole = np.pad(imgWhole, (padNum,padNum))
+# polyxWhole, polyyWhole, bbWhole = expandImageSegmentation(poly, bb, splitNum, coords, padNum=200)
+
+# imgBB = imgSplit[bb[1]:bb[3], bb[0]:bb[2]]
+# imgBBWhole = imgWhole[bbWhole[1]:bbWhole[3], bbWhole[0]:bbWhole[2]]
+
+# nIncrease = 50
+# colMin, rowMin, colMax, rowMax = bbWhole
+# rowMin -= nIncrease
+# rowMax += nIncrease
+# colMin -= nIncrease
+# colMax += nIncrease
+
+# bbIncrease = [colMin, rowMin, colMax, rowMax]
+# imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
+# plt.figure(figsize=(75,50))
+# plt.subplot(241)
+# plt.imshow(imgSplit)
+# plt.plot(polyx, polyy, c='red')
+# plt.subplot(242)
+# plt.imshow(imgBB)
+# plt.subplot(243)
+# plt.imshow(imgBBWhole, cmap='gray')
+# plt.subplot(244)
+# plt.imshow(imgWhole, cmap='gray')
+# plt.plot(polyxWhole, polyyWhole, c='red', linewidth=1)
+# plt.subplot(245)
+# plt.imshow(imgBBWholeExpand, cmap='gray')
+# print(imgNum)
+# %%
+imgSeg, fileNameSplit = getImgPath(datasetDicts, imgNum = -1)
+
+fileNameWhole = splitName2Whole(fileNameSplit)
+imgSplit = imread(os.path.join(splitDir, fileNameSplit))
+imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
+poly = np.array(imgSeg['annotations'][0]['segmentation'][0])
+bb = imgSeg['annotations'][0]['bbox']
+imgName = fileNameSplit
+nIncrease = 50
 
 finalCrop = bbIncrease(poly, bb, imgName, imgWhole, nIncrease)
 plt.imshow(finalCrop)

@@ -122,6 +122,7 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
             cells.append(cell)
         record["annotations"] = cells
         datasetDicts.append(record)
+        
         idx += 1
         print(len(datasetDicts))
 

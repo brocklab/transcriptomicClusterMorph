@@ -4,6 +4,7 @@ This is a script making a data loader using the outline information
 (not loading individual images)
 """
 # %%
+from src.data.imageProcessing import bbIncrease, splitName2Whole
 import numpy as np
 import random
 import os
@@ -66,13 +67,14 @@ class singleCellCrop(Dataset):
             idx = idx.tolist()
         
         imgName = self.imgNames[idx]
+        imgNameWhole = splitName2Whole(imgName)
         label = self.phenotypes[idx]
-        fullPath = os.path.join(self.dataPath, imgName)
+        fullPath = os.path.join(self.dataPath, imgNameWhole)
         maxRows, maxCols = self.maxImgSize, self.maxImgSize
         img = imread(fullPath)
 
         bb = self.bbs[idx]
-
+        poly = self.segmentations[idx]
         nIncrease = self.nIncrease
         colMin, rowMin, colMax, rowMax = bb
         rowMin -= nIncrease
@@ -91,9 +93,11 @@ class singleCellCrop(Dataset):
             colMax = img.shape[1]
 
         # Increase the size of the bounding box and crop
-        bbIncrease = [colMin, rowMin, colMax, rowMax]
-        imgCrop = img[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
-
+        bbIncreased = [colMin, rowMin, colMax, rowMax]
+        imgCrop = img[bbIncreased[1]:bbIncreased[3], bbIncreased[0]:bbIncreased[2]]
+        print(imgCrop.shape)
+        # imgCrop = bbIncrease(poly, bb, imgName, img, self.nIncrease)
+        # print(imgCrop.shape)
         # Pad image
         diffRows = int((maxRows - imgCrop.shape[0])/2)
         diffCols = int((maxCols - imgCrop.shape[1])/2)
@@ -125,11 +129,11 @@ class singleCellCrop(Dataset):
         segmentations, phenotypes, imgNames, bbs = [], [], [], []
         # Note there is a lot of repeats for images but this is much cleaner
         for img in datasetDicts:
-            path = img['file_name'].split('/')[-1]
+            imgName = os.path.basename(img['file_name'])
             for annotation in img['annotations']:
                 segmentations.append(np.array(annotation['segmentation'][0]))
                 phenotypes.append(annotation['category_id'])
-                imgNames.append(path)
+                imgNames.append(imgName)
                 bbs.append([int(corner) for corner in annotation['bbox']])
         # Balance dataset
         uniquePheno, cts = np.unique(phenotypes, return_counts=True)
@@ -184,7 +188,8 @@ data_transforms = {
         # transforms.Normalize(mean, std)
     ]),
 }
-dataPath = f'../data/{experiment}/split16/phaseContrast'
+# %%
+dataPath = f'../data/{experiment}/raw/phaseContrast'
 
 image_datasets = {x: singleCellCrop(datasetDicts, data_transforms[x], dataPath, phase=x) 
                     for x in ['train', 'test']}
