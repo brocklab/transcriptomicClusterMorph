@@ -157,25 +157,6 @@ def filterCells(cells, confluencyDate=False, edge=False, color=False):
     return cells
 
 # %% Expanding image segmentation to larger image
-def splitName2Whole(imgName: str):
-    """
-    Strips split number from image name
-
-    Inputs:
-        - imgName: Name of image in format:
-            imagingType_Well_IncucyteNum_Date_Time_ImgNum.extension
-    Outputs:
-        - imgNameWhole: Name of image in format:
-            imagingType_Well_IncucyteNum_Date_Timeß.extension
-
-    """
-    extSplit = imgName.split('.')
-    ext = extSplit[-1]
-    imgName = extSplit[0]
-
-    imgNameWhole = '_'.join(imgName.split('_')[0:-1])+'.'+ext
-    return imgNameWhole
-
 def split2WholeCoords(nIms, wholeImgSize):
     """
     Returns coordinates to connect split images to whole images

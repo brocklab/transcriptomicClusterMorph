@@ -1,32 +1,22 @@
-# %% [markdown]
-"""
-This is a script making a data loader using the outline information 
-(not loading individual images)
-"""
-# %%
 from src.data.imageProcessing import bbIncrease
 from src.data.fileManagement import splitName2Whole
 
-import numpy as np
 import random
+import numpy as np
+import copy
+from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-import copy
 
 from skimage.io import imread
 from skimage.transform import resize
 
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, models
-import torchvision
 import torch
 import torch.nn.functional as F
-import torch.nn as nn
-import torch.optim as optim
-from torch.optim import lr_scheduler
-# %%
-class singleCellCrop(Dataset):
+from torchvision import transforms
+
+class singleCellLoader(Dataset):
     """
     Dataloader class for cropping out a cell from an image
 
@@ -171,51 +161,41 @@ class singleCellCrop(Dataset):
         random.shuffle(l)
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
-# %%
-experiment = 'TJ2201'
-datasetDicts = np.load(f'../data/{experiment}/split16/{experiment}DatasetDict.npy', allow_pickle=True)
-mean = np.array([0.5, 0.5, 0.5])
-std = np.array([0.25, 0.25, 0.25])
-data_transforms = {
-    'train': transforms.Compose([
-        # transforms.RandomResizedCrop(224),
-        # transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        # transforms.Normalize(mean, std)
-    ]),
-    'test': transforms.Compose([
-        # transforms.Resize(356),
-        # transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        # transforms.Normalize(mean, std)
-    ]),
-}
-# %%
-nIncrease = 20
-dataPath = f'../data/{experiment}/raw/phaseContrast'
 
-image_datasets = {x: singleCellCrop(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x) 
+def makeImageDatasets(datasetDicts, dataPath, nIncrease=20, batch_size=4):
+    """
+    Creates pytorch image datasets using transforms
+
+    Inputs:
+    - datasetDicts: Segmentation information
+    """
+    mean = np.array([0.5, 0.5, 0.5])
+    std = np.array([0.25, 0.25, 0.25])
+    data_transforms = {
+        'train': transforms.Compose([
+            # transforms.RandomResizedCrop(224),
+            # transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            # transforms.Normalize(mean, std)
+        ]),
+        'test': transforms.Compose([
+            # transforms.Resize(356),
+            # transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            # transforms.Normalize(mean, std)
+        ]),
+    }
+
+    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x) 
                     for x in ['train', 'test']}
-dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
-dataloaders = {x: DataLoader(image_datasets[x], batch_size=4, shuffle=True)
-                    for x in ['train', 'test']}
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# %%
-def imshow(inp):
-    """Imshow for Tensor."""
-    inp = inp.numpy().transpose((1, 2, 0))
-    plt.figure(figsize=(15,5))
-    plt.imshow(inp)
-    plt.show()
+    dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
+    dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True)
+                        for x in ['train', 'test']}
+    
+    return dataloaders, dataset_sizes
 
-# Get a batch of training data
-inputs, classes = next(iter(dataloaders['train']))
-
-# # Make a grid from batch
-out = torchvision.utils.make_grid(inputs)
-imshow(out)
-# %%
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
@@ -277,31 +257,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
         print()
 
-
-
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
-# %%
-model = models.resnet152(pretrained=True)
-nIncrease = image_datasets['train'].nIncrease
-modelSaveName = f'../../models/classifySingleCellCrop{nIncrease}Resnet152.pth'
-num_ftrs = model.fc.in_features
-
-# Create new layer and assign in to the last layer
-# Number of output layers is now 2 for the 2 classes
-model.fc = nn.Linear(num_ftrs, 2)
-model.to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.001)
-
-# Scheduler to update lr 
-# Every 7 epochs the learning rate is multiplied by gamma
-setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-
-model = train_model(model, criterion, optimizer, setp_lr_scheduler, num_epochs=50)
-# %%
-device = torch.device("cuda")
-model.to(device)
-torch.save(model.state_dict(), '../../models/classifySplitResnet152.pth')

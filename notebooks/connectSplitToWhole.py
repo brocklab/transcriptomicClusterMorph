@@ -119,8 +119,8 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50, padNum=200):
 
     bbIncrease = [colMin, rowMin, colMax, rowMax]
     imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
-    plt.imshow(imgBBWholeExpand)
-    return imgBBWholeExpand
+
+    return imgBBWholeExpand, [polyxWhole, polyyWhole]
 
 def getImgPath(datasetDicts, imgNum = -1):
     if imgNum < 0:
@@ -138,6 +138,14 @@ def getImgPath(datasetDicts, imgNum = -1):
             break
 
     return imgSeg, fileNameSplit
+
+def getPolygonCentroid(polyx, polyy):
+    polyx = polyFinal[0]
+    polyy = polyFinal[1]
+    A = .5*np.sum([polyx[i]*polyy[i+1] - polyx[i+1]*polyy[i] for i in range(0, len(polyx)-1)])
+    Cx = 1/(6*A)*np.sum([(polyx[i]+polyx[i+1])*(polyx[i]*polyy[i+1]-polyx[i+1]*polyy[i]) for i in range(0, len(polyx)-1)])
+    Cy = 1/(6*A)*np.sum([(polyy[i]+polyy[i+1])*(polyx[i]*polyy[i+1]-polyx[i+1]*polyy[i]) for i in range(0, len(polyx)-1)])
+    return Cx, Cy
 # %%
 datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDict.npy', allow_pickle=True)
 # %%
@@ -201,8 +209,9 @@ wholeDir = '../data/TJ2201/raw/phaseContrast'
 # plt.imshow(imgBBWholeExpand, cmap='gray')
 # print(imgNum)
 # %%
+# 46860
 imgSeg, fileNameSplit = getImgPath(datasetDicts, imgNum = -1)
-
+# %%
 fileNameWhole = splitName2Whole(fileNameSplit)
 imgSplit = imread(os.path.join(splitDir, fileNameSplit))
 imgWhole = imread(os.path.join(wholeDir, fileNameWhole))
@@ -211,6 +220,17 @@ bb = imgSeg['annotations'][0]['bbox']
 imgName = fileNameSplit
 nIncrease = 50
 
-finalCrop = bbIncrease(poly, bb, imgName, imgWhole, nIncrease)
-plt.imshow(finalCrop)
+finalCrop, polyFinal = bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50)
+plt.imshow(finalCrop, cmap='gray')
+plt.scatter(finalCrop.shape[1]/2,finalCrop.shape[0]/2)
+# plt.plot(polyFinal[0], polyFinal[1], c = 'red')
+Cx, Cy = getPolygonCentroid(polyFinal[0], polyFinal[1])
+diffx = Cx-finalCrop.shape[1]/2
+diffy = Cy-finalCrop.shape[0]/2
+plt.plot(polyFinal[0]-diffx, polyFinal[1]-diffy, c = 'red')
+
+# plt.scatter(Cx, Cy)
 # %%
+plt.imshow(imgSplit)
+plt.plot(poly[::2], poly[1::2])
+
