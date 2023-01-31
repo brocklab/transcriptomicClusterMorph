@@ -194,12 +194,13 @@ def makeImageDatasets(datasetDicts, dataPath, nIncrease=20, batch_size=4):
     
     return dataloaders, dataset_sizes
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, num_epochs=25):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
-
+    if device.type != 'cuda':
+        raise Exception('Incorrect device')
     for epoch in tqdm(range(num_epochs), leave=False):
         # print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         # print('-' * 10)
@@ -253,7 +254,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
         if epoch % 10 == 0:
-            torch.save(model.state_dict(), )
+            torch.save(model.state_dict(), savePath)
 
         print()
 
