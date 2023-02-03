@@ -41,4 +41,4 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-model = train_model(model, criterion, optimizer, setp_lr_scheduler, dataloaders, dataset_sizes, modelSaveName, num_epochs=50)
+model = train_model(model, criterion, optimizer, setp_lr_scheduler, dataloaders, dataset_sizes, modelSaveName, num_epochs=100)
