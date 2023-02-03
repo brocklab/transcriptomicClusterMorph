@@ -12,25 +12,59 @@ and save the segmentation.
 #
 from src.data import imageProcessing, fileManagement
 from src.models import modelTools
+import time
 import pickle
 import os
-import cv2
+import shutil
+
 import numpy as np
 import random
 from tqdm import tqdm
-from skimage.io import imread, imsave
-from skimage.transform import rescale, resize
+from skimage.io import imread
 
-import matplotlib.pyplot as plt
 import datetime
 
-from skimage import data, measure
+from skimage import measure
 from skimage.segmentation import clear_border
 
 from detectron2.structures import BoxMode
 #
+def replaceDatasetDict(dataPath: str, experiment: str):
+    """
+    Replaces dataset dictionary with largest dictionary to reduce analyzing the same images repeatedly
 
-print(os.getcwd())
+    dataPath: String path to find datasetDicts
+    experiment: experiment associated with segmentations
+    """
+
+    fullDict = os.path.join(dataPath, f'{experiment}DatasetDict.npy')
+    modDict0 = os.path.join(dataPath, f'{experiment}DatasetDict-0.npy')
+    modDict1 = os.path.join(dataPath, f'{experiment}DatasetDict-1.npy')
+
+    for datasetPath in [fullDict, modDict0, modDict1]:
+        if not os.path.exists(datasetPath):
+            return
+
+    fullDictSize = os.path.getsize(fullDict)
+    modDict0Size = os.path.getsize(modDict0)
+    modDict1Size = os.path.getsize(modDict1)
+
+    for sizes in [fullDictSize, modDict0Size, modDict1Size]
+    if modDict0Size > modDict1Size:
+        modDict = modDict0
+        modDictSize = modDict0Size
+    else:
+        modDict = modDict1
+        modDictSize = modDict1Size
+
+    if fullDictSize < modDictSize:
+        print('Replacing with mod dict')
+        shutil.move(modDict, fullDict)
+    else:
+        print('Keeping dictionary')
+        shutil.move(fullDict, modDict)
+
+
 def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment: str, predictor):
     """
     segmentExperiment gathers all segmentations for an experiment
@@ -45,7 +79,8 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
     Outputs:
         - saved datasetDict
     """
-
+    replaceDatasetDict(dataPath, experiment)
+    then = time.time()
     # Load the dataset
     datasetDictPath = os.path.join(dataPath, f'{experiment}DatasetDict.npy')
     if os.path.isfile(datasetDictPath):
@@ -71,6 +106,7 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
         processedFiles = []
         idx = 0
 
+    saveIdx = 0
     for imgBase in tqdm(imgBases, leave=True):
         # Grab image
 
@@ -97,6 +133,7 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
         record['width'] =  pcImg.shape[1]
 
         cells = []
+        # Get segmentation outlines
         for cellNum in range(nCells):
             mask = outputs[cellNum].pred_masks.numpy()[0]
             color = imageProcessing.findFluorescenceColor(compositeImg, mask)
@@ -124,11 +161,26 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
         datasetDicts.append(record)
         
         idx += 1
-        print(len(datasetDicts))
 
-        if idx % 100 == 0:
-            print(len(datasetDicts))
+        # Alternate saving so that if saving gets interrupted we lose < 1000 images
+        if idx % 1000 == 0:
+            modIdx = saveIdx % 2
+            datasetDictPath = os.path.join(dataPath, f'{experiment}DatasetDict-{modIdx}.npy')
+            picklePath = os.path.join(dataPath, f'{experiment}DatasetDict-{modIdx}.pickle')
+            print(f'Saving {len(datasetDicts)} images')
             np.save(datasetDictPath, datasetDicts)
+            # pickle.dump(datasetDicts, open(picklePath, "wb"))
+            print('Done saving')
+            saveIdx += 1
+
+        # If time running > 8 hours stop
+        if time.time()-then > 28800:
+            print('Time is up!')
+            datasetDictPath = os.path.join(dataPath, f'{experiment}DatasetDict.npy')
+            np.save(datasetDictPath, datasetDicts)            
+            break
+
+
 # %%
 if __name__ == '__main__':
     predictor = modelTools.getSegmentModel('../../models/TJ2201Split16')
