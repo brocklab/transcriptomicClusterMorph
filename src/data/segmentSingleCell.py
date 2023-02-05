@@ -49,7 +49,7 @@ def replaceDatasetDict(dataPath: str, experiment: str):
     modDict0Size = os.path.getsize(modDict0)
     modDict1Size = os.path.getsize(modDict1)
 
-    for sizes in [fullDictSize, modDict0Size, modDict1Size]
+    # for sizes in [fullDictSize, modDict0Size, modDict1Size]:
     if modDict0Size > modDict1Size:
         modDict = modDict0
         modDictSize = modDict0Size

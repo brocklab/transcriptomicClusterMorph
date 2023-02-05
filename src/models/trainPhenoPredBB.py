@@ -162,7 +162,7 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, nIncrease=20, batch_size=4):
+def makeImageDatasets(datasetDicts, dataPath, nIncrease=20, batch_size=40):
     """
     Creates pytorch image datasets using transforms
 
@@ -199,8 +199,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
-    if device.type != 'cuda':
-        raise Exception('Incorrect device')
+    # if device.type != 'cuda':
+    #     raise Exception('Incorrect device')
     for epoch in tqdm(range(num_epochs), leave=False):
         # print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         # print('-' * 10)
