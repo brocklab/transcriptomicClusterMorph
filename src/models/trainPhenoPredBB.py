@@ -91,7 +91,7 @@ class singleCellLoader(Dataset):
         imgCrop = img[bbIncreased[1]:bbIncreased[3], bbIncreased[0]:bbIncreased[2]]
 
         imgCrop = bbIncrease(poly, bb, imgName, img, self.nIncrease)
-        # print(imgCrop.shape)
+
         # Pad image
         diffRows = int((maxRows - imgCrop.shape[0])/2)
         diffCols = int((maxCols - imgCrop.shape[1])/2)
