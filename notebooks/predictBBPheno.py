@@ -1,7 +1,12 @@
 # %%
+# %load_ext autoreload
+# %autoreload 2
+
+# %%
 from src.models.trainPhenoPredBB import makeImageDatasets, train_model
 from pathlib import Path
 import numpy as np
+import time
 
 from torchvision import models
 from torch.optim import lr_scheduler
@@ -14,10 +19,13 @@ experiment = 'TJ2201'
 nIncrease = 45
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictCopy.npy')
+datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 # %%
-dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, dataPath, nIncrease=20)
+dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, dataPath, nIncrease=nIncrease, maxAmt = 20000, batch_size=40)
+# %%
+dataset_sizes
+
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
@@ -41,6 +49,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
+<<<<<<< Updated upstream
 model = train_model(model, 
                     criterion, 
                     optimizer, 
@@ -48,3 +57,11 @@ model = train_model(model,
                     dataloaders, 
                     dataset_sizes, 
                     modelSaveName, num_epochs=100)
+=======
+model = train_model(model, criterion, optimizer, setp_lr_scheduler, dataloaders, dataset_sizes, modelSaveName, num_epochs=40)
+
+# %%
+"""
+10000 data points     10 min/epoch.    100
+"""
+>>>>>>> Stashed changes
