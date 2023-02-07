@@ -8,6 +8,7 @@ from src.models import modelTools
 from pathlib import Path
 import numpy as np
 import time
+import sys
 
 from torchvision import models
 from torch.optim import lr_scheduler
@@ -23,8 +24,8 @@ batch_size  = 40
 num_epochs  = 40
 modelType   = 'resnet152'
 
-modelTime = int(time.time())
-modelSaveName = Path(f'../models/classifySingleCellCrop-{modelTime}.pth')
+modelID, idSource = modelTools.getModelID(sys.argv)
+modelSaveName = Path(f'../models/classifySingleCellCrop-{modelID}.pth')
 
 modelInputs = {
 
@@ -34,11 +35,12 @@ modelInputs = {
 'batch_size'    : batch_size,
 'num_epochs'    : num_epochs,
 'modelType'     : modelType,
-'modelName'     : modelSaveName.parts[-1]
+'modelName'     : modelSaveName.parts[-1],
+'modelIDSource' : idSource
+
 }
 
 modelTools.printModelVariables(modelInputs)
-
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')

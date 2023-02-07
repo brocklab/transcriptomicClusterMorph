@@ -4,6 +4,7 @@ from skimage.io import imread
 import matplotlib.pyplot as plt
 import torch
 import os
+import time
 
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
@@ -56,3 +57,29 @@ def printModelVariables(modelInputDict: dict):
         print(f'{var} - {inputVal}')
 
     print('-'*10)
+
+def getModelID(args):
+    """
+    Returns a model ID
+    If a jobid is passed from a slurm file, the model ID is the job ID. 
+    If there is no jobid passed, the model ID is an integer of the UNIX time.
+
+    Inputs:
+    - args: sys.argv from passing script
+
+    Outputs:
+    - modelID: ID used to name model
+    - source: Source of modelID
+    """
+    try:
+        get_ipython().__class__.__name__
+        modelID = int(time.time())
+        source = 'time'
+    except:
+        if len(args)>1:
+            modelID = args[1]
+            source = 'slurm'
+        else:
+            modelID = int(time.time())
+            source = 'time'
+    return modelID, source
