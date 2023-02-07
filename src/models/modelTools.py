@@ -42,3 +42,17 @@ def getSegmentModel(modelPath: str, numClasses = 1):
     predictor = DefaultPredictor(cfg)
 
     return predictor
+
+
+def printModelVariables(modelInputDict: dict):
+    """
+    Prints the names of variables used to train model. 
+
+    This is recorded in the slurm .out file
+    """
+    print('----')
+
+    for var, inputVal in modelInputDict.items():
+        print(f'{var} - {inputVal}')
+
+    print('----')

@@ -132,7 +132,6 @@ class singleCellLoader(Dataset):
         # Balance dataset
         uniquePheno, cts = np.unique(phenotypes, return_counts=True)
         
-        print(self.maxAmt)
         if self.maxAmt == 0:
             maxAmt = min(cts)
         else:

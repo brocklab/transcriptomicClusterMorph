@@ -4,6 +4,7 @@
 
 # %%
 from src.models.trainPhenoPredBB import makeImageDatasets, train_model
+from src.models import modelTools
 from pathlib import Path
 import numpy as np
 import time
@@ -15,14 +16,34 @@ import torch
 import torch.optim as optim
 
 # %%
-experiment = 'TJ2201'
-nIncrease = 45
+experiment  = 'TJ2201'
+nIncrease   = 45
+maxAmt      = 15000
+batch_size  = 40
+num_epochs  = 40
+modelType   = 'resnet152'
+
+modelInputs = {
+
+'experiment'    : experiment, 
+'nIncrease'     : nIncrease,
+'maxAmt'        : maxAmt,
+'batch_size'    : batch_size,
+'num_epochs'    : num_epochs,
+'modelType'     : modelType,
+
+}
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 # %%
-dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, dataPath, nIncrease=nIncrease, maxAmt = 20000, batch_size=40)
+dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
+                                               dataPath, 
+                                               nIncrease=nIncrease, 
+                                               maxAmt = maxAmt, 
+                                               batch_size=batch_size
+                                               )
 # %%
 dataset_sizes
 
@@ -30,7 +51,9 @@ dataset_sizes
 inputs, classes = next(iter(dataloaders['train']))
 # %%
 model = models.resnet152(pretrained=True)
-modelSaveName = Path(f'../models/classifySingleCellCrop{nIncrease}Resnet152.pth')
+modelTime = int(time.time())
+modelSaveName = Path(f'../models/classifySingleCellCrop-{modelTime}.pth')
+modelInputs['modelName'] = modelSaveName.parts[-1]
 if not modelSaveName.parent.exists():
     raise NotADirectoryError('Model directory not found')
     
@@ -49,19 +72,14 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-<<<<<<< Updated upstream
 model = train_model(model, 
                     criterion, 
                     optimizer, 
                     setp_lr_scheduler, 
                     dataloaders, 
                     dataset_sizes, 
-                    modelSaveName, num_epochs=100)
-=======
-model = train_model(model, criterion, optimizer, setp_lr_scheduler, dataloaders, dataset_sizes, modelSaveName, num_epochs=40)
-
+                    modelSaveName, 
+                    num_epochs=num_epochs
+                    )
 # %%
-"""
-10000 data points     10 min/epoch.    100
-"""
->>>>>>> Stashed changes
+modelTools.printModelVariables(modelInputs)
