@@ -32,7 +32,7 @@ class singleCellLoader(Dataset):
     - bbs: List of bounding boxes for segmentations
     """
 
-    def __init__(self, datasetDicts, transforms, dataPath, nIncrease, phase, randomSeed = 1234):
+    def __init__(self, datasetDicts, transforms, dataPath, nIncrease, phase, maxAmt = 0, randomSeed = 1234):
         """
         Input: 
         - datasetDicts: Catalogs images and cell segmentations in detectron2 format
@@ -46,7 +46,9 @@ class singleCellLoader(Dataset):
         self.phase = phase
         self.seed = randomSeed
         self.transforms = transforms
+        self.maxAmt = maxAmt
         self.segmentations, self.phenotypes, self.imgNames, self.bbs = self.balance(datasetDicts)
+        
         # Variable parameters for segmentation
         self.maxImgSize = 150
         self.nIncrease = nIncrease
@@ -129,8 +131,13 @@ class singleCellLoader(Dataset):
                 bbs.append([int(corner) for corner in annotation['bbox']])
         # Balance dataset
         uniquePheno, cts = np.unique(phenotypes, return_counts=True)
-        maxAmt = min(cts)
-
+        
+        print(self.maxAmt)
+        if self.maxAmt == 0:
+            maxAmt = min(cts)
+        else:
+            maxAmt = self.maxAmt
+            
         segmentations, phenotypes, imgNames, bbs = self.shuffleLists([segmentations, phenotypes, imgNames, bbs], self.seed)
         uniqueIdx = []
         for pheno in uniquePheno:
@@ -162,7 +169,7 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, nIncrease=20, batch_size=4):
+def makeImageDatasets(datasetDicts, dataPath, maxAmt = 0, nIncrease=20, batch_size=40):
     """
     Creates pytorch image datasets using transforms
 
@@ -186,7 +193,7 @@ def makeImageDatasets(datasetDicts, dataPath, nIncrease=20, batch_size=4):
         ]),
     }
 
-    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x) 
+    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x, maxAmt = maxAmt) 
                     for x in ['train', 'test']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True)
