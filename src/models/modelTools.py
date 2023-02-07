@@ -50,9 +50,9 @@ def printModelVariables(modelInputDict: dict):
 
     This is recorded in the slurm .out file
     """
-    print('----')
+    print('~ Model Details ~')
 
     for var, inputVal in modelInputDict.items():
         print(f'{var} - {inputVal}')
 
-    print('----')
+    print('-'*10)

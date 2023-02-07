@@ -23,6 +23,9 @@ batch_size  = 40
 num_epochs  = 40
 modelType   = 'resnet152'
 
+modelTime = int(time.time())
+modelSaveName = Path(f'../models/classifySingleCellCrop-{modelTime}.pth')
+
 modelInputs = {
 
 'experiment'    : experiment, 
@@ -31,8 +34,11 @@ modelInputs = {
 'batch_size'    : batch_size,
 'num_epochs'    : num_epochs,
 'modelType'     : modelType,
-
+'modelName'     : modelSaveName.parts[-1]
 }
+
+modelTools.printModelVariables(modelInputs)
+
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
@@ -51,9 +57,7 @@ dataset_sizes
 inputs, classes = next(iter(dataloaders['train']))
 # %%
 model = models.resnet152(pretrained=True)
-modelTime = int(time.time())
-modelSaveName = Path(f'../models/classifySingleCellCrop-{modelTime}.pth')
-modelInputs['modelName'] = modelSaveName.parts[-1]
+
 if not modelSaveName.parent.exists():
     raise NotADirectoryError('Model directory not found')
     
@@ -82,4 +86,3 @@ model = train_model(model,
                     num_epochs=num_epochs
                     )
 # %%
-modelTools.printModelVariables(modelInputs)
