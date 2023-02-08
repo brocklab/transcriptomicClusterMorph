@@ -7,6 +7,7 @@ import copy
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
+import pickle 
 
 from skimage.io import imread
 from skimage.transform import resize
@@ -267,3 +268,31 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
+
+def testModel(model, loaders, testSummaryPath=''):
+    device_str = "cuda"
+    device = torch.device(device_str if torch.cuda.is_available() else "cpu")
+    probs = []
+    allLabels = []
+    scores = []
+    running_corrects = 0
+    for i, batch in enumerate(tqdm(loaders['test'], desc=f"spectra", position=0, leave=True)):
+        spectra, labels = tuple(t.to(device) for t in batch)
+    
+        outputs = model(spectra)
+        _, preds = torch.max(outputs, 1)
+        probs.append(outputs.cpu().data.numpy())
+        allLabels.append(labels.cpu().data.numpy())
+        scores.append(F.softmax(outputs, dim=1).cpu().data.numpy())
+        running_corrects += torch.sum(preds == labels.data)
+        
+
+    probs = np.concatenate(probs)
+    allLabels = np.concatenate(allLabels)
+    scores = np.concatenate(scores)
+
+    modelTestResults = {'probs': probs, 'allLabels': allLabels, 'scores': scores}
+    if len(testSummaryPath)>0:
+        pickle.dump(modelTestResults, open(testSummaryPath, "wb"))
+
+    return [probs, allLabels, scores]
