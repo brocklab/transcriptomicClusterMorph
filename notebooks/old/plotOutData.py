@@ -40,6 +40,10 @@ def transferLearningRes(filePath, title, plot=True):
         plt.show()
     return [trainLoss, trainAcc, testLoss, testAcc]
 # %%
+
+resRes18Pre = transferLearningRes('../../results/TJ2201SingleCellCrop/singleCellCrop45-686756.out', title = '', plot=True)
+
+# %%
 title='resnet18 Pretrained'
 resRes18Pre = transferLearningRes('../results/TJ2201Split16SingleCell/resnet18Pretrained.out', title=title)
 title = 'resent152 Pretrained'
