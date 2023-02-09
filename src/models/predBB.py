@@ -269,17 +269,22 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     model.load_state_dict(best_model_wts)
     return model
 
-def testModel(model, loaders, testSummaryPath=''):
+def testModel(model, loaders, testSummaryPath='') -> list:
     device_str = "cuda"
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
     probs = []
     allLabels = []
     scores = []
     running_corrects = 0
-    for i, batch in enumerate(tqdm(loaders['test'], desc=f"spectra", position=0, leave=True)):
-        spectra, labels = tuple(t.to(device) for t in batch)
-    
-        outputs = model(spectra)
+    for inputs, labels in tqdm(loaders['test'], position=0, leave=True):
+        # I have no idea why you have to do this but...
+        # https://discuss.pytorch.org/t/runtimeerror-expected-object-of-scalar-type-double-but-got-scalar-type-float-for-argument-2-weight/38961/9
+        inputs = inputs.float()
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+
+        outputs = model(inputs)
         _, preds = torch.max(outputs, 1)
         probs.append(outputs.cpu().data.numpy())
         allLabels.append(labels.cpu().data.numpy())
@@ -296,3 +301,31 @@ def testModel(model, loaders, testSummaryPath=''):
         pickle.dump(modelTestResults, open(testSummaryPath, "wb"))
 
     return [probs, allLabels, scores]
+
+def getModelDetails(outPath) -> dict:
+    """
+    Splits .out file from slurm and returns dictionary with details for recreating the model
+
+    Inputs:
+        - outPath: Location of .out file
+    Outputs:
+        - modelDetails: Dictionary of model parameters
+    """
+    with open(outPath) as outFile:
+        x = outFile.read()
+    detailsSplit = x.split('~ Model Details ~')[1]
+    modelDetailsOut = detailsSplit.split('-'*10)[0]
+    modelDetailsOut = modelDetailsOut.split('\n')[1:-1]
+    modelDetails = {}
+    for detail in modelDetailsOut:
+        detail, val = detail.split(' - ')
+        if val.isdigit():
+            val = int(val)
+        modelDetails[detail] = val
+
+    return modelDetails
+
+def loadDataLoader(loaderPath):
+    """
+    Loads 
+    """
