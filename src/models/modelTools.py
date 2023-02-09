@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import os
 import time
+from pathlib import Path
 
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
@@ -22,6 +23,13 @@ def getSegmentModel(modelPath: str, numClasses = 1):
     Outputs:
     Mask-RCNN model
     """
+    # Insert segmentation folder to correctly load path
+    modelPath = Path(modelPath)
+    if modelPath.parts[-2] != 'segmentation':
+        modelPathParts = list(modelPath.parts)
+        modelPathParts.insert(-1, 'segmentation')
+        modelPath = Path(*modelPathParts)
+    modelPath = str(modelPath)
     cfg = get_cfg()
     if not torch.cuda.is_available():
         print('CUDA not available, resorting to CPU')
