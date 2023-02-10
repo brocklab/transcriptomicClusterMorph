@@ -8,15 +8,20 @@ from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
 import pickle 
+from pathlib import Path
 
 from skimage.io import imread
 from skimage.transform import resize
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
 
 from torch.utils.data import Dataset, DataLoader
 import torch
 import torch.nn.functional as F
-from torchvision import transforms
-
+from torchvision import transforms, models
+from torch.optim import lr_scheduler
+import torch.nn as nn
+import torch.optim as optim
 class singleCellLoader(Dataset):
     """
     Dataloader class for cropping out a cell from an image
@@ -268,64 +273,3 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
-
-def testModel(model, loaders, testSummaryPath='') -> list:
-    device_str = "cuda"
-    device = torch.device(device_str if torch.cuda.is_available() else "cpu")
-    probs = []
-    allLabels = []
-    scores = []
-    running_corrects = 0
-    for inputs, labels in tqdm(loaders['test'], position=0, leave=True):
-        # I have no idea why you have to do this but...
-        # https://discuss.pytorch.org/t/runtimeerror-expected-object-of-scalar-type-double-but-got-scalar-type-float-for-argument-2-weight/38961/9
-        inputs = inputs.float()
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-
-
-        outputs = model(inputs)
-        _, preds = torch.max(outputs, 1)
-        probs.append(outputs.cpu().data.numpy())
-        allLabels.append(labels.cpu().data.numpy())
-        scores.append(F.softmax(outputs, dim=1).cpu().data.numpy())
-        running_corrects += torch.sum(preds == labels.data)
-        
-
-    probs = np.concatenate(probs)
-    allLabels = np.concatenate(allLabels)
-    scores = np.concatenate(scores)
-
-    modelTestResults = {'probs': probs, 'allLabels': allLabels, 'scores': scores}
-    if len(testSummaryPath)>0:
-        pickle.dump(modelTestResults, open(testSummaryPath, "wb"))
-
-    return [probs, allLabels, scores]
-
-def getModelDetails(outPath) -> dict:
-    """
-    Splits .out file from slurm and returns dictionary with details for recreating the model
-
-    Inputs:
-        - outPath: Location of .out file
-    Outputs:
-        - modelDetails: Dictionary of model parameters
-    """
-    with open(outPath) as outFile:
-        x = outFile.read()
-    detailsSplit = x.split('~ Model Details ~')[1]
-    modelDetailsOut = detailsSplit.split('-'*10)[0]
-    modelDetailsOut = modelDetailsOut.split('\n')[1:-1]
-    modelDetails = {}
-    for detail in modelDetailsOut:
-        detail, val = detail.split(' - ')
-        if val.isdigit():
-            val = int(val)
-        modelDetails[detail] = val
-
-    return modelDetails
-
-def loadDataLoader(loaderPath):
-    """
-    Loads 
-    """
