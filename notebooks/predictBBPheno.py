@@ -3,7 +3,7 @@
 # %autoreload 2
 
 # %%
-from src.models.predBB import makeImageDatasets, train_model
+from src.models.trainBB import makeImageDatasets, train_model
 from src.models import modelTools
 from pathlib import Path
 import numpy as np
