@@ -1,51 +1,35 @@
 # %%
-from src.models.predBB import getModelDetails, makeImageDatasets, testModel
+from src.models import testBB
 
 import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
 
-from torchvision import models
-import torch
-import torch.nn as nn
-
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
 # %%
 # First get training/testing results
 homePath = Path('..')
-modelId = 'classifySingleCellCrop-688020'
+modelNames = ['classifySingleCellCrop-688020', 'classifySingleCellCrop-686756', 'classifySingleCellCrop-688997']
+datasetDictPath = '../data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
 # %%
-device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-
-modelPath = Path.joinpath(homePath, 'models', f'{modelId}.pth')
-
-model = models.resnet152(pretrained=True)
-num_ftrs = model.fc.in_features
-model.fc = nn.Linear(num_ftrs, 2)
-model.load_state_dict(torch.load(modelPath, map_location=device))
-model.eval()
+datasetDicts = np.load(datasetDictPath, allow_pickle=True) 
 # %%
-outPath = Path.joinpath(homePath, 'results', 'TJ2201SingleCellCrop', f'{modelId}.out')
-
-modelDetails = getModelDetails(outPath)
-experiment = modelDetails['experiment']
-
-dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
-datasetDicts = np.load(datasetDictPath, allow_pickle=True)
-
-dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
-                                               dataPath, 
-                                               nIncrease    = modelDetails['nIncrease'], 
-                                               maxAmt       = modelDetails['maxAmt'], 
-                                               batch_size   = modelDetails['batch_size']
-                                               )
+modelRes = []
+for modelName in modelNames:
+    probs, allLabels, scores = testBB.getModelResults(modelName, homePath, datasetDicts)
+    modelRes.append(testBB.testResults(probs, allLabels, scores, modelName))
 # %%
-probs, allLabels, scores = testModel(model, dataloaders)
-# %%
-fpr, tpr, _ = roc_curve(allLabels, scores[:,1])
-roc_auc = roc_auc_score(allLabels, scores[:,1])
-# %%
-plt.plot(fpr, tpr, linewidth=3)
-plt.title('')
+plt.figure()
+plt.figure(figsize=(6,6))
+plt.rcParams.update({'font.size': 17})
+plt.grid()
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+for res in modelRes:
+    modelDetails = testBB.getModelDetails(Path('../results/classificationTraining') / f'{res.modelName}.out')
+    print(modelDetails['nIncrease'])
+    auc = res.auc
+    plotLabel = f'BB increase {modelDetails["nIncrease"]} px, AUC = {auc:0.2f}'
+    plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
+plt.legend(fontsize=12)
+plt.title('Phenotype Prediction\nIncreasing Bounding Box')
+plt.savefig('../figures/bbIncreaseROC.png', dpi=600)
