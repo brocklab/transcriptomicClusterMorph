@@ -158,8 +158,6 @@ class singleCellLoader(Dataset):
             uniqueIdx = uniqueIdx[0:n]
         elif self.phase == 'test':
             uniqueIdx = uniqueIdx[n:]
-        else:
-            raise ValueError('Phase must be train or test')
 
         # Get finalized amts
         segmentations = np.array([np.reshape(seg, (int(len(seg)/2), 2)) for seg in segmentations[uniqueIdx]], dtype='object')
