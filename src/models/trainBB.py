@@ -158,7 +158,7 @@ class singleCellLoader(Dataset):
             uniqueIdx = uniqueIdx[0:n]
         elif self.phase == 'test':
             uniqueIdx = uniqueIdx[n:]
-
+        self.uniqueIdx = uniqueIdx
         # Get finalized amts
         segmentations = np.array([np.reshape(seg, (int(len(seg)/2), 2)) for seg in segmentations[uniqueIdx]], dtype='object')
         phenotypes = phenotypes[uniqueIdx]
@@ -173,7 +173,7 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, maxAmt = 0, nIncrease=20, batch_size=40):
+def makeImageDatasets(datasetDicts, dataPath, maxAmt = 0, nIncrease=20, batch_size=40, isShuffle=True):
     """
     Creates pytorch image datasets using transforms
 
@@ -200,7 +200,7 @@ def makeImageDatasets(datasetDicts, dataPath, maxAmt = 0, nIncrease=20, batch_si
     image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x, maxAmt = maxAmt) 
                     for x in ['train', 'test']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
-    dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True)
+    dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=isShuffle)
                         for x in ['train', 'test']}
     
     return dataloaders, dataset_sizes
