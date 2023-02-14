@@ -113,3 +113,4 @@ plt.ylabel('Number of Cells')
 plt.legend(loc='upper left')
 
 plt.savefig('../figures/pipelineFigure/growthPlot.png', dpi=600)
+# %%

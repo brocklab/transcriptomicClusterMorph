@@ -24,6 +24,9 @@ from torch.optim import lr_scheduler
 import torch.nn as nn
 import torch.optim as optim
 
+def predictDataset(datasetDict, model):
+    pass
+
 def testModel(model, loaders, testSummaryPath='') -> list:
     device_str = "cuda"
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
@@ -117,7 +120,6 @@ def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
         model.load_state_dict(torch.load(modelPath, map_location=device))
     model.eval()
 
-
     outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
 
     modelDetails = getModelDetails(outPath)
@@ -128,11 +130,12 @@ def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
                                                 dataPath, 
                                                 nIncrease    = modelDetails['nIncrease'], 
                                                 maxAmt       = modelDetails['maxAmt'], 
-                                                batch_size   = modelDetails['batch_size']
+                                                batch_size   = modelDetails['batch_size'],
+                                                isShuffle = False
                                                 )
     probs, allLabels, scores = testModel(model, dataloaders)
-
-    return [probs, allLabels, scores]
+    imgNames = dataloaders['test'].dataset.imgNames
+    return [probs, allLabels, scores, imgNames]
 
 class testResults:
     """
@@ -144,14 +147,14 @@ class testResults:
     - scores: The softmax of the probabilities
     - labels: The actual labels    
     """
-    def __init__(self, probs, allLabels, scores, modelName, resultName = ''):
+    def __init__(self, probs, allLabels, scores, imageNames, modelName, resultName = ''):
         self.probs =  probs
         self.labels = allLabels
         self.scores = scores
         self.name = resultName
         self.n = self.probs.shape[0]
         self.preds = np.argmax(self.scores, axis= 1)
-
+        self.imgNames = imageNames
         if resultName == '':
             self.name = modelName
         self.modelName = modelName
@@ -159,7 +162,7 @@ class testResults:
         self.fpr, self.tpr, self.auc = self.getROC()
         self.acc = np.sum(self.labels == self.preds)/self.n
         
-        modelPath = Path.joinpath('..')
+        # modelPath = Path.joinpath('..')
     def getROC(self):
         fpr, tpr, _ = roc_curve(self.labels, self.scores[:,1])
         roc_auc = roc_auc_score(self.labels, self.scores[:,1])
