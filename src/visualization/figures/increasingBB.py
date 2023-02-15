@@ -6,6 +6,7 @@ Generates a figure demonstrating increasing bounding boxes for a cell
 # %%
 from src.data.imageProcessing import bbIncrease
 from src.data.fileManagement import splitName2Whole
+from src.visualization.trainTestRes import plotTrainingRes
 
 import numpy as np
 from pathlib import Path
@@ -98,4 +99,6 @@ for nIncrease in nIncreases:
     c += 1
 
 plt.savefig(homePath / 'figures/increasingBBDemonstration.png', dpi=600)
-# %%ß
+# %%
+cocultureModelPath = homePath / 'results/classificationTraining/classifySingleCellCrop-702500.out'
+plotTrainingRes(cocultureModelPath, title='Coculture Wells Only')
