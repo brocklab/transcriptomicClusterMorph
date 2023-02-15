@@ -1,6 +1,6 @@
 # %%
 import matplotlib.pyplot as plt
-
+from pathlib import Path
 # %%
 def plotTrainingRes(filePath, plot=True, title=''):
     """
@@ -29,7 +29,7 @@ def plotTrainingRes(filePath, plot=True, title=''):
 
     # Plot train/test loss/accuracy over epochs
     if plot:
-        plt.figure(figsize=(11,7))
+        plt.figure(figsize=(14,9))
         plt.subplot(221)
         plt.plot(trainLoss)
         plt.xlabel('Epoch')
@@ -47,6 +47,12 @@ def plotTrainingRes(filePath, plot=True, title=''):
         plt.xlabel('Epoch')
         plt.ylabel('Test Accuracy')
         plt.suptitle(title)
+        cwd = Path(__file__).parent.resolve()
+        figurePath = Path(cwd, '../../', 'figures', 'temp', 'currentTrainingResults.png')
+        # assert figurePath.exists()
+        plt.savefig(figurePath, dpi=600)
         plt.show()
+
+    
     return [trainLoss, trainAcc, testLoss, testAcc]
 

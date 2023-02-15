@@ -1,6 +1,6 @@
 # %%
 from src.models import testBB
-
+from src.visualization.trainTestRes import plotTrainingRes
 import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
@@ -55,10 +55,14 @@ for res in modelRes:
     modelDetails = testBB.getModelDetails(homePath / 'results/classificationTraining' / f'{res.modelName}.out')
     print(modelDetails['nIncrease'])
     auc = res.auc
-    plotLabel = f'BB increase {modelDetails["nIncrease"]} px, AUC = {auc:0.2f}'
+    plotLabel = f'AUC = {auc:0.2f}'
     plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
-plt.legend(fontsize=12)
-plt.title('Phenotype Prediction\nIncreasing Bounding Box')
+plt.legend(fontsize=12, loc='lower right')
+plt.title('Coculture Wells ROC')
+plt.savefig(homePath / 'figures/temp/cocultureWellsInit.png', dpi=600)
+# %%
+modelPath = homePath / 'results' / 'classificationTraining' / f'{modelNames[0]}.out'
+x = plotTrainingRes(modelPath, title = 'Coculture Well Training')
 # %% Get results by identity
 monoPos = ['B2','B3','B4','B5','B6','C2','C3','C4','C5','C6','D2','D3','D4','D5','D6']
 monoNeg = ['E2','E3','E4','E5','E6','F2','F3','F4','F5','F6','G2','G3','G4','G5','G6']
