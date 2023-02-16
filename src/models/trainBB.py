@@ -15,6 +15,8 @@ from skimage.transform import resize
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 
+from PIL import Image
+
 from torch.utils.data import Dataset, DataLoader
 import torch
 import torch.nn.functional as F
@@ -107,6 +109,7 @@ class singleCellLoader(Dataset):
 
         pcCrop = np.array([pcCrop, pcCrop, pcCrop]).transpose((1,2,0))
         if self.transforms:
+            pcCrop = Image.fromarray(np.uint8(pcCrop*255))
             img = self.transforms(pcCrop)
         return img, label
 
@@ -173,36 +176,50 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, maxAmt = 0, nIncrease=20, batch_size=40, isShuffle=True):
+def makeImageDatasets(datasetDicts, dataPath, data_transforms = [], phase = ['train', 'test'], maxAmt = 0, nIncrease=20, batch_size=40, isShuffle=True):
     """
     Creates pytorch image datasets using transforms
 
     Inputs:
     - datasetDicts: Segmentation information
     """
-    mean = np.array([0.5, 0.5, 0.5])
-    std = np.array([0.25, 0.25, 0.25])
-    data_transforms = {
-        'train': transforms.Compose([
-            # transforms.RandomResizedCrop(224),
-            # transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            # transforms.Normalize(mean, std)
-        ]),
-        'test': transforms.Compose([
-            # transforms.Resize(356),
-            # transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            # transforms.Normalize(mean, std)
-        ]),
-    }
+    mean = np.array([0.4840, 0.4840, 0.4840])
+    std = np.array([0.1047, 0.1047, 0.1047])
+    if data_transforms == []:
+        data_transforms = {
+            'train': transforms.Compose([
+                transforms.RandomVerticalFlip(p=0.5),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(degrees=(0, 180)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std)
+            ]),
+            'test': transforms.Compose([
+                # transforms.Resize(356),
+                # transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std)
+            ]),
+            'none': transforms.Compose([
+                transforms.RandomVerticalFlip(p=0.5),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(degrees=(0, 180)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std)
+            ])
+        }
+        print('Not using custom transforms')
 
     image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x, maxAmt = maxAmt) 
-                    for x in ['train', 'test']}
-    dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
+                    for x in phase}
+    dataset_sizes = {x: len(image_datasets[x]) for x in phase}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=isShuffle)
-                        for x in ['train', 'test']}
+                        for x in phase}
     
+    if len(phase) == 1:
+        dataloaders = dataloaders[phase[0]]
+        dataset_sizes = dataset_sizes[phase[0]]
+
     return dataloaders, dataset_sizes
 
 def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, num_epochs=25):
@@ -265,6 +282,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
         if epoch % 10 == 0:
+            model.load_state_dict(best_model_wts)
             torch.save(model.state_dict(), savePath)
 
         print()
