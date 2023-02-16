@@ -103,17 +103,19 @@ trainName = f'{name}_train'
 testName = f'{name}_test'
 if trainName in DatasetCatalog:
     DatasetCatalog.remove(trainName)
+    MetadataCatalog.remove(trainName)
     print('Removing training')
 if testName in DatasetCatalog:
     DatasetCatalog.remove(testName)
+    MetadataCatalog.remove(testName)
     print('Removing testing')
 inputs = [experiment, imgType, 'train']
 
 DatasetCatalog.register(trainName, lambda x = inputs: registerDatasetDict('train'))
-MetadataCatalog.get(trainName).set(thing_classes=["cell"])
+MetadataCatalog.get(trainName).set(thing_classes=["esamPos", "esamNeg"])
 
 DatasetCatalog.register(testName, lambda x=inputs: registerDatasetDict('test'))
-MetadataCatalog.get(testName).set(thing_classes=["cell"])
+MetadataCatalog.get(testName).set(thing_classes=["esamPos", "esamNeg"])
 
 # %%
 cfg = get_cfg()
