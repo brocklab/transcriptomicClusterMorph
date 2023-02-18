@@ -56,9 +56,6 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
                                                batch_size=batch_size
                                                )
 # %%
-dataset_sizes
-
-# %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
 model = models.resnet152(pretrained=True)
