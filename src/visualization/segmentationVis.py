@@ -1,6 +1,8 @@
 from src.data.fileManagement import getImageBase
 
+from pathlib import Path
 import matplotlib.pyplot as plt
+import numpy as np
 
 from skimage.io import imread
 from detectron2.utils.visualizer import Visualizer
@@ -16,8 +18,11 @@ def viewPredictorResult(predictor, imPath: str):
     Outputs:
     None
     """
-    im = imread(imPath)
-    imBase = getImageBase(imPath.split('/')[-1])
+    if type(imPath).__module__ == np.__name__:
+        im = imPath
+    else:
+        im = imread(imPath)
+    # imBase = getImageBase(imPath.split('/')[-1])
     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
     v = Visualizer(im[:, :, ::-1],
                 #    metadata=cell_metadata, 
@@ -28,5 +33,5 @@ def viewPredictorResult(predictor, imPath: str):
     plt.figure()
     print("plotting")
     plt.imshow(out.get_image()[:,:,::-1])
-    plt.title(imBase)
+    # plt.title(imBase)
     plt.show()
