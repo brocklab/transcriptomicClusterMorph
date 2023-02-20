@@ -115,7 +115,7 @@ def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
 
         # Create new layer and assign in to the last layer
         # Number of output layers is now 2 for the 2 classes
-        model.fc = nn.Linear(num_ftrs, 2)
+        # model.fc = nn.Linear(num_ftrs, 2)
 
         model.load_state_dict(torch.load(modelPath, map_location=device))
     model.eval()

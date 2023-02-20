@@ -290,3 +290,26 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
+
+
+def getTFModel(modelType, modelPath = '', nClassesNew = 2):
+
+    if modelType == 'resnet152':
+        model = models.resnet152(pretrained=True)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, nClassesNew)
+
+    elif modelType == 'vgg16':
+        model = models.vgg16(pretrained=True)
+        num_features = model.classifier[6].in_features
+        # Remove last layer
+        features = list(model.classifier.children())[:-1]
+        features.extend([nn.Linear(num_features, nClassesNew)])
+        model.classifier = nn.Sequential(*features)
+
+    if len(modelPath) >0:
+        device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
+        model.load_state_dict(torch.load(modelPath, map_location=device))
+        model.eval()
+
+    return model
