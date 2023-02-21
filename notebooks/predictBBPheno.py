@@ -18,7 +18,7 @@ import torch.optim as optim
 
 # %%
 experiment  = 'TJ2201'
-nIncrease   = 25
+nIncrease   = 0
 maxAmt      = 15000
 batch_size  = 40
 num_epochs  = 32
