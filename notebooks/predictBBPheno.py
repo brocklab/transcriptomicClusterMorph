@@ -26,7 +26,7 @@ modelType   = 'resnet152'
 notes = 'Run only on coculture wells'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
-modelSaveName = Path(f'../models/classifySingleCellCrop-{modelID}.pth')
+modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
 
 modelInputs = {
 
