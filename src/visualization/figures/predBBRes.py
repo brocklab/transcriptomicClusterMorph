@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score
 # %%
 # First get training/testing results
 homePath = Path('../../../')
-modelNames = ['classifySingleCellCrop-709125']
+modelNames = ['classifySingleCellCrop-713279']
 datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
 # %%
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
@@ -42,7 +42,7 @@ plt.title('Phenotype Prediction\nIncreasing Bounding Box')
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
-modelNames = ['classifySingleCellCrop-702500']
+modelNames = ['classifySingleCellCrop-713279']
 modelRes = []
 for modelName in modelNames:
     probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts)
@@ -64,7 +64,7 @@ plt.legend(fontsize=12, loc='lower right')
 plt.title('Coculture Wells ROC')
 plt.savefig(homePath / 'figures/temp/cocultureWellsInit.png', dpi=600)
 # %%
-modelPath = homePath / 'results' / 'classificationTraining' / 'classifySingleCellCrop-709125.out'
+modelPath = homePath / 'results' / 'classificationTraining' / 'classifySingleCellCrop-713279.out'
 x = plotTrainingRes(modelPath, title = 'Coculture Well Training')
 # %% Get results by identity
 monoPos = ['B2','B3','B4','B5','B6','C2','C3','C4','C5','C6','D2','D3','D4','D5','D6']
