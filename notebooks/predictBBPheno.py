@@ -22,7 +22,7 @@ nIncrease   = 0
 maxAmt      = 15000
 batch_size  = 40
 num_epochs  = 32
-modelType   = 'resnet152'
+modelType   = 'vgg16'
 notes = 'Run only on coculture wells'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
@@ -51,9 +51,9 @@ datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath, 
-                                               nIncrease=nIncrease, 
-                                               maxAmt = maxAmt, 
-                                               batch_size=batch_size
+                                               nIncrease    = modelInputs['nIncrease'], 
+                                               maxAmt       = modelInputs['maxAmt'], 
+                                               batch_size   = modelInputs['batch_size']
                                                )
 # %%
 inputs, classes = next(iter(dataloaders['train']))
@@ -63,7 +63,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 if not modelSaveName.parent.exists():
     raise NotADirectoryError('Model directory not found')
 
-model = getTFModel('resnet152')
+model = getTFModel(modelInputs['modelType'])
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
