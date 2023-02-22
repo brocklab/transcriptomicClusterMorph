@@ -9,8 +9,68 @@ import datetime
 import cv2
 from tqdm import tqdm
 import pickle
+from pathlib import Path
 
 from src.data.imageProcessing import imSplit
+
+def collateTrainingResults(generate = True):
+    """
+    Collects model results
+    Inputs:
+        - generate: bool for generating, if false loads and prints results'
+    Outputs:
+        - None
+    """
+    outPath = Path(__file__).resolve().parent / '../../' / 'results' / 'classificationTraining'
+    if generate == True:
+        outFiles = [outPath / outFile for outFile in list(outPath.iterdir())]
+        print(outFiles)
+        allModelDetails = {}
+        for outFile in outFiles:
+            modelDetails = getModelDetails(outFile)
+            for detail in modelDetails.keys():
+                if detail not in allModelDetails.keys():
+                    allModelDetails[detail] = []
+
+        for outFile in outFiles:
+            modelDetails = getModelDetails(outFile)
+            for detail in allModelDetails.keys():
+                if detail not in modelDetails.keys():
+                    allModelDetails[detail].append('')
+                else:
+                    allModelDetails[detail].append(modelDetails[detail])
+                
+        dfDetails = pd.DataFrame(allModelDetails)
+        dfDetails.to_csv(outPath / 'allModelDetails.csv')
+    else:
+        dfDetailsPath = outPath / 'allModelDetails.csv'
+        if not dfDetailsPath.exists():
+            print('Generating results...')
+            collateTrainingResults(generate=True)
+        dfDetails = pd.read_csv(dfDetailsPath, index_col=0)
+        print(dfDetails)
+def getModelDetails(outPath) -> dict:
+    """
+    Splits .out file from slurm and returns dictionary with details for recreating the model
+
+    Inputs:
+        - outPath: Location of .out file
+    Outputs:
+        - modelDetails: Dictionary of model parameters
+    """
+    with open(outPath) as outFile:
+        x = outFile.read()
+    detailsSplit = x.split('~ Model Details ~')[1]
+    modelDetailsOut = detailsSplit.split('-'*10)[0]
+    modelDetailsOut = modelDetailsOut.split('\n')[1:-1]
+    modelDetails = {}
+    for detail in modelDetailsOut:
+        detail, val = detail.split(' - ')
+        if val.isdigit():
+            val = int(val)
+        modelDetails[detail] = val
+
+    return modelDetails
 
 def makeNewExperimentDirectory(experimentName):
     """

@@ -60,29 +60,6 @@ def testModel(model, loaders, testSummaryPath='') -> list:
 
     return [probs, allLabels, scores]
 
-def getModelDetails(outPath) -> dict:
-    """
-    Splits .out file from slurm and returns dictionary with details for recreating the model
-
-    Inputs:
-        - outPath: Location of .out file
-    Outputs:
-        - modelDetails: Dictionary of model parameters
-    """
-    with open(outPath) as outFile:
-        x = outFile.read()
-    detailsSplit = x.split('~ Model Details ~')[1]
-    modelDetailsOut = detailsSplit.split('-'*10)[0]
-    modelDetailsOut = modelDetailsOut.split('\n')[1:-1]
-    modelDetails = {}
-    for detail in modelDetailsOut:
-        detail, val = detail.split(' - ')
-        if val.isdigit():
-            val = int(val)
-        modelDetails[detail] = val
-
-    return modelDetails
-
 def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
     """
     Gets results of a model on testing data
