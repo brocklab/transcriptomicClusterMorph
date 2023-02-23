@@ -4,11 +4,13 @@
 
 # %%
 from src.models.trainBB import makeImageDatasets, train_model, getTFModel
+from src.data.fileManagement import convertDate
 from src.models import modelTools
 from pathlib import Path
 import numpy as np
 import time
 import sys
+import datetime
 
 from torchvision import models
 from torch.optim import lr_scheduler
@@ -22,8 +24,8 @@ nIncrease   = 25
 maxAmt      = 15000
 batch_size  = 40
 num_epochs  = 32
-modelType   = 'vgg16'
-notes = 'Run only on coculture wells'
+modelType   = 'resnet152'
+notes = 'Run only on coculture wells on full high confluency images'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -49,7 +51,15 @@ datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
-dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
+datasetDictsLate = []
+for seg in datasetDicts:
+    fileName = seg['file_name']
+    incucyteDate = '_'.join(fileName.split('_')[3:5])
+    date = convertDate(incucyteDate)
+    if date >= datetime.datetime(2022,4,7,4):
+        datasetDictsLate.append(seg)
+# %%
+dataloaders, dataset_sizes = makeImageDatasets(datasetDictsLate, 
                                                dataPath, 
                                                nIncrease    = modelInputs['nIncrease'], 
                                                maxAmt       = modelInputs['maxAmt'], 
@@ -57,6 +67,8 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
                                                )
 # %%
 inputs, classes = next(iter(dataloaders['train']))
+# %%
+# plt.imshow(inputs[16].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
