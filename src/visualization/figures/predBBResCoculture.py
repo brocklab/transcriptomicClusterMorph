@@ -140,8 +140,8 @@ allLabels = np.concatenate(allLabels)
 scores = np.concatenate(scores)
 allPreds = np.argmax(scores, axis= 1)
 modelTestResults = {'probs': probs, 'allPreds': allPreds, 'allLabels': allLabels, 'scores': scores, 'images': dataloader.dataset.imgNames}
-fpr, tpr, _ = roc_curve(modelTestResults['allLabels'], modelTestResults['scores'][:,1])
-roc_auc = roc_auc_score(modelTestResults['allLabels'], modelTestResults['scores'][:,1])
+fpr, tpr, _ = roc_curve(modelTestResults['allLabels'], modelTestResults['scores'][:,0])
+roc_auc = roc_auc_score(modelTestResults['allLabels'], modelTestResults['scores'][:,0])
 print(f'AUC: {roc_auc:0.3}')
 # %%
 allDates = []
@@ -208,7 +208,7 @@ def ccc(x,y):
     return 2*cov_xy / (vx + vy + (mx-my)**2)
 
 # %%
-dfWell = getWell(dfFull, 'B8')   
+dfWell = getWell(dfFull, 'all')   
 plt.scatter(dfWell['0_pred'], dfWell['0_true'],  color='green')
 plt.scatter(dfWell['1_pred'], dfWell['1_true'],  color='red')
 plt.xlabel('Predicted')
@@ -217,34 +217,24 @@ plt.ylabel('Actual')
 slope, intercept, r_value0, p_value, std_err = stats.linregress(dfWell['0_pred'], dfWell['0_true'])
 slope, intercept, r_value1, p_value, std_err = stats.linregress(dfWell['1_pred'], dfWell['1_true'])
 
-plt.title(f'R^2 = {r_value1**2:.3}')
+plt.title(f'R^2 = {r_value0**2:.3}')
+# %% 
+vals = np.random.randint(2, size=30000)
+predVals = []
+opposite = {0: 1, 1:0}
+for val in vals:
+    roll = np.random.random()
+    if roll > .9:
+        predVals.append(opposite[val])
+    else:
+        predVals.append(val)
+
+df = pd.DataFrame([vals, predVals]).transpose()
+N = 60
+df = df.groupby(df.index // N).sum()
+
+rvalue = ccc(df[0], df[1])
+plt.scatter(df[0], df[1])
+plt.title(rvalue)
 # %%
-probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts)
-allPreds = np.argmax(scores, axis= 1)
-
-modelRes1 = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
-# %%
-predicted, groundTruth = {}, {}
-for predLabel, imgName, trueLabel in zip(predictedLabels, modelTestResults['images'], modelTestResults['allLabels']):
-    imgName = splitName2Whole(imgName)
-    if imgName not in predicted.keys():
-        predicted[imgName] = [0, 0]
-        groundTruth[imgName] = [0, 0]
-    predicted[imgName][predLabel] += 1
-    groundTruth[imgName][trueLabel] += 1
-
-# %%
-dfPred = pd.DataFrame(predicted).transpose()
-dfTrue = pd.DataFrame(groundTruth).transpose()
-
-dfFull = dfPred.join(dfTrue, lsuffix='_pred', rsuffix='_true')
-
-wells = [img.split('_')[1] for img in dfFull.index]
-dates = [convertDate('_'.join(img.split('_')[3:5])) for img in dfFull.index]
-dfFull['well'] = wells
-dfFull['dates'] = dates
-dfFull.head()
-
-dfWell = getWell(dfFull, 'all')
-slope, intercept, r_value0, p_value, std_err = stats.linregress(dfWell['0_pred'], dfWell['0_true'])
-slope, intercept, r_value1, p_value, std_err = stats.linregress(dfWell['1_pred'], dfWell['1_true'])
+roc_auc = roc_auc_score(modelTestResults['allLabels'], modelTestResults['scores'][:,0])
