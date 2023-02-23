@@ -293,7 +293,20 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
 
 
 def getTFModel(modelType, modelPath = '', nClassesNew = 2):
-
+    """
+    Loads a model and modifies the last portion for transfer learning
+    Inputs:
+        - modelType: Type of model desired
+        - modelPath: Path to load the state dict if provided
+        - nClassesNew: New number of classes
+    Outputs:
+        - model: Pytorch model
+    """
+    availableModels = ['resnet152', 'vgg16']
+    if modelType not in availableModels:
+        print("Model not found, resorting to resnet")
+        modelType = 'resnet152'
+        
     if modelType == 'resnet152':
         model = models.resnet152(pretrained=True)
         num_ftrs = model.fc.in_features

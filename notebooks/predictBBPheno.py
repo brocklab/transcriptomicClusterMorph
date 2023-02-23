@@ -21,11 +21,11 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2201'
 nIncrease   = 25
-maxAmt      = 15000
+maxAmt      = 20000
 batch_size  = 40
 num_epochs  = 32
 modelType   = 'resnet152'
-notes = 'Run only on coculture wells on full high confluency images'
+notes = 'Run only on coculture wells'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -51,15 +51,7 @@ datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
-datasetDictsLate = []
-for seg in datasetDicts:
-    fileName = seg['file_name']
-    incucyteDate = '_'.join(fileName.split('_')[3:5])
-    date = convertDate(incucyteDate)
-    if date >= datetime.datetime(2022,4,7,4):
-        datasetDictsLate.append(seg)
-# %%
-dataloaders, dataset_sizes = makeImageDatasets(datasetDictsLate, 
+dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath, 
                                                nIncrease    = modelInputs['nIncrease'], 
                                                maxAmt       = modelInputs['maxAmt'], 

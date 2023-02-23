@@ -144,8 +144,21 @@ fpr, tpr, _ = roc_curve(modelTestResults['allLabels'], modelTestResults['scores'
 roc_auc = roc_auc_score(modelTestResults['allLabels'], modelTestResults['scores'][:,1])
 print(f'AUC: {roc_auc:0.3}')
 # %%
-
-
+allDates = []
+for image in modelTestResults['images']:
+    date = '_'.join(image.split('_')[3:5])
+    allDates.append(convertDate(date))
+allDates = np.array(allDates)
+uniqueDates = list(set(allDates))
+uniqueDates.sort()
+for date in uniqueDates:
+    dateIdx = np.where(allDates == date)[0]
+    currentLabels = allLabels[dateIdx]
+    currentScores = scores[dateIdx]
+    currentPreds = np.argmax(scores[dateIdx], axis=1)
+    acc = np.sum(currentPreds == currentLabels)/len(currentLabels)
+    roc_auc = roc_auc_score(currentLabels, currentScores[:,1])
+    print(f'AUC: {roc_auc:0.2f} \t Accuracy: {acc:0.2f}')
 # %%
 groundTruth = {}
 for seg in datasetDictsSub:
