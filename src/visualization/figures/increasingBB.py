@@ -24,13 +24,15 @@ homePath = Path('../../../')
 datasetDictPath = homePath / './data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 # %% Get single cell
-idx = 516
+idx = random.randint(0,len(datasetDicts))
+# idx = 15902
+print(idx)
 c = idx
 for seg in datasetDicts[idx:]:
     annotations = seg['annotations']
     nCells = len(seg['annotations'])
     if nCells < 10:
-        print(f'Skipping {c} \t {nCells}')
+        # print(f'Skipping {c} \t {nCells}')
         c += 1
         continue
     imgPath = homePath / Path(*Path(seg['file_name']).parts[2:])
@@ -73,26 +75,27 @@ pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows
 pcCropFull = resize(pcCrop, (maxRows, maxCols))
 
 
-# %% Increase bounding box
+# Increase bounding box
 imgNameWhole = splitName2Whole(seg['file_name'].split('/')[-1])
 imgPathWhole = homePath / 'data/TJ2201/raw/phaseContrast' / imgNameWhole
 imgWhole = imread(imgPathWhole)
-nIncreases = [0, 45, 65]
+nIncreases = [0, 25, 65]
 increasingBB = {}
 for nIncrease in nIncreases:
     imgCrop = bbIncrease(cell['segmentation'][0], cell['bbox'], seg['file_name'], imgWhole, nIncrease = nIncrease)
     increasingBB[nIncrease] = imgCrop
-# %%
+# 
 plt.figure(figsize=(10,10))
 
-plt.subplot(221)
-plt.imshow(pcCropFull, cmap='gray')
-plt.title('No bounding box', fontsize=15)
-plt.axis('off')
+# plt.subplot(221)
+# plt.imshow(img, cmap='gray')
+# plt.plot(polyx, polyy, 'b--', linewidth=2)
+# plt.title('No bounding box', fontsize=15)
+# plt.axis('off')
 
-c = 2
+c = 1
 for nIncrease in nIncreases:
-    plt.subplot(2,2,c)
+    plt.subplot(3,1,c)
     plt.imshow(increasingBB[nIncrease], cmap='gray')
     plt.title(f'BB Increase = {nIncrease} px', fontsize=15)
     plt.axis('off')

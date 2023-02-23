@@ -1,5 +1,5 @@
 from src.data.imageProcessing import bbIncrease
-from src.data.fileManagement import splitName2Whole
+from src.data.fileManagement import splitName2Whole, getModelDetails
 from src.models import trainBB
 
 import random

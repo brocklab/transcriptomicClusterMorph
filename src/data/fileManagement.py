@@ -13,13 +13,13 @@ from pathlib import Path
 
 from src.data.imageProcessing import imSplit
 
-def collateTrainingResults(generate = True):
+def collateTrainingResults(generate = False):
     """
     Collects model results
     Inputs:
         - generate: bool for generating, if false loads and prints results'
     Outputs:
-        - None
+        - defDetails: Dataframe of all experiments and details
     """
     outPath = Path(__file__).resolve().parent / '../../' / 'results' / 'classificationTraining'
     if generate == True:
@@ -49,6 +49,7 @@ def collateTrainingResults(generate = True):
             collateTrainingResults(generate=True)
         dfDetails = pd.read_csv(dfDetailsPath, index_col=0)
         print(dfDetails)
+    return dfDetails
 def getModelDetails(outPath) -> dict:
     """
     Splits .out file from slurm and returns dictionary with details for recreating the model
