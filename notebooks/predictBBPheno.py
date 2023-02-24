@@ -21,7 +21,7 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2201'
 nIncrease   = 25
-maxAmt      = 30000
+maxAmt      = 40000
 batch_size  = 40
 num_epochs  = 32
 modelType   = 'resnet152'
