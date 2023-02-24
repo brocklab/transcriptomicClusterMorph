@@ -320,7 +320,7 @@ def getTFModel(modelType, modelPath = '', nClassesNew = 2):
         features.extend([nn.Linear(num_features, nClassesNew)])
         model.classifier = nn.Sequential(*features)
 
-    if len(modelPath) >0:
+    if len(str(modelPath)) > 0:
         device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
         model.load_state_dict(torch.load(modelPath, map_location=device))
         model.eval()

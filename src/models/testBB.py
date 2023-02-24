@@ -60,7 +60,7 @@ def testModel(model, loaders, testSummaryPath='') -> list:
 
     return [probs, allLabels, scores]
 
-def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
+def getModelResults(modelName, homePath, datasetDicts):
     """
     Gets results of a model on testing data
 
@@ -68,7 +68,6 @@ def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
         - modelName: Used to identify the model name/output file
         - homePath: Path to return to home directory
         - datasetDicts: Segmentation information in detectron2 format
-        - modelType: Type of model (used for transfer learning)
     
     Outputs:
         - probs: Returned probabilities of class identification from network
@@ -76,30 +75,13 @@ def getModelResults(modelName, homePath, datasetDicts, modelType = 'resnet152'):
         - scores: softmax of probs to get actual probabilities summed to 1
 
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-
     modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
-
-    # TODO: Could turn this into a function if > 1 models are used
-    if modelType == 'resnet152':
-        model = models.resnet152(pretrained=True)
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, 2)
-        model.load_state_dict(torch.load(modelPath, map_location=device))
-        model.eval()
-
-        num_ftrs = model.fc.in_features
-
-        # Create new layer and assign in to the last layer
-        # Number of output layers is now 2 for the 2 classes
-        # model.fc = nn.Linear(num_ftrs, 2)
-
-        model.load_state_dict(torch.load(modelPath, map_location=device))
-    model.eval()
-
     outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
-
     modelDetails = getModelDetails(outPath)
+
+    model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
+
+
 
     dataPath = Path.joinpath(homePath, 'data', modelDetails['experiment'], 'raw', 'phaseContrast')
 
