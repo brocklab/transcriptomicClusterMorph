@@ -281,9 +281,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
             if phase == 'test' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-        if epoch % 10 == 0:
-            model.load_state_dict(best_model_wts)
-            torch.save(model.state_dict(), savePath)
+        
+        # Always save model on each epoch
+        model.load_state_dict(best_model_wts)
+        torch.save(model.state_dict(), savePath)
 
         print()
 

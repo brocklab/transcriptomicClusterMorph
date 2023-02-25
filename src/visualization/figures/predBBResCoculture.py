@@ -27,17 +27,10 @@ import torch.nn.functional as F
 # %%   
 # First get training/testing results
 homePath = Path('../../../')
-modelNames = [
-'classifySingleCellCrop-702500',   
-'classifySingleCellCrop-714689',   
-'classifySingleCellCrop-709125',   
-'classifySingleCellCrop-688020',   
-'classifySingleCellCrop-688997',   
-'classifySingleCellCrop-713279'
-]
 modelPath = homePath / 'models' / 'classification'
 modelNames = list(modelPath.iterdir())
 modelNames = [str(modelName.parts[-1]).split('.')[0] for modelName in modelNames]
+modelNames.sort()
 datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
 # %%
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
@@ -60,7 +53,8 @@ for modelName in modelNames:
 modelsPlot = ['classifySingleCellCrop-714689',
               'classifySingleCellCrop-713279', 
               'classifySingleCellCrop-709125', 
-              'classifySingleCellCrop-720396']
+              'classifySingleCellCrop-720396',
+              'classifySingleCellCrop-721082']
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})
@@ -77,7 +71,7 @@ plt.legend(fontsize=12)
 plt.title('Phenotype Prediction\nIncreasing Bounding Box')
 # plt.savefig(homePath / 'figures' / 'bbIncreaseCocultureROC.png', dpi=600)
 # %%
-x = plotTrainingRes(homePath / 'results' / 'classificationTraining' / f'{modelsPlot[-1]}.out')
+x = plotTrainingRes(homePath / 'results' / 'classificationTraining' / f'{modelNames[-1]}.out')
 # # %% Identify images that were not in the training set
 # modelName = 'classifySingleCellCrop-713279'
 # modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{modelName}.out')
