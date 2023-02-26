@@ -173,11 +173,14 @@ def segmentExperiment(dataPath: str, imgBases: list, phenoDict: dict, experiment
             print('Done saving')
             saveIdx += 1
 
-        # If time running > 8 hours stop
-        if time.time()-then > 28800:
+        # If time running > 8 hours stop (28800 seconds)
+        if time.time()-then > 72247:
             print('Time is up!')
             datasetDictPath = os.path.join(dataPath, f'{experiment}DatasetDict.npy')
             np.save(datasetDictPath, datasetDicts)            
+            
+            year, month, day, hour, min = map(int, time.strftime("%Y %m %d %H %M").split())
+            print(f'Finished on {month}-{day}-{year} at {hour}:{min}')
             break
 
 
