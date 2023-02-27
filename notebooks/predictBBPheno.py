@@ -22,7 +22,7 @@ import torch.optim as optim
 experiment  = 'TJ2201'
 nIncrease   = 25
 maxAmt      = 40000
-batch_size  = 40
+batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
 notes = 'Run only on coculture wells'
@@ -44,6 +44,8 @@ modelInputs = {
 }
 
 modelTools.printModelVariables(modelInputs)
+# %%
+
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
@@ -74,11 +76,14 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.001)
 
 # %%
+model2 = nn.DataParallel(model)
+
+# %%
 # Scheduler to update lr
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-model = train_model(model, 
+model = train_model(model2, 
                     criterion, 
                     optimizer, 
                     setp_lr_scheduler, 

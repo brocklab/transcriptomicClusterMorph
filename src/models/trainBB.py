@@ -223,8 +223,10 @@ def makeImageDatasets(datasetDicts, dataPath, data_transforms = [], phase = ['tr
     return dataloaders, dataset_sizes
 
 def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, num_epochs = 25, best_acc = 0):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('Sending to device')
+    model.to(device)
+    print(model)
     best_model_wts = copy.deepcopy(model.state_dict())
     # if device.type != 'cuda':
     #     raise Exception('Incorrect device')
