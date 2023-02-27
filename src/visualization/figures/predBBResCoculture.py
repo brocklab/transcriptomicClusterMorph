@@ -4,7 +4,7 @@
 """
 # %%
 from src.models.trainBB import singleCellLoader, getTFModel
-from src.data.fileManagement import convertDate, splitName2Whole
+from src.data.fileManagement import convertDate, splitName2Whole, collateModelParameters
 from src.models import testBB
 from src.visualization.trainTestRes import plotTrainingRes
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ modelPath = homePath / 'models' / 'classification'
 modelNames = list(modelPath.iterdir())
 modelNames = [str(modelName.parts[-1]).split('.')[0] for modelName in modelNames]
 modelNames.sort()
-datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
+datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderOrig.npy'
 # %%
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
@@ -54,7 +54,7 @@ modelsPlot = ['classifySingleCellCrop-714689',
               'classifySingleCellCrop-713279', 
               'classifySingleCellCrop-709125', 
               'classifySingleCellCrop-720396',
-              'classifySingleCellCrop-721082']
+              'classifySingleCellCrop-723948']
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})

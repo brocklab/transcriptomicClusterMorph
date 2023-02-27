@@ -13,7 +13,7 @@ from pathlib import Path
 
 from src.data.imageProcessing import imSplit
 
-def collateTrainingResults(generate = False):
+def collateModelParameters(generate = False):
     """
     Collects model results
     Inputs:
@@ -46,9 +46,8 @@ def collateTrainingResults(generate = False):
         dfDetailsPath = outPath / 'allModelDetails.csv'
         if not dfDetailsPath.exists():
             print('Generating results...')
-            collateTrainingResults(generate=True)
+            collateModelParameters(generate=True)
         dfDetails = pd.read_csv(dfDetailsPath, index_col=0)
-        print(dfDetails)
     return dfDetails
 def getModelDetails(outPath) -> dict:
     """
