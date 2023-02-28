@@ -147,10 +147,15 @@ class singleCellLoader(Dataset):
         else:
             maxAmt = self.maxAmt
             
+        
+        if maxAmt > min(cts):
+            self.maxAmt = min(cts)
+        print(self.maxAmt)
+
         segmentations, phenotypes, imgNames, bbs = self.shuffleLists([segmentations, phenotypes, imgNames, bbs], self.seed)
         uniqueIdx = []
         for pheno in uniquePheno:
-            idx = list(np.where(phenotypes == pheno)[0][0:maxAmt])
+            idx = list(np.where(phenotypes == pheno)[0][0:self.maxAmt])
             uniqueIdx += idx
         random.seed(self.seed)
         random.shuffle(uniqueIdx)

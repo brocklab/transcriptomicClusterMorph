@@ -7,7 +7,7 @@ from skimage.draw import polygon
 from skimage.segmentation import clear_border
 from skimage.morphology import binary_dilation
 # %%
-datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDictCopy.npy', allow_pickle=True)
+datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDict.npy', allow_pickle=True)
 # %%
 breakOn = 0
 ddNoBorder = []
@@ -38,7 +38,7 @@ for segInit, segFilter in zip(datasetDicts, ddNoBorder):
     nCellsFilter += len(segFilter['annotations'])
 
 print(f'Filtered from {nCellsInit} cells to {nCellsFilter}')
-np.save('../data/TJ2201/split16/TJ2201DatasetDictNoBorderOrig.npy', ddNoBorder)
+np.save('../data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.npy', ddNoBorder)
 # %%
 
 idx = 0

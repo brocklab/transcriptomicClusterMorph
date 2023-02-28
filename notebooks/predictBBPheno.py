@@ -1,6 +1,6 @@
 # %%
-# %load_ext autoreload
-# %autoreload 2
+%load_ext autoreload
+%autoreload 2
 
 # %%
 from src.models.trainBB import makeImageDatasets, train_model, getTFModel
@@ -21,7 +21,7 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2201'
 nIncrease   = 25
-maxAmt      = 40000
+maxAmt      = 50000
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
@@ -48,10 +48,20 @@ modelTools.printModelVariables(modelInputs)
 
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
+datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
+# %%
+# Check size
+wellSize = {}
+for seg in datasetDicts:
+    well = seg['file_name'].split('_')[1]
+    if well not in wellSize.keys():
+        wellSize[well] = 0
+    wellSize[well] += len(seg['annotations'])
+
+sum(list(wellSize.values()))
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath, 
@@ -59,6 +69,7 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
                                                maxAmt       = modelInputs['maxAmt'], 
                                                batch_size   = modelInputs['batch_size']
                                                )
+np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%

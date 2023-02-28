@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 import torch
 from torchvision import transforms
 import torch.nn.functional as F
-# %%   
+# %%
 # First get training/testing results
 homePath = Path('../../../')
 modelPath = homePath / 'models' / 'classification'
