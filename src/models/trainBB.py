@@ -9,6 +9,7 @@ import os
 import matplotlib.pyplot as plt
 import pickle 
 from pathlib import Path
+from collections import OrderedDict
 
 from skimage.io import imread
 from skimage.transform import resize
@@ -335,7 +336,13 @@ def getTFModel(modelType, modelPath = '', nClassesNew = 2):
 
     if len(str(modelPath)) > 0:
         device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-        model.load_state_dict(torch.load(modelPath, map_location=device))
+        modelSaved = torch.load(modelPath, map_location=device)
+        modelSavedCorrect = OrderedDict()
+        for k, v in modelSaved.items():
+            modelSavedCorrect[k.replace('module.', '')] = v
+        
+        model.load_state_dict(modelSavedCorrect)
+        
         model.eval()
 
     return model

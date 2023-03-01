@@ -36,7 +36,6 @@ datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
-
 # %%
 resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
 if resultsFile.exists():
@@ -53,20 +52,28 @@ for modelName in modelNames:
 modelsPlot = ['classifySingleCellCrop-714689',
               'classifySingleCellCrop-713279', 
               'classifySingleCellCrop-709125', 
-              'classifySingleCellCrop-720396',
-              'classifySingleCellCrop-723948']
+            #   'classifySingleCellCrop-720396',
+              'classifySingleCellCrop-727592']
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})
 plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-for model in modelsPlot:
+for model in modelsPlot[0:-1]:
     modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.out')
     res = modelRes[model]
     auc = res.auc
     plotLabel = f'BB increase {modelDetails["nIncrease"]} px, AUC = {auc:0.2f}'
     plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
+
+model = modelsPlot[-1]
+modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.out')
+res = modelRes[model]
+auc = res.auc
+plotLabel = f'Full dataset, AUC = {auc:0.2f}'
+plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
+
 plt.legend(fontsize=12)
 plt.title('Phenotype Prediction\nIncreasing Bounding Box')
 # plt.savefig(homePath / 'figures' / 'bbIncreaseCocultureROC.png', dpi=600)
