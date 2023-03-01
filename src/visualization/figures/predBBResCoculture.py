@@ -31,7 +31,7 @@ modelPath = homePath / 'models' / 'classification'
 modelNames = list(modelPath.iterdir())
 modelNames = [str(modelName.parts[-1]).split('.')[0] for modelName in modelNames]
 modelNames.sort()
-datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderOrig.npy'
+datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.npy'
 # %%
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']

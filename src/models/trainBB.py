@@ -129,6 +129,14 @@ class singleCellLoader(Dataset):
             - phenotypes, list of encoded phenotypes
             - imgNames, list of image names
         """
+        # Split off well for training/testing
+        testWell = 'B8'
+
+        if self.phase == 'train':
+            datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] != testWell]
+        elif self.phase == 'test':
+            datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] == testWell]
+
         # Reformat dataset dict to most relevant information
         segmentations, phenotypes, imgNames, bbs = [], [], [], []
         # Note there is a lot of repeats for images but this is much cleaner
@@ -147,25 +155,21 @@ class singleCellLoader(Dataset):
         else:
             maxAmt = self.maxAmt
             
-        
         if maxAmt > min(cts):
             self.maxAmt = min(cts)
-        print(self.maxAmt)
 
         segmentations, phenotypes, imgNames, bbs = self.shuffleLists([segmentations, phenotypes, imgNames, bbs], self.seed)
         uniqueIdx = []
-        for pheno in uniquePheno:
-            idx = list(np.where(phenotypes == pheno)[0][0:self.maxAmt])
-            uniqueIdx += idx
+
+        if self.phase == 'train':
+            for pheno in uniquePheno:
+                idx = list(np.where(phenotypes == pheno)[0][0:self.maxAmt])
+                uniqueIdx += idx
+        else:
+            uniqueIdx = list(range(0, len(phenotypes)))
         random.seed(self.seed)
         random.shuffle(uniqueIdx)
         
-        # Create train/test split
-        n = int(0.9*len(uniqueIdx))
-        if self.phase == 'train':
-            uniqueIdx = uniqueIdx[0:n]
-        elif self.phase == 'test':
-            uniqueIdx = uniqueIdx[n:]
         self.uniqueIdx = uniqueIdx
         # Get finalized amts
         segmentations = np.array([np.reshape(seg, (int(len(seg)/2), 2)) for seg in segmentations[uniqueIdx]], dtype='object')
@@ -173,6 +177,7 @@ class singleCellLoader(Dataset):
         imgNames = imgNames[uniqueIdx]
         bbs = bbs[uniqueIdx]
         return [segmentations, phenotypes, imgNames, bbs]
+    
     @staticmethod
     def shuffleLists(l, seed=1234):
         random.seed(seed)
