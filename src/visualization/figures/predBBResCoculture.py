@@ -31,9 +31,11 @@ modelPath = homePath / 'models' / 'classification'
 modelNames = list(modelPath.iterdir())
 modelNames = [str(modelName.parts[-1]).split('.')[0] for modelName in modelNames]
 modelNames.sort()
-datasetDictPath = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.npy'
+datasetDictPathFull = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.npy'
+datasetDictPathPartial = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
+
 # %%
-datasetDicts = np.load(datasetDictPath, allow_pickle=True)
+datasetDicts = np.load(datasetDictPathPartial, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
@@ -42,12 +44,16 @@ if resultsFile.exists():
     modelRes = pickle.load(open(resultsFile, "rb"))
 else:
     modelRes = {}
-for modelName in modelNames:
-    if modelName not in modelRes.keys():
-        print(modelName)
-        probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts)
-        modelRes[modelName] = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
-        pickle.dump(modelRes, open(resultsFile, "wb"))
+
+modelNames2 = ['classifySingleCellCrop-714689',
+              'classifySingleCellCrop-713279', 
+              'classifySingleCellCrop-709125']
+for modelName in modelNames2:
+    # if modelName not in modelRes.keys():
+    print(modelName)
+    probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts)
+    modelRes[modelName] = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+    pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
 modelsPlot = ['classifySingleCellCrop-714689',
               'classifySingleCellCrop-713279', 

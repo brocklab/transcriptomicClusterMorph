@@ -65,7 +65,7 @@ def cellpose2Detectron(experiment, imgType='phaseContrast', stage=None):
 
         splitDir = f'split{nSplits}'
         imgBase = getImageBase(segFile)
-
+        print(segFile)
         # For every split image, load corresponding image
         # Covert to Detectron2 Dataset format
         for splitNum in range(1, len(splitMasks)+1):
@@ -123,5 +123,5 @@ def addCellsToCatalog(experiment, name, imgType = 'phaseContrast'):
     DatasetCatalog.register(testName, lambda x=inputs: cellpose2Detectron(inputs[0], inputs[1], 'test'))
     MetadataCatalog.get(testName).set(thing_classes=["cell"])
 
-
+    return cellpose2Detectron(inputs[0], inputs[1], 'train')
 

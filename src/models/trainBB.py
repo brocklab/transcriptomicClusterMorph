@@ -60,7 +60,7 @@ class singleCellLoader(Dataset):
         self.segmentations, self.phenotypes, self.imgNames, self.bbs = self.balance(datasetDicts)
         
         # Variable parameters for segmentation
-        self.maxImgSize = 150
+        self.maxImgSize = 75
         self.nIncrease = nIncrease
         
     def __len__(self):

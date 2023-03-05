@@ -32,7 +32,7 @@ experiment = 'TJ2201'
 stage = 'train'
 imgType = 'phaseContrast'
 
-addCellsToCatalog('TJ2201', 'cellMorph')
+datasetDicts = addCellsToCatalog('TJ2201', 'cellMorph')
 
 # %%
 cfg = get_cfg()
@@ -51,7 +51,7 @@ cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (cell). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
-cfg.OUTPUT_DIR = '../models/TJ2201Split16_2'
+cfg.OUTPUT_DIR = '../../models/TJ2201Split16_2'
 # %%
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 trainer = DefaultTrainer(cfg)
