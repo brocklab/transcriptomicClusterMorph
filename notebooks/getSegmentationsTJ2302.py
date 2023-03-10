@@ -141,16 +141,19 @@ def getRecord(pcName, compositeImg, pcImg, idx, predictor = predictor):
     record["annotations"] = cells
     return record
 # %%
-idx = 0
 if Path('../data/TJ2302/TJ2302DatasetDicts-1.npy').exists():
     print('Loading dataset dict')
     datasetDicts = np.load(Path('../data/TJ2302/TJ2302DatasetDicts-1.npy'), allow_pickle=True)
+    idx = len(datasetDicts)
 else:
     datasetDicts = []
+    idx = 0
+
+# %%
 datasetDicts = list(datasetDicts)
 modIdx = 1
 allCompositeIms = list(compositeImPath.iterdir())
-for compositeName in tqdm(allCompositeIms[64:]):
+for compositeName in tqdm(allCompositeIms[idx:]):
     pcName = Path(str(compositeName).replace('composite', 'phaseContrast'))
 
     pcImg = imread(pcName)

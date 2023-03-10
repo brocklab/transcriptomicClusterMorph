@@ -42,11 +42,10 @@ if resultsFile.exists():
 else:
     modelRes = {}
 
-modelNames2 = ['classifySingleCellCrop-737765']
+modelNames2 = ['classifySingleCellCrop-727592']
 for modelName in modelNames2:
-    # if modelName not in modelRes.keys():
     print(modelName)
-    probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts)
+    probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')
     modelRes[modelName] = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
     pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
@@ -72,10 +71,20 @@ plotLabel = f'Full dataset, AUC = {auc:0.2f}'
 plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 
 plt.legend(fontsize=12, loc='lower right')
-# plt.title('Phenotype Prediction\nIncreasing Bounding Box')
-# plt.savefig(homePath / 'figures' / 'bbIncreaseCocultureROC.png', dpi=600)
+plt.title('BT474 Initial Classification')
+plt.savefig(homePath / 'figures' / 'BT474Classification.png', dpi=600)
 # %%
 x = plotTrainingRes(homePath / 'results' / 'classificationTraining' / f'{modelNames[-1]}.out')
+# %%
+trainFile = homePath / 'results' / 'classificationResults' / 'trainingResBT474.pickle'
+
+if not trainFile.exists():
+    probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'train')
+    trainingRes = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+    pickle.dump(trainingRes, open(trainFile, "wb"))
+else:
+    trainingRes = pickle.load(open(trainFile, "rb"))
+# %%
 # # %% Identify images that were not in the training set
 # modelName = 'classifySingleCellCrop-713279'
 # modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{modelName}.out')

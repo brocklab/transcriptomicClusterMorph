@@ -27,14 +27,14 @@ import torch.optim as optim
 def predictDataset(datasetDict, model):
     pass
 
-def testModel(model, loaders, testSummaryPath='') -> list:
+def testModel(model, loaders, mode = 'test', testSummaryPath='') -> list:
     device_str = "cuda"
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
     probs = []
     allLabels = []
     scores = []
     running_corrects = 0
-    for inputs, labels in tqdm(loaders['test'], position=0, leave=True):
+    for inputs, labels in tqdm(loaders[mode], position=0, leave=True):
         # I have no idea why you have to do this but...
         # https://discuss.pytorch.org/t/runtimeerror-expected-object-of-scalar-type-double-but-got-scalar-type-float-for-argument-2-weight/38961/9
         inputs = inputs.float()
@@ -55,12 +55,12 @@ def testModel(model, loaders, testSummaryPath='') -> list:
     scores = np.concatenate(scores)
 
     modelTestResults = {'probs': probs, 'allLabels': allLabels, 'scores': scores}
-    if len(testSummaryPath)>0:
+    if len(str(testSummaryPath))>0:
         pickle.dump(modelTestResults, open(testSummaryPath, "wb"))
 
     return [probs, allLabels, scores]
 
-def getModelResults(modelName, homePath, datasetDicts):
+def getModelResults(modelName, homePath, datasetDicts, mode = 'test'):
     """
     Gets results of a model on testing data
 
@@ -92,8 +92,8 @@ def getModelResults(modelName, homePath, datasetDicts):
                                                 batch_size   = modelDetails['batch_size'],
                                                 isShuffle = False
                                                 )
-    probs, allLabels, scores = testModel(model, dataloaders)
-    imgNames = dataloaders['test'].dataset.imgNames
+    probs, allLabels, scores = testModel(model, dataloaders, mode = mode)
+    imgNames = dataloaders[mode].dataset.imgNames
     return [probs, allLabels, scores, imgNames]
 
 class testResults:
