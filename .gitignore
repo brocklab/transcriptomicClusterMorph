@@ -16,3 +16,4 @@ __pycache__/
 
 # Keep folder structure
 !.gitkeep
+!data/experimentParams.txt
