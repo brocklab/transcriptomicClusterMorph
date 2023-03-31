@@ -57,17 +57,19 @@ for seg in datasetDicts:
     wellSize[well] += len(seg['annotations'])
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                               dataPath, 
-                                               nIncrease    = modelInputs['nIncrease'], 
-                                               maxAmt       = modelInputs['maxAmt'], 
-                                               batch_size   = modelInputs['batch_size']
-                                               )
+                                               dataPath,
+                                               modelInputs
+                                            )
+                                            #    nIncrease    = modelInputs['nIncrease'], 
+                                            #    maxAmt       = modelInputs['maxAmt'], 
+                                            #    batch_size   = modelInputs['batch_size']
+                                            #    )
 # %%
 np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-# plt.imshow(inputs[35].numpy().transpose((1,2,0)))
+plt.imshow(inputs[35].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

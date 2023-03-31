@@ -33,6 +33,7 @@ class singleCellLoader(Dataset):
     Attributes
     --------------------
     - dataPath: Relative path to load images
+    - experiment: Experiment being trained/tested
     - phase: Train/test phase
     - seed: Random seed for shuffling
     - transforms: Transforms for reducing overfitting
@@ -42,7 +43,7 @@ class singleCellLoader(Dataset):
     - bbs: List of bounding boxes for segmentations
     """
 
-    def __init__(self, datasetDicts, transforms, dataPath, nIncrease, phase, maxAmt = 0, randomSeed = 1234):
+    def __init__(self, datasetDicts, experiment, transforms, dataPath, nIncrease, phase, maxAmt = 0, randomSeed = 1234):
         """
         Input: 
         - datasetDicts: Catalogs images and cell segmentations in detectron2 format
@@ -58,10 +59,16 @@ class singleCellLoader(Dataset):
         self.transforms = transforms
         self.maxAmt = maxAmt
         self.segmentations, self.phenotypes, self.imgNames, self.bbs = self.balance(datasetDicts)
-        
-        # Variable parameters for segmentation
-        self.maxImgSize = 75
+        self.experiment = experiment
+
         self.nIncrease = nIncrease
+
+        # Static parameters for segmentation
+        experimentParamsLoc = dataPath.parents[-3] / 'experimentParams.pickle'
+        experimentParams = pickle.load(open(experimentParamsLoc,"rb"))
+        self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
+        self.nIms = experimentParams[self.experiment]['nIms']
+        
         
     def __len__(self):
         return len(self.imgNames)
@@ -100,7 +107,7 @@ class singleCellLoader(Dataset):
         bbIncreased = [colMin, rowMin, colMax, rowMax]
         imgCrop = img[bbIncreased[1]:bbIncreased[3], bbIncreased[0]:bbIncreased[2]]
 
-        imgCrop = bbIncrease(poly, bb, imgName, img, self.nIncrease)
+        imgCrop = bbIncrease(poly, bb, imgName, img, self.nIms, self.nIncrease)
 
         # Pad image
         diffRows = int((maxRows - imgCrop.shape[0])/2)
@@ -164,6 +171,7 @@ class singleCellLoader(Dataset):
 
         if self.phase == 'train':
             for pheno in uniquePheno:
+                
                 idx = list(np.where(phenotypes == pheno)[0][0:self.maxAmt])
                 uniqueIdx += idx
         else:
@@ -187,13 +195,20 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, data_transforms = [], phase = ['train', 'test'], maxAmt = 0, nIncrease=20, batch_size=40, isShuffle=True):
+def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [], phase = ['train', 'test'], isShuffle=True):
     """
     Creates pytorch image datasets using transforms
 
     Inputs:
     - datasetDicts: Segmentation information
+    - dataPath: Location of images
+    - modelInputs: 
     """
+    nIncrease    = modelInputs['nIncrease']
+    maxAmt       = modelInputs['maxAmt']
+    batch_size   = modelInputs['batch_size']
+    experiment   = modelInputs['experiment']
+
     mean = np.array([0.4840, 0.4840, 0.4840])
     std = np.array([0.1047, 0.1047, 0.1047])
     if data_transforms == []:
@@ -221,7 +236,7 @@ def makeImageDatasets(datasetDicts, dataPath, data_transforms = [], phase = ['tr
         }
         print('Not using custom transforms')
 
-    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, nIncrease, phase=x, maxAmt = maxAmt) 
+    image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x) 
                     for x in phase}
     dataset_sizes = {x: len(image_datasets[x]) for x in phase}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=isShuffle)

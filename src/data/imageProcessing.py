@@ -221,7 +221,7 @@ def expandImageSegmentation(poly, bb, splitNum, coords, padNum=200):
     
     return [polyxWhole, polyyWhole, bbWhole]
 
-def bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50, padNum=200):
+def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200):
     """
     Takes in a segmentation from a split image and outputs the segmentation from the whole image. 
     Inputs: 
@@ -236,7 +236,7 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIncrease=50, padNum=200):
     - imgBBWholeExpand: The image cropped from the whole image increased by nIncrease
     """
     splitNum = int(imgName.split('_')[-1].split('.')[0])
-    coords = split2WholeCoords(nIms = 4, wholeImgSize = imgWhole.shape)
+    coords = split2WholeCoords(nIms, wholeImgSize = imgWhole.shape)
     imgWhole = np.pad(imgWhole, (padNum,padNum))
     polyxWhole, polyyWhole, bbWhole = expandImageSegmentation(poly, bb, splitNum, coords, padNum)
     bbWhole = [int(corner) for corner in bbWhole]
