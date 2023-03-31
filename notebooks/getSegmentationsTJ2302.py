@@ -144,7 +144,7 @@ def getRecord(pcName, compositeImg, pcImg, idx, predictor = predictor):
 if Path('../data/TJ2302/TJ2302DatasetDicts-1.npy').exists():
     print('Loading dataset dict')
     datasetDicts = np.load(Path('../data/TJ2302/TJ2302DatasetDicts-1.npy'), allow_pickle=True)
-    idx = len(datasetDicts)
+    idx = int(len(datasetDicts)/4)
 else:
     datasetDicts = []
     idx = 0

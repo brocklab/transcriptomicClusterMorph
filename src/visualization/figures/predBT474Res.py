@@ -42,7 +42,7 @@ if resultsFile.exists():
 else:
     modelRes = {}
 
-modelNames2 = ['classifySingleCellCrop-727592']
+modelNames2 = ['classifySingleCellCrop-751978']
 for modelName in modelNames2:
     print(modelName)
     probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')

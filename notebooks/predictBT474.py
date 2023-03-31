@@ -38,6 +38,7 @@ modelInputs = {
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
 'notes'         : notes
+
 }
 
 modelTools.printModelVariables(modelInputs)
