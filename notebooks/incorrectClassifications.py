@@ -53,12 +53,10 @@ model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
 
 dataPath = Path.joinpath(homePath, 'data', modelDetails['experiment'], 'raw', 'phaseContrast')
 
-dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts,
-                                            dataPath, 
-                                            nIncrease    = modelDetails['nIncrease'], 
-                                            maxAmt       = modelDetails['maxAmt'], 
-                                            batch_size   = modelDetails['batch_size'],
-                                            isShuffle = False
+dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
+                                               dataPath,
+                                               modelInputs,
+                                               isShuffle = False
                                             )
 # %%
 segs = dataloaders['test'].dataset.segmentations

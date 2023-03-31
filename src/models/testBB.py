@@ -81,15 +81,14 @@ def getModelResults(modelName, homePath, datasetDicts, mode = 'test'):
 
     model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
 
+    modelInputs = getModelDetails(modelPath)
 
 
     dataPath = Path.joinpath(homePath, 'data', modelDetails['experiment'], 'raw', 'phaseContrast')
 
-    dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts,
-                                                dataPath, 
-                                                nIncrease    = modelDetails['nIncrease'], 
-                                                maxAmt       = modelDetails['maxAmt'], 
-                                                batch_size   = modelDetails['batch_size'],
+    dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
+                                               dataPath,
+                                               modelInputs,
                                                 isShuffle = False
                                                 )
     probs, allLabels, scores = testModel(model, dataloaders, mode = mode)

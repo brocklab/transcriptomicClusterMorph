@@ -64,11 +64,9 @@ for seg in datasetDicts:
 sum(list(wellSize.values()))
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                               dataPath, 
-                                               nIncrease    = modelInputs['nIncrease'], 
-                                               maxAmt       = modelInputs['maxAmt'], 
-                                               batch_size   = modelInputs['batch_size']
-                                               )
+                                               dataPath,
+                                               modelInputs
+                                            )
 np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))

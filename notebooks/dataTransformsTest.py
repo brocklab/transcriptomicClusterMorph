@@ -68,14 +68,13 @@ data_transforms = {
     ])
 }
 # %%
+modelInputs[maxAmt] = None
 dataloader, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                               dataPath, 
-                                               data_transforms = data_transforms,
-                                               phase = ['none'],
-                                               nIncrease=nIncrease, 
-                                               maxAmt = None, 
-                                               batch_size=batch_size
-                                               )
+                                              dataPath,
+                                              modelInputs,
+                                              data_transforms = data_transforms,
+                                              phase = ['none']
+                                            )
 # %%
 for inputs, _labels in tqdm(dataloader):
  

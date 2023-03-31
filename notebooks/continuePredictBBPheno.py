@@ -43,11 +43,9 @@ co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10'
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                               dataPath, 
-                                               nIncrease    = modelInputs['nIncrease'], 
-                                               maxAmt       = modelInputs['maxAmt'], 
-                                               batch_size   = modelInputs['batch_size']
-                                               )
+                                               dataPath,
+                                               modelInputs
+                                            )
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%

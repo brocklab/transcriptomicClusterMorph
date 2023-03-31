@@ -36,13 +36,13 @@ dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorder.npy')
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 # %%
+modelInputs[maxAmt] = None
 dataloader, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                               dataPath, 
-                                               phase = ['none'],
-                                               nIncrease=nIncrease, 
-                                               maxAmt = None, 
-                                               batch_size=batch_size
-                                               )
+                                              dataPath,
+                                              modelInputs,
+                                              data_transforms = data_transforms,
+                                              phase = ['none']
+                                            )
 # %%
 nChannels = 3
 mean = torch.zeros(nChannels)
