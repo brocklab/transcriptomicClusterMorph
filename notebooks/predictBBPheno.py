@@ -25,7 +25,7 @@ maxAmt      = 50000
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
-notes = 'Run only on coculture wells'
+notes = 'Trying adam optimizer'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -83,7 +83,7 @@ model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.001)
-
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
 model2 = nn.DataParallel(model)
 

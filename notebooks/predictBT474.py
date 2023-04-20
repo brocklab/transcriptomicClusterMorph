@@ -18,11 +18,11 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2302'
 nIncrease   = 10
-maxAmt      = 50000
+maxAmt      = 9e9
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
-notes = 'Run only on coculture wells'
+notes = 'Test with sgd optimizer'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -44,7 +44,7 @@ modelInputs = {
 modelTools.printModelVariables(modelInputs)
 # %%
 dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
@@ -80,8 +80,8 @@ model = getTFModel(modelInputs['modelType'])
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.001)
-
+#optimizer = optim.SGD(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
 model2 = nn.DataParallel(model)
 
@@ -90,10 +90,10 @@ model2 = nn.DataParallel(model)
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-model = train_model(model2, 
+model = train_model(model, 
                     criterion, 
                     optimizer, 
-                    setp_lr_scheduler, 
+                    setp_lr_scheduler,
                     dataloaders, 
                     dataset_sizes, 
                     modelSaveName, 
