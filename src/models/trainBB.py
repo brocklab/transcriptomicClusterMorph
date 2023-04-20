@@ -64,7 +64,7 @@ class singleCellLoader(Dataset):
         self.nIncrease = nIncrease
 
         # Static parameters for segmentation
-        experimentParamsLoc = dataPath.parents[-3] / 'experimentParams.pickle'
+        experimentParamsLoc = dataPath.parents[len(dataPath.parents)-3] / 'experimentParams.pickle'
         experimentParams = pickle.load(open(experimentParamsLoc,"rb"))
         self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
         self.nIms = experimentParams[self.experiment]['nIms']

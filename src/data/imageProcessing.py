@@ -5,7 +5,7 @@ from scipy.interpolate import interp1d
 from skimage.color import rgb2hsv
 from skimage.morphology import binary_dilation
 from skimage.segmentation import clear_border
-import pyfeats
+# import pyfeats
 
 # %% General tools
 def imSplit(im, nIms: int=16):
