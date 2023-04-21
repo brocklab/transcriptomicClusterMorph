@@ -11,6 +11,8 @@ from tqdm import tqdm
 import pickle
 from pathlib import Path
 
+from detectron2.data import MetadataCatalog, DatasetCatalog
+from detectron2.data.datasets import load_coco_json
 from src.data.imageProcessing import imSplit
 
 def collateModelParameters(generate = False):
@@ -267,6 +269,17 @@ def splitName2Whole(imgName: str):
 
     imgNameWhole = '_'.join(imgName.split('_')[0:-1])+'.'+ext
     return imgNameWhole
+
+def datasetDict2Coco(datasetDicts, outputLocation, datasetName):
+    def data_dict(datasetDicts):
+        return datasetDicts
+    inputs = [datasetDicts]
+    DatasetCatalog.register(datasetName, lambda x=inputs: data_dict(inputs[0]))
+    MetadataCatalog.get(datasetName).set(thing_classes=[0, 1])
+    convert_to_coco_json(datasetName, output_file=outputLocation, allow_cached=False)
+
+def loadDatasetDictJSON(datasetLocation):
+    register_coco_instances('data', {}, "../data/sartorius/segmentations/train.json", "../data/sartorius/images/livecell_train_val_images")
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """

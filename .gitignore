@@ -13,6 +13,8 @@ __pycache__/
 # Data that might be hanging around
 *.png
 *.npy
+*.json
+*.lock
 
 # Keep folder structure
 !.gitkeep

@@ -18,7 +18,7 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2302'
 nIncrease   = 10
-maxAmt      = 9e9
+maxAmt      = 64
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
@@ -26,7 +26,7 @@ notes = 'Test with sgd optimizer'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
-
+resultsSaveName = Path(f'../results/classificationTraining/classifySingleCellCrop-{modelID}.txt')
 modelInputs = {
 
 'experiment'    : experiment, 
@@ -44,7 +44,7 @@ modelInputs = {
 modelTools.printModelVariables(modelInputs)
 # %%
 dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts.npy')
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
@@ -96,7 +96,20 @@ model = train_model(model,
                     setp_lr_scheduler,
                     dataloaders, 
                     dataset_sizes, 
-                    modelSaveName, 
+                    modelSaveName,
+                    resultsSaveName,
                     num_epochs=num_epochs
                     )
+# %%
+from detectron2.data import MetadataCatalog, DatasetCatalog
+from detectron2.data.datasets.coco import convert_to_coco_json
+def data_dict(datasetDicts):
+    return datasetDicts
+inputs = [datasetDicts]
+# DatasetCatalog.register('test', lambda x=inputs: data_dict(inputs[0]))
+MetadataCatalog.get('test').set(thing_classes=[0, 1])
+convert_to_coco_json('test', output_file='./test.json', allow_cached=False)
+# %%
+from detectron2.data.datasets import load_coco_json
+x = load_coco_json('./test.json', '.')
 # %%
