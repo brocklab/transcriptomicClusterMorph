@@ -248,7 +248,7 @@ def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [],
 
     return dataloaders, dataset_sizes
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, num_epochs = 25, best_acc = 0):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, resultsSaveName, num_epochs = 25, best_acc = 0):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Sending to device')
     model.to(device)
@@ -301,15 +301,20 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, epoch_acc))
+            currentResults = '{} Loss: {:.4f} Acc: {:.4f}'.format(
+                phase, epoch_loss, epoch_acc)
+            print(currentResults)
 
             # deep copy the model
+            improvementResults = ''
             if phase == 'test' and epoch_acc > best_acc:
-                print('Improved epoch accuracy, updating weights')
+                improvementResults = 'Improved epoch accuracy, updating weights'
+                print(improvementResults)
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-        
+
+            with open(resultsSaveName, 'a') as file:
+                file.write(f'{currentResults} \n {improvementResults} \n')
         # Always save model on each epoch
         model.load_state_dict(best_model_wts)
         torch.save(model.state_dict(), savePath)
