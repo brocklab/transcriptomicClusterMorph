@@ -1,10 +1,15 @@
 import numpy as np
 import itertools
 from scipy.interpolate import interp1d
+import os
+from pathlib import Path
 
 from skimage.color import rgb2hsv
 from skimage.morphology import binary_dilation
 from skimage.segmentation import clear_border
+from skimage.draw import polygon2mask
+from skimage.io import imread
+import matplotlib.pyplot as plt
 # import pyfeats
 
 # %% General tools
@@ -205,9 +210,8 @@ def expandImageSegmentation(poly, bb, splitNum, coords, padNum=200):
     - polyxWhole, polyyWhole: polygon coordinates for whole image
     - bbWhole: bounding box for whole image
     """
-    poly = np.array(poly)
-    polyx = poly[::2]
-    polyy = poly[1::2]
+    polyx = poly[:,0]
+    polyy = poly[:,1]
 
     cIncrease = coords[int(splitNum)]
     bbWhole = bb.copy()
@@ -250,6 +254,44 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200):
     imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
     return imgBBWholeExpand
 
+def bbIncreaseBlackout(poly, bb, imgName, imgWhole, nIms, label, nIncrease=50, padNum=200):
+    """
+    Takes in a segmentation from a split image and outputs the segmentation from the whole image.
+    This differs from bbIncrease because it will black out the cell.  
+    Inputs: 
+    - poly: Polygon in datasetDict format
+    - bb: Bounding box in datasetDict format
+    - imageName: Name of the image where the segmentation was found
+    - imgWhole: The whole image from which the final crop will come from
+    - nIncrease: The amount to increase the bounding box
+    - padNum: The padding on the whole image, necessary to segment properly
+
+    Outputs:
+    - imgBBWholeExpand: The image cropped from the whole image increased by nIncrease where the cell is all black (0s)
+    """
+  
+
+    splitNum = int(imgName.split('_')[-1].split('.')[0])
+    coords = split2WholeCoords(nIms, wholeImgSize = imgWhole.shape)
+    imgWhole = np.pad(imgWhole, (padNum,padNum))
+    polyxWhole, polyyWhole, bbWhole = expandImageSegmentation(poly, bb, splitNum, coords, padNum)
+    bbWhole = [int(corner) for corner in bbWhole]
+    colMin, rowMin, colMax, rowMax = bbWhole
+    rowMin -= nIncrease
+    rowMax += nIncrease
+    colMin -= nIncrease
+    colMax += nIncrease
+    
+    maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
+
+    imgWhole[maskBlackout] = 0
+
+    
+    bbIncrease = [colMin, rowMin, colMax, rowMax]
+    imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
+    
+
+    return imgBBWholeExpand
 
 # %% Perimeter and "classic" cell morphology
 def interpolatePerimeter(perim: np.array, nPts: int=150):

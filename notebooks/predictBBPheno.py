@@ -11,6 +11,7 @@ import numpy as np
 import time
 import sys
 import datetime
+import matplotlib.pyplot as plt
 
 from torchvision import models
 from torch.optim import lr_scheduler
@@ -22,7 +23,7 @@ import torch.optim as optim
 experiment  = 'TJ2201'
 nIncrease   = 25
 maxAmt      = 50000
-batch_size  = 64
+batch_size  = 2
 num_epochs  = 32
 modelType   = 'resnet152'
 notes = 'Trying adam optimizer'
@@ -71,7 +72,7 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-# plt.imshow(inputs[16].numpy().transpose((1,2,0)))
+plt.imshow(inputs[0].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
