@@ -11,7 +11,6 @@ import numpy as np
 import time
 import sys
 import datetime
-import matplotlib.pyplot as plt
 
 from torchvision import models
 from torch.optim import lr_scheduler
@@ -22,15 +21,16 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2201'
 nIncrease   = 25
-maxAmt      = 50000
-batch_size  = 2
+maxAmt      = 10000
+batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
-notes = 'Trying adam optimizer'
+optimizer = 'sgd'
+notes = 'Full run without blackout'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
-
+resultsSaveName = Path(f'../results/classificationTraining/classifySingleCellCrop-{modelID}.txt')
 modelInputs = {
 
 'experiment'    : experiment, 
@@ -41,10 +41,14 @@ modelInputs = {
 'modelType'     : modelType,
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
-'notes'         : notes
+'notes'         : notes,
+'optimizer'     : optimizer
 }
 
-modelTools.printModelVariables(modelInputs)
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
 # %%
 
 # %%
@@ -72,7 +76,7 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-plt.imshow(inputs[0].numpy().transpose((1,2,0)))
+# plt.imshow(inputs[16].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -84,7 +88,7 @@ model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.001)
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+# optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
 model2 = nn.DataParallel(model)
 
@@ -99,7 +103,8 @@ model = train_model(model2,
                     setp_lr_scheduler, 
                     dataloaders, 
                     dataset_sizes, 
-                    modelSaveName, 
+                    modelSaveName,
+                    resultsSaveName,
                     num_epochs=num_epochs
                     )
 # %%

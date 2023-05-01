@@ -30,6 +30,7 @@ def predictDataset(datasetDict, model):
 def testModel(model, loaders, mode = 'test', testSummaryPath='') -> list:
     device_str = "cuda"
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
+    model.to(device)
     probs = []
     allLabels = []
     scores = []
@@ -77,18 +78,18 @@ def getModelResults(modelName, homePath, datasetDicts, mode = 'test'):
     """
     modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
     outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
+    if not outPath.exists():
+        outPath = Path(str(outPath).replace('.out', '.txt'))
+    assert outPath.exists()
     modelDetails = getModelDetails(outPath)
-
+    print(modelDetails)
     model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
-
-    modelInputs = getModelDetails(modelPath)
-
 
     dataPath = Path.joinpath(homePath, 'data', modelDetails['experiment'], 'raw', 'phaseContrast')
 
     dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
                                                dataPath,
-                                               modelInputs,
+                                               modelDetails,
                                                 isShuffle = False
                                                 )
     probs, allLabels, scores = testModel(model, dataloaders, mode = mode)

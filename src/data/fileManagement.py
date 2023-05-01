@@ -60,6 +60,7 @@ def getModelDetails(outPath) -> dict:
     Outputs:
         - modelDetails: Dictionary of model parameters
     """
+    print(outPath)
     with open(outPath) as outFile:
         x = outFile.read()
     detailsSplit = x.split('~ Model Details ~')[1]
@@ -68,6 +69,7 @@ def getModelDetails(outPath) -> dict:
     modelDetails = {}
     for detail in modelDetailsOut:
         detail, val = detail.split(' - ')
+        val = val.strip()
         if val.isdigit():
             val = int(val)
         modelDetails[detail] = val

@@ -64,7 +64,14 @@ class singleCellLoader(Dataset):
         self.nIncrease = nIncrease
 
         # Static parameters for segmentation
-        experimentParamsLoc = dataPath.parents[len(dataPath.parents)-3] / 'experimentParams.pickle'
+        experimentParamsLoc = dataPath
+        c = 0
+        while experimentParamsLoc.name != 'data':
+            experimentParamsLoc = experimentParamsLoc.parent
+            c += 1
+            assert c < 1000
+                
+        experimentParamsLoc = experimentParamsLoc / 'experimentParams.pickle'
         experimentParams = pickle.load(open(experimentParamsLoc,"rb"))
         self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
         self.nIms = experimentParams[self.experiment]['nIms']
@@ -116,8 +123,8 @@ class singleCellLoader(Dataset):
         bbIncreased = [colMin, rowMin, colMax, rowMax]
         imgCrop = img[bbIncreased[1]:bbIncreased[3], bbIncreased[0]:bbIncreased[2]]
 
-        imgCrop = bbIncreaseBlackout(poly, bb, imgName, img, self.nIms, label, self.nIncrease)
-        # imgCrop = bbIncrease(poly, bb, imgName, img, self.nIms, self.nIncrease)
+        # imgCrop = bbIncreaseBlackout(poly, bb, imgName, img, self.nIms, label, self.nIncrease)
+        imgCrop = bbIncrease(poly, bb, imgName, img, self.nIms, self.nIncrease)
 
         # Pad image
         diffRows = int((maxRows - imgCrop.shape[0])/2)

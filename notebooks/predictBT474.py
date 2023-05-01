@@ -18,11 +18,11 @@ import torch.optim as optim
 # %%
 experiment  = 'TJ2302'
 nIncrease   = 10
-maxAmt      = 64
+maxAmt      = 9e9
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
-notes = 'Test with sgd optimizer'
+notes = 'Full test with Adam'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -41,7 +41,9 @@ modelInputs = {
 
 }
 
-modelTools.printModelVariables(modelInputs)
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
 # %%
 dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
@@ -69,7 +71,7 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-plt.imshow(inputs[35].numpy().transpose((1,2,0)))
+# plt.imshow(inputs[35].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -101,15 +103,15 @@ model = train_model(model,
                     num_epochs=num_epochs
                     )
 # %%
-from detectron2.data import MetadataCatalog, DatasetCatalog
-from detectron2.data.datasets.coco import convert_to_coco_json
-def data_dict(datasetDicts):
-    return datasetDicts
-inputs = [datasetDicts]
+# from detectron2.data import MetadataCatalog, DatasetCatalog
+# from detectron2.data.datasets.coco import convert_to_coco_json
+# def data_dict(datasetDicts):
+#     return datasetDicts
+# inputs = [datasetDicts]
 # DatasetCatalog.register('test', lambda x=inputs: data_dict(inputs[0]))
-MetadataCatalog.get('test').set(thing_classes=[0, 1])
-convert_to_coco_json('test', output_file='./test.json', allow_cached=False)
-# %%
-from detectron2.data.datasets import load_coco_json
-x = load_coco_json('./test.json', '.')
+# MetadataCatalog.get('test').set(thing_classes=[0, 1])
+# convert_to_coco_json('test', output_file='./test.json', allow_cached=False)
+# # %%
+# from detectron2.data.datasets import load_coco_json
+# x = load_coco_json('./test.json', '.')
 # %%

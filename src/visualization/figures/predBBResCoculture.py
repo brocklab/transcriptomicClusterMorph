@@ -3,6 +3,9 @@
 
 """
 # %%
+%load_ext autoreload
+%autoreload 2
+# %%
 from src.models.trainBB import singleCellLoader, getTFModel
 from src.data.fileManagement import convertDate, splitName2Whole, collateModelParameters
 from src.models import testBB
@@ -45,7 +48,7 @@ if resultsFile.exists():
 else:
     modelRes = {}
 
-modelNames2 = ['classifySingleCellCrop-727592']
+modelNames2 = ['classifySingleCellCrop-1682366887']
 for modelName in modelNames2:
     # if modelName not in modelRes.keys():
     print(modelName)
