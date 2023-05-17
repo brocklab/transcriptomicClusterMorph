@@ -45,10 +45,6 @@ modelInputs = {
 'optimizer'     : optimizer
 }
 
-modelDetailsPrint = modelTools.printModelVariables(modelInputs)
-
-with open(resultsSaveName, 'a') as file:
-    file.write(modelDetailsPrint)
 # %%
 
 # %%
@@ -93,6 +89,11 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 model2 = nn.DataParallel(model)
 
 # %%
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
+
 # Scheduler to update lr
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
