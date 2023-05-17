@@ -70,8 +70,8 @@ def getModelDetails(outPath) -> dict:
     for detail in modelDetailsOut:
         detail, val = detail.split(' - ')
         val = val.strip()
-        if val.isdigit():
-            val = int(val)
+        if val.replace('.','').isnumeric():
+            val = int(float(val))
         modelDetails[detail] = val
 
     return modelDetails

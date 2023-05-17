@@ -80,7 +80,7 @@ def getModelResults(modelName, homePath, datasetDicts, mode = 'test'):
     outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
     if not outPath.exists():
         outPath = Path(str(outPath).replace('.out', '.txt'))
-    assert outPath.exists()
+    assert outPath.exists(), outPath
     modelDetails = getModelDetails(outPath)
     print(modelDetails)
     model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
