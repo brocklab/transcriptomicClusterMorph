@@ -23,7 +23,7 @@ batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
 optimizer = 'sgd'
-notes = 'Full run without blackout'
+notes = 'Early vs late timepoints using midpoint'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
