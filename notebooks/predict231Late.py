@@ -23,7 +23,7 @@ batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
 optimizer = 'sgd'
-notes = 'Early vs late timepoints using midpoint'
+notes = 'Early vs late timepoints using 3 days as starting point'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -60,14 +60,15 @@ for record in datasetDicts:
 firstDate = min(dates)
 timeDiff = max(dates) - firstDate
 midPoint = timeDiff.total_seconds()/2
+day3Seconds = 3*60*60*24
 
 datasetDictsLate, datasetDictsEarly = [], []
 for record in datasetDicts:
     strDate = '_'.join(record['file_name'].split('_')[3:5])
     date = fileManagement.convertDate(strDate)
     timeDiff = date - firstDate
-    timeDiff = midPoint - timeDiff.total_seconds()
-    # Find if before or after midpoint
+    timeDiff = day3Seconds - timeDiff.total_seconds()
+    # Find if before or after given point
     if timeDiff > 0:
         datasetDictsEarly.append(record)
     elif timeDiff <= 0:
