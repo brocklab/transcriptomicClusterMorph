@@ -41,6 +41,8 @@ modelInputs = {
 'notes'         : notes,
 'optimizer'     : optimizer
 }
+
+print(notes)
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
