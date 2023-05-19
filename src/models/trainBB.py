@@ -155,12 +155,12 @@ class singleCellLoader(Dataset):
             - imgNames, list of image names
         """
         # Split off well for training/testing
-        testWell = 'B8'
+        testWell = ['B2', 'E2']
 
         if self.phase == 'train':
-            datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] != testWell]
+            datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] not in testWell]
         elif self.phase == 'test':
-            datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] == testWell]
+            datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in testWell]
 
         # Reformat dataset dict to most relevant information
         segmentations, phenotypes, imgNames, bbs = [], [], [], []
