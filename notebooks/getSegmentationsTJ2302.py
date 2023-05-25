@@ -25,8 +25,10 @@ import os
 from tqdm import tqdm
 # %matplotlib inline
 # %%
-numClasses = 1
+experiment = 'TJ2310'
 modelPath = '../models/sartoriusBT474'
+# %%
+numClasses = 1
 modelPath = Path(modelPath)
 if modelPath.parts[-2] != 'segmentation':
     modelPathParts = list(modelPath.parts)
@@ -36,7 +38,7 @@ modelPath = str(modelPath)
 cfg = get_cfg()
 if not torch.cuda.is_available():
     print('CUDA not available, resorting to CPU')
-    cfg.MODEL.DEVICE='cpu'
+cfg.MODEL.DEVICE='cpu'
 cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
 cfg.DATASETS.TRAIN = ("cellMorph_Train",)
 cfg.DATASETS.TEST = ()
@@ -56,47 +58,8 @@ cfg.DETECTION_MAX_INSTANCES = 1000
 cfg.POST_NMS_ROIS_INFERENCE = 8000
 predictor = DefaultPredictor(cfg)
 # %%
-compositeImPath = Path('../data/TJ2302/raw/composite')
-pcPath = Path('../data/TJ2302/raw/phaseContrast')
-
-# pcFiles = [str(pcImPath) for pcImPath in list(pcPath.iterdir())]
-# for compositeName in compositeImPath.iterdir():
-#     pcName = Path(str(compositeName).replace('composite', 'phaseContrast'))
-
-#     pcImg = imread(pcName)
-#     compositeImg = imread(compositeName)
-#     pcTiles = imSplit(pcImg, nIms = 4)
-#     compositeTiles = imSplit(compositeImg, nIms = 4)
-#     break
-# # %%
-# img = np.array([pcTiles[0], pcTiles[0], pcTiles[0]]).transpose([1,2,0])
-# img2 = pcTiles[0]
-# outputs = predictor(img)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-# v = Visualizer(img[:, :],
-#             #    metadata=cell_metadata, 
-#                 scale=1, 
-#                 instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
-# )
-# out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-# plt.figure()
-# print("plotting")
-# plt.imshow(out.get_image()[:,:])
-# # plt.title(imBase)
-# plt.show()
-# # %% Test fluorescent Finding
-# compositeFileName = Path('../data/TJ2302/raw/composite/composite_B1_1_2023y03m02d_15h47m.png')
-# pcName = Path('../data/TJ2302/raw/phaseContrast/phaseContrast_B1_1_2023y03m02d_15h47m.png')
-# compositeTiles = imSplit(imread(compositeFileName), nIms = 4)
-# pcTiles = imSplit(imread(pcName), nIms = 4)
-
-# img = np.array([pcTiles[0], pcTiles[0], pcTiles[0]]).transpose([1,2,0])
-# compositeImg = compositeTiles[0][:,:,0:3]
-# outputs = predictor(img)['instances'].to("cpu")  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-# nCells = len(outputs)
-# for cellNum in range(nCells):
-#     mask = outputs[cellNum].pred_masks.numpy()[0]
-#     color = findFluorescenceColor(compositeImg, mask)
-#     print(color)
+compositeImPath = Path(f'../data/{experiment}/raw/composite')
+pcPath = Path(f'../data/{experiment}/raw/phaseContrast')
 # %%
 def getRecord(pcName, compositeImg, pcImg, idx, predictor = predictor):
     # Go through each cell in each cropped image
@@ -141,10 +104,12 @@ def getRecord(pcName, compositeImg, pcImg, idx, predictor = predictor):
     record["annotations"] = cells
     return record
 # %%
-if Path('../data/TJ2302/TJ2302DatasetDicts-1.npy').exists():
+datasetDictsPath = f'../data/{experiment}/{experiment}DatasetDicts-1.npy'
+if Path(datasetDictsPath).exists():
     print('Loading dataset dict')
-    datasetDicts = np.load(Path('../data/TJ2302/TJ2302DatasetDicts-1.npy'), allow_pickle=True)
-    idx = int(len(datasetDicts)/4)
+    datasetDicts = np.load(Path(datasetDictsPath), allow_pickle=True)
+    image_ids = [record['image_id'] for record in datasetDicts]
+    idx = max(image_ids)
 else:
     datasetDicts = []
     idx = 0
@@ -152,12 +117,16 @@ else:
 # %%
 datasetDicts = list(datasetDicts)
 modIdx = 1
-allCompositeIms = list(compositeImPath.iterdir())
-for compositeName in tqdm(allCompositeIms[idx:]):
-    pcName = Path(str(compositeName).replace('composite', 'phaseContrast'))
+allPcIms = list(pcPath.iterdir())
+for pcName in tqdm(allPcIms[idx:]):
+    compositeName = Path(str(pcName).replace('phaseContrast', 'composite'))
 
     pcImg = imread(pcName)
-    compositeImg = imread(compositeName)
+    if compositeName.exists():
+        compositeImg = imread(compositeName)
+    else:
+        compositeImg = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
+
     pcTiles = imSplit(pcImg, nIms = 4)
     compositeTiles = imSplit(compositeImg, nIms = 4)
     
@@ -177,17 +146,18 @@ for compositeName in tqdm(allCompositeIms[idx:]):
         imNum += 1
         idx += 1
 
-        imSplitPath = Path('../data/TJ2302/split4/phaseContrast') / Path(newPcImgName).parts[-1]
-        imsave(imSplitPath, pcSplit)
+        imSplitPath = Path(f'../data/{experiment}/split4/phaseContrast') / Path(newPcImgName).parts[-1]
+        imsave(imSplitPath, pcSplit, check_contrast=False)
         datasetDicts.append(record)
         
         if idx % 100 == 0:
             print('Saving...')
             if modIdx % 2 == 0:
-                np.save('../data/TJ2302/TJ2302DatasetDicts-0.npy', datasetDicts)
+                np.save(f'../data/{experiment}/{experiment}DatasetDicts-0.npy', datasetDicts)
+                modIdx += 1
             else:
-                np.save('../data/TJ2302/TJ2302DatasetDicts-1.npy', datasetDicts)
-            modIdx += 1
+                np.save(f'../data/{experiment}/{experiment}DatasetDicts-1.npy', datasetDicts)
+                modIdx += 1
 
-np.save('../data/TJ2302/TJ2302DatasetDicts.npy', datasetDicts)
+np.save(f'../data/{experiment}/{experiment}DatasetDicts.npy', datasetDicts)
 # %%
