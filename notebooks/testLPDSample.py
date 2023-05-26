@@ -115,5 +115,6 @@ for inputs, labels in tqdm(dataloader):
     allPreds.append(preds.cpu().numpy())
     # print(sum(preds)/len(preds))
 # %%
-preds = np.concatenate([pred.cpu().numpy() for pred in allPreds])
+preds = np.concatenate(allPreds)
+print(sum(preds)/len(preds))
 # %%

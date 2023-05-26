@@ -48,7 +48,7 @@ with open(resultsSaveName, 'a') as file:
     file.write(modelDetailsPrint)
 # %%
 dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1-copy.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
@@ -105,3 +105,4 @@ plotLabel = f'BB increase AUC = {auc:0.2f}'
 plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 plt.legend(fontsize=12, loc='lower right')
 plt.title('BT474 Lineage 1 Classification')
+# %%
