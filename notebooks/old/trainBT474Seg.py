@@ -17,6 +17,7 @@ import os
 
 # %matplotlib inline
 # %%
+homePath = Path('../../')
 trainName = 'bt474Train'
 testName = 'bt474Test'
 if trainName in DatasetCatalog:
@@ -27,8 +28,8 @@ if testName in DatasetCatalog:
     DatasetCatalog.remove(testName)
     MetadataCatalog.remove(testName)
     print('Removing testing')
-register_coco_instances(trainName, {}, "../data/sartorius/segmentations/train.json", "../data/sartorius/images/livecell_train_val_images")
-register_coco_instances(testName, {}, "../data/sartorius/segmentations/test.json", "../data/sartorius/images/livecell_test_images")
+register_coco_instances(trainName, {}, homePath / "data/sartorius/segmentations/train.json", homePath / "data/sartorius/images/livecell_train_val_images")
+register_coco_instances(testName, {},  homePath / "data/sartorius/segmentations/test.json",  homePath / "data/sartorius/images/livecell_test_images")
 MetadataCatalog.get('bt474Train').set(thing_classes=["cell"])
 MetadataCatalog.get('bt474Test').set(thing_classes=["cell"])
 # %%
@@ -58,7 +59,7 @@ cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (cell). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
-cfg.OUTPUT_DIR = '../models/sartoriusBT4742'
+cfg.OUTPUT_DIR = '../../models/segmentation/sartoriusBT474'
 # Recommended from https://github.com/matterport/Mask_RCNN/issues/1884
 cfg.RPN_TRAIN_ANCHORS_PER_IMAGE = 800
 cfg.MAX_GT_INSTANCES = 300
@@ -76,3 +77,14 @@ trainer.train()
 
 
 # %%
+from detectron2.engine import DefaultPredictor
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
+predictor = DefaultPredictor(cfg)
+# %%
+from detectron2.evaluation import inference_on_dataset, SemSegEvaluator
+from coco_evaluation import COCOEvaluator
+from detectron2.data import build_detection_test_loader
+# %%
+evaluator = COCOEvaluator('bt474Train', output_dir=cfg.OUTPUT_DIR)
+val_loader = build_detection_test_loader(cfg, "bt474Train")
+print(inference_on_dataset(predictor.model, val_loader, evaluator))
