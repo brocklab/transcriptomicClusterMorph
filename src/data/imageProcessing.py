@@ -225,7 +225,7 @@ def expandImageSegmentation(poly, bb, splitNum, coords, padNum=200):
     
     return [polyxWhole, polyyWhole, bbWhole]
 
-def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200):
+def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200, augmentation = None):
     """
     Takes in a segmentation from a split image and outputs the segmentation from the whole image. 
     Inputs: 
@@ -249,6 +249,11 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200):
     rowMax += nIncrease
     colMin -= nIncrease
     colMax += nIncrease
+
+    if augmentation == 'blackoutCell':
+        maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
+
+        imgWhole[maskBlackout] = 0
 
     bbIncrease = [colMin, rowMin, colMax, rowMax]
     imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]

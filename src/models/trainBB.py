@@ -13,6 +13,8 @@ from collections import OrderedDict
 
 from skimage.io import imread
 from skimage.transform import resize
+from skimage.draw import polygon2mask
+
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 
@@ -42,8 +44,7 @@ class singleCellLoader(Dataset):
     - imgNames: List of paths to load image
     - bbs: List of bounding boxes for segmentations
     """
-
-    def __init__(self, datasetDicts, experiment, transforms, dataPath, nIncrease, phase, maxAmt = 0, randomSeed = 1234):
+    def __init__(self, datasetDicts, transforms, dataPath, phase, modelInputs, randomSeed = 1234):
         """
         Input: 
         - datasetDicts: Catalogs images and cell segmentations in detectron2 format
@@ -57,12 +58,11 @@ class singleCellLoader(Dataset):
         self.phase = phase
         self.seed = randomSeed
         self.transforms = transforms
-        self.maxAmt = maxAmt
+        self.maxAmt = modelInputs['maxAmt']
         self.segmentations, self.phenotypes, self.imgNames, self.bbs = self.balance(datasetDicts)
-        self.experiment = experiment
-
-        self.nIncrease = nIncrease
-
+        self.experiment = modelInputs['experiment']
+        self.nIncrease = modelInputs['nIncrease']
+        self.augmentation = modelInputs['augmentation']
         # Static parameters for segmentation
         experimentParamsLoc = dataPath
         c = 0
@@ -124,7 +124,7 @@ class singleCellLoader(Dataset):
         imgCrop = img[bbIncreased[1]:bbIncreased[3], bbIncreased[0]:bbIncreased[2]]
 
         # imgCrop = bbIncreaseBlackout(poly, bb, imgName, img, self.nIms, label, self.nIncrease)
-        imgCrop = bbIncrease(poly, bb, imgName, img, self.nIms, self.nIncrease)
+        imgCrop = bbIncrease(poly, bb, imgName, img, self.nIms, self.nIncrease, augmentation=self.augmentation)
 
         # Pad image
         diffRows = int((maxRows - imgCrop.shape[0])/2)
@@ -221,10 +221,7 @@ def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [],
     - dataPath: Location of images
     - modelInputs: 
     """
-    nIncrease    = modelInputs['nIncrease']
-    maxAmt       = modelInputs['maxAmt']
     batch_size   = modelInputs['batch_size']
-    experiment   = modelInputs['experiment']
 
     mean = np.array([0.4840, 0.4840, 0.4840])
     std = np.array([0.1047, 0.1047, 0.1047])
@@ -253,7 +250,8 @@ def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [],
         }
         print('Not using custom transforms')
 
-    image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x) 
+    # image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x)
+    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
                     for x in phase}
     dataset_sizes = {x: len(image_datasets[x]) for x in phase}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=isShuffle)

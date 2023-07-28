@@ -19,13 +19,14 @@ import torch
 import torch.optim as optim
 
 # %%
-experiment  = 'TJ2201'
-nIncrease   = 25
-maxAmt      = 10000
-batch_size  = 64
-num_epochs  = 32
-modelType   = 'resnet152'
-optimizer = 'sgd'
+experiment      = 'TJ2201'
+nIncrease       = 25
+maxAmt          = 10000
+batch_size      = 64
+num_epochs      = 32
+modelType       = 'resnet152'
+optimizer       = 'sgd'
+augmentation    = None
 notes = 'Full run without blackout'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
@@ -42,7 +43,9 @@ modelInputs = {
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
 'notes'         : notes,
-'optimizer'     : optimizer
+'optimizer'     : optimizer,
+'augmentation' : augmentation
+
 }
 
 # %%
@@ -65,6 +68,7 @@ for seg in datasetDicts:
 
 sum(list(wellSize.values()))
 # %%
+modelInputs['augmentation'] = 'blackoutCell'
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,
                                                modelInputs
@@ -73,7 +77,8 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-# plt.imshow(inputs[16].numpy().transpose((1,2,0)))
+import matplotlib.pyplot as plt
+plt.imshow(inputs[16].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
