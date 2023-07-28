@@ -44,7 +44,7 @@ modelInputs = {
 'modelIDSource' : idSource,
 'notes'         : notes,
 'optimizer'     : optimizer,
-'augmentation' : augmentation
+'augmentation'  : augmentation
 
 }
 
@@ -68,7 +68,7 @@ for seg in datasetDicts:
 
 sum(list(wellSize.values()))
 # %%
-modelInputs['augmentation'] = 'blackoutCell'
+modelInputs['augmentation'] = 'stamp'
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,
                                                modelInputs

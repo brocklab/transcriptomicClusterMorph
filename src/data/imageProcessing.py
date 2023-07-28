@@ -7,7 +7,7 @@ from pathlib import Path
 from skimage.color import rgb2hsv
 from skimage.morphology import binary_dilation
 from skimage.segmentation import clear_border
-from skimage.draw import polygon2mask
+from skimage.draw import polygon2mask, polygon_perimeter
 from skimage.io import imread
 import matplotlib.pyplot as plt
 # import pyfeats
@@ -254,6 +254,16 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200, augm
         maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
 
         imgWhole[maskBlackout] = 0
+
+    if augmentation == 'outline':
+            rr, cc = polygon_perimeter(polyyWhole, polyxWhole)
+            imgWhole = np.zeros(imgWhole.shape)
+            imgWhole[rr, cc] = 1
+
+    if augmentation == 'stamp':
+        maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
+
+        imgWhole[~maskBlackout] = 0
 
     bbIncrease = [colMin, rowMin, colMax, rowMax]
     imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]
