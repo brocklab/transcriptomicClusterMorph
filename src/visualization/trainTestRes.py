@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 from pathlib import Path
 # %%
-def plotTrainingRes(filePath, plot=True, title=''):
+def plotTrainingRes(filePath, plot=True, title='', homePath = ''):
     """
     Plots results from slurm.out file
 
@@ -48,9 +48,11 @@ def plotTrainingRes(filePath, plot=True, title=''):
         plt.ylabel('Test Accuracy')
         plt.suptitle(title)
         cwd = Path(__file__).parent.resolve()
-        figurePath = Path(cwd, '../../', 'figures', 'temp', 'currentTrainingResults.png')
-        # assert figurePath.exists()
-        plt.savefig(figurePath, dpi=600)
+        if homePath != '':
+            figurePath = Path(cwd, homePath, 'figures', 'temp', 'currentTrainingResults.png')
+            # assert figurePath.exists()
+            
+            plt.savefig(figurePath, dpi=600)
         plt.show()
 
     
