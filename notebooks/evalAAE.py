@@ -42,7 +42,8 @@ modelInputs = {
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
 'notes'         : notes,
-'optimizer'     : optimizer
+'optimizer'     : optimizer,
+'augmentation'  : None
 }
 
 # %%
@@ -189,22 +190,33 @@ encoder.load_state_dict(torch.load('../models/testEncoder.pth'))
 decoder.eval()
 encoder.eval()
 # %%
-data_loader = dataloaders['train']
-for i, (imgs, _) in tqdm(enumerate(data_loader)):
-        imgs = imgs[:, 0:1, :, :]
-        real_imgs = Variable(imgs.type(Tensor))
+# data_loader = dataloaders['train']
+# for i, (imgs, _) in tqdm(enumerate(data_loader)):
+#         imgs = imgs[:, 0:1, :, :]
+#         real_imgs = Variable(imgs.type(Tensor))
 
-        # -----------------
-        #  Train Generator
-        # -----------------
+#         # -----------------
+#         #  Train Generator
+#         # -----------------
 
-        optimizer_G.zero_grad()
+#         optimizer_G.zero_grad()
 
-        encoded_imgs = encoder(real_imgs)
-        decoded_imgs = decoder(encoded_imgs)
-        break
+#         encoded_imgs = encoder(real_imgs)
+#         decoded_imgs = decoder(encoded_imgs)
+#         break
 # %%
+for imgs, labels in tqdm(dataloaders['train']):
+    imgs = imgs[:, 0:1, :, :]
+    real_imgs = Variable(imgs.type(Tensor))
+    
+    encodings = encoder(real_imgs)
+    decodings = decoder(encodings)
+    break
 
+img0 = imgs[0][0].detach().cpu().numpy()
+label0 = labels[0].detach().cpu().numpy()
+decoding0 = decodings[0][0].detach().cpu().numpy()
+# %%
 plt.subplot(121)
 plt.imshow(imgs[0][0].detach().cpu().numpy())
 plt.subplot(122)

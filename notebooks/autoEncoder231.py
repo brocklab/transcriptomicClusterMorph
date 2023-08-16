@@ -15,6 +15,7 @@ from torch.optim import lr_scheduler
 import torch.nn as nn
 import torch
 import torch.optim as optim
+
 # %%
 experiment  = 'TJ2201'
 nIncrease   = 25
@@ -39,8 +40,11 @@ modelInputs = {
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
 'notes'         : notes,
-'optimizer'     : optimizer
+'optimizer'     : optimizer,
+'augmentation'  : None
 }
+
+# %%
 
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
@@ -91,50 +95,13 @@ class CNNAutoencoder(nn.Module):
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return decoded
-    
-    def encoding(self, x):
-        return self.encoder(x)
-    
-class Autoencoder(nn.Module):
-    def __init__(self, latent_dims):
-        super().__init__()
-        # nimages, 784 (150*150)
-        self.encoder = nn.Sequential(
-            nn.Linear(in_features = 150*150, out_features=1024),
-            nn.ReLU(),
-            nn.Linear(in_features = 1024, out_features=128),
-            nn.ReLU(),
-            nn.Linear(in_features=128, out_features=64),
-            nn.ReLU(),
-            nn.Linear(in_features=64, out_features=12),
-            nn.ReLU(),
-            nn.Linear(in_features=12, out_features=latent_dims)
-        )
 
-        self.decoder = nn.Sequential(
-            nn.Linear(in_features = latent_dims, out_features=12),
-            nn.ReLU(),
-            nn.Linear(in_features=12, out_features=64),
-            nn.ReLU(),
-            nn.Linear(in_features=64, out_features=128),
-            nn.ReLU(),
-            nn.Linear(in_features = 128, out_features=1024),
-            nn.ReLU(),
-            nn.Linear(in_features=1024, out_features=150*150),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded
-    
     def encoding(self, x):
         return self.encoder(x)
 # %%
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = Autoencoder(latent_dims=60).to(device)
+model = CNNAutoencoder().to(device)
 
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = 1e-3, weight_decay=1e-5)
@@ -142,12 +109,12 @@ model.cuda()
 model.to('cuda')
 
 # %%
-num_epochs = 1
+num_epochs = 15
 outputs = []
 allLoss = []
 for epoch in range(num_epochs):
     for (img, label) in tqdm(dataloaders['train']):
-        img = img[:,0,:,:].reshape(-1, 150*150)
+        img = img[:,0:1,:,:]
         img = img.to(device)
         recon = model(img)
         loss = criterion(recon, img)
@@ -156,11 +123,6 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 # %%
-torch.save(model.state_dict(), '../models/testAutoencoder.pth')
-# %%
-savedModel = torch.load('../models/testAutoencoder.pth', map_location=device)
-model.load_state_dict(savedModel)
-# %%
 img, labels = next(iter(dataloaders['test']))
 
 img = img[:,0:1,:,:]
@@ -168,6 +130,7 @@ img = img.to(device)
 # %%
 res = model(img)
 # %%
+idx = 3
 plt.subplot(121)
 plt.imshow(img[0][0].cpu().detach().numpy())
 plt.title('Original')
@@ -176,4 +139,3 @@ plt.imshow(res[0][0].cpu().detach().numpy())
 plt.title('Reconstructed')
 # %%
 encode = model.encoding(img)
-# %%

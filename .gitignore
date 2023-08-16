@@ -15,6 +15,7 @@ __pycache__/
 *.npy
 *.json
 *.lock
+*.pth 
 
 # Keep folder structure
 !.gitkeep

@@ -42,7 +42,8 @@ modelInputs = {
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
 'notes'         : notes,
-'optimizer'     : optimizer
+'optimizer'     : optimizer,
+'augmentation'  : None
 }
 
 # %%
@@ -250,3 +251,19 @@ torch.save(encoder.state_dict(), '../models/testEncoder.pth')
 torch.save(decoder.state_dict(), '../models/testDecoder.pth')
 torch.save(discriminator.state_dict(), '../models/testDiscriminator.pth')
 # %%
+for imgs, labels in tqdm(dataloaders['train']):
+    imgs = imgs[:, 0:1, :, :]
+    real_imgs = Variable(imgs.type(Tensor))
+    
+    encodings = encoder(real_imgs)
+    decodings = decoder(encodings)
+    break
+
+img0 = imgs[0][0].detach().cpu().numpy()
+label0 = labels[0].detach().cpu().numpy()
+decoding0 = decodings[0][0].detach().cpu().numpy()
+plt.subplot(121)
+plt.imshow(img0)
+plt.subplot(122)
+plt.imshow(decoding0)
+plt.savefig('encodingDecoding.png', dpi=500)
