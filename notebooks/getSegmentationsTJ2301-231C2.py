@@ -81,12 +81,13 @@ else:
     datasetDicts = []
     idx = 0
 # %%
+datasetDicts = []
+idx = 0
 datasetDicts = list(datasetDicts)
 modIdx = 1
 allPcIms = list(pcPath.iterdir())
 for pcName in tqdm(allPcIms[idx:]):
     compositeName = Path(str(pcName).replace('phaseContrast', 'composite'))
-    print(pcName)
     pcImg = imread(pcName)
     if compositeName.exists():
         compositeImg = imread(compositeName)
@@ -115,7 +116,7 @@ for pcName in tqdm(allPcIms[idx:]):
         imsave(imSplitPath, pcSplit, check_contrast=False)
         datasetDicts.append(record)
         
-        if idx % 4000 == 0:
+        if idx % 100 == 0:
             print('Saving...')
             def getCells(datasetDict):
                 return datasetDict
@@ -128,10 +129,29 @@ for pcName in tqdm(allPcIms[idx:]):
             DatasetCatalog.register("cellMorph", lambda x=inputs: getCells(inputs[0]))
             MetadataCatalog.get("cellMorph").set(thing_classes=["cell"])
 
-            datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
+            datasets.convert_to_coco_json('cellMorph', output_file='./test', allow_cached=False)
+        break
+def getCells(datasetDict):
+    return datasetDict
+inputs = [datasetDicts]
+if 'cellMorph' in DatasetCatalog:
+    DatasetCatalog.remove('cellMorph')
+    MetadataCatalog.remove('cellMorph')
+
+DatasetCatalog.register("cellMorph", lambda x=inputs: getCells(inputs[0]))
+MetadataCatalog.get("cellMorph").set(thing_classes=["cell"])
+
 datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
 np.save(f'../data/{experiment}/{experiment}DatasetDicts.npy', datasetDicts)
 # %%
-# Test predictor
-imPath = '../data/TJ2301-231C2/split16/phaseContrast/phaseContrast_B2_1_02d12h00m_6.png'
-viewPredictorResult(predictor, imPath)
+dd = datasets.load_coco_json(json_file='./test.json', image_root='', extra_annotation_keys=['bbox_mode'])
+# %%
+# %%
+dd2 = load_coco_json('./test.json', image_root='')
+# %%
+dd2[0]['annotations']
+# %%
+detectron2.structures.BoxMode.convert([206.161, 106.295, 33.413, 32.303], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+# %%
+import detectron2
+# %%

@@ -6,8 +6,18 @@ import matplotlib.pyplot as plt
 from skimage.draw import polygon
 from skimage.segmentation import clear_border
 from skimage.morphology import binary_dilation
+
+import detectron2.data.datasets as datasets
+import detectron2
+from detectron2.structures import BoxMode
+from detectron2.data import MetadataCatalog, DatasetCatalog
 # %%
-datasetDicts = np.load('../data/TJ2201/split16/TJ2201DatasetDict.npy', allow_pickle=True)
+datasetDicts = datasets.load_coco_json(json_file='../../data/TJ2301-231C2/TJ2301-231C2Segmentations.json', image_root='')
+datasetDicts = [record for record in datasetDicts if len(record['annotations']) > 0]
+for record in tqdm(datasetDicts):
+    for cell in record['annotations']:
+        cell['bbox'] = detectron2.structures.BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+        cell['bbox_mode'] = BoxMode.XYXY_ABS
 # %%
 breakOn = 0
 ddNoBorder = []
@@ -38,10 +48,18 @@ for segInit, segFilter in zip(datasetDicts, ddNoBorder):
     nCellsFilter += len(segFilter['annotations'])
 
 print(f'Filtered from {nCellsInit} cells to {nCellsFilter}')
-np.save('../data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.npy', ddNoBorder)
+# np.save('../data/TJ2201/split16/TJ2201DatasetDictNoBorderFull.npy', ddNoBorder)
 # %%
+def getCells(datasetDict):
+    return datasetDict
+inputs = [ddNoBorder]
+if 'cellMorph' in DatasetCatalog:
+    DatasetCatalog.remove('cellMorph')
+    MetadataCatalog.remove('cellMorph')
 
-idx = 0
+DatasetCatalog.register("cellMorph", lambda x=inputs: getCells(inputs[0]))
+MetadataCatalog.get("cellMorph").set(thing_classes=["cell"])
 
-seg = ddNoBorder[idx]
+datasets.convert_to_coco_json('cellMorph', output_file='../../data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', allow_cached=False)
 
+# %%

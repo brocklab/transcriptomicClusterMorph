@@ -17,7 +17,7 @@ from skimage.transform import resize
 from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader
-from torchvision import models
+from torchvision import models, transforms
 from torch.optim import lr_scheduler
 import torch.nn as nn
 import torch
@@ -26,15 +26,20 @@ import torch.nn.functional as F
 
 import detectron2.data.datasets as datasets
 from detectron2.data import MetadataCatalog, DatasetCatalog
+import detectron2
+from detectron2.structures import BoxMode
+
 # %%
 experiment      = 'TJ2201 and TJ2301-231C2'
 nIncrease       = 25
-maxAmt          = 10000
+maxAmt          = 50000
 batch_size      = 64
 num_epochs      = 32
 modelType       = 'resnet152'
 optimizer       = 'sgd'
 augmentation    = None
+nIms            = 16
+maxImgSize      = 150
 notes = 'Initial run'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
@@ -52,6 +57,8 @@ modelInputs = {
 'modelIDSource' : idSource,
 'notes'         : notes,
 'optimizer'     : optimizer,
+'nIms'          : nIms,
+'maxImgSize'    : maxImgSize,
 'augmentation'  : augmentation
 
 }
@@ -64,8 +71,12 @@ co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10'
 datasetDictsPre = [seg for seg in datasetDictsPre if seg['file_name'].split('_')[1] in co]
 datasetDictsPre = [record for record in datasetDictsPre if len(record['annotations']) > 0]
 # %%
-datasetDictsTreat = datasets.load_coco_json(json_file='../data/TJ2301-231C2/TJ2301-231C2Segmentations.json', image_root='')
+datasetDictsTreat = datasets.load_coco_json(json_file='../data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', image_root='')
 datasetDictsTreat = [record for record in datasetDictsTreat if len(record['annotations']) > 0]
+for record in tqdm(datasetDictsTreat):
+    for cell in record['annotations']:
+        cell['bbox'] = detectron2.structures.BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+        cell['bbox_mode'] = BoxMode.XYXY_ABS
 # %%
 # Set labels appropriately
 for image in tqdm(datasetDictsTreat):
@@ -74,6 +85,19 @@ for image in tqdm(datasetDictsTreat):
 for image in tqdm(datasetDictsPre):
     for cell in image['annotations']:
         cell['category_id'] = 0
+
+imgPaths = {0: '../data/TJ2201/raw/phaseContrast',
+            1: '../data/TJ2301-231C2/raw/phaseContrast'}
+
+modelInputs['imgPaths'] = imgPaths
+# %% Replace file paths
+for image in datasetDictsPre:
+    filePath = Path(image['file_name'])
+    image['file_name'] = str(Path(*filePath.parts[1:]))
+for image in datasetDictsTreat:
+    filePath = Path(image['file_name'])
+    image['file_name'] = str(filePath).replace('raw', 'split16')
+
 # %%
 class singleCellLoader(Dataset):
     """
@@ -110,19 +134,9 @@ class singleCellLoader(Dataset):
         self.experiment = modelInputs['experiment']
         self.nIncrease = modelInputs['nIncrease']
         self.augmentation = modelInputs['augmentation']
-        # Static parameters for segmentation
-        experimentParamsLoc = dataPath
-        c = 0
-        while experimentParamsLoc.name != 'data':
-            experimentParamsLoc = experimentParamsLoc.parent
-            c += 1
-            assert c < 1000
-                
-        experimentParamsLoc = experimentParamsLoc / 'experimentParams.pickle'
-        experimentParams = pickle.load(open(experimentParamsLoc,"rb"))
-        self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
-        self.nIms = experimentParams[self.experiment]['nIms']
-        
+        self.maxImgSize = modelInputs['maxImgSize']
+        self.nIms = modelInputs['nIms']
+        self.imgPaths = modelInputs['imgPaths']
         
     def __len__(self):
         return len(self.imgNames)
@@ -134,7 +148,9 @@ class singleCellLoader(Dataset):
         imgName = self.imgNames[idx]
         imgNameWhole = splitName2Whole(imgName)
         label = self.phenotypes[idx]
-        fullPath = os.path.join(self.dataPath, imgNameWhole)
+
+        dataPath = self.imgPaths[self.phenotypes[idx]]
+        fullPath = os.path.join(dataPath, imgNameWhole)
         maxRows, maxCols = self.maxImgSize, self.maxImgSize
         img = imread(fullPath)
 
@@ -146,15 +162,6 @@ class singleCellLoader(Dataset):
         rowMax += nIncrease
         colMin -= nIncrease
         colMax += nIncrease
-
-        # imgOrig = imread(Path('../data/TJ2201/split16/phaseContrast/') / imgName)
-        # poly2 = np.array(poly)
-        # polyx = poly2[:,0]
-        # polyy = poly2[:,1]
-        # plt.figure()
-        # plt.imshow(imgOrig, cmap = 'gray')
-        # plt.plot(polyx, polyy, c = 'red')
-        # plt.title(label)
 
         # Indexing checks
         if rowMin <= 0:
@@ -231,7 +238,7 @@ class singleCellLoader(Dataset):
                 idx = list(np.where(phenotypes == pheno)[0][0:self.maxAmt])
                 uniqueIdx += idx
         else:
-            uniqueIdx = list(range(0, len(phenotypes)))
+            uniqueIdx = list(range(0, len(phenotypes)))[0:1000]
         random.seed(self.seed)
         random.shuffle(uniqueIdx)
         
@@ -250,3 +257,86 @@ class singleCellLoader(Dataset):
         random.shuffle(l)
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
+
+# %%
+datasetDicts = datasetDictsPre + datasetDictsTreat
+phase = ['train', 'test']
+data_transforms = []
+batch_size   = modelInputs['batch_size']
+
+mean = np.array([0.4840, 0.4840, 0.4840])
+std = np.array([0.1047, 0.1047, 0.1047])
+if data_transforms == []:
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(degrees=(0, 180)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        'test': transforms.Compose([
+            # transforms.Resize(356),
+            # transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        'none': transforms.Compose([
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(degrees=(0, 180)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+    }
+    print('Not using custom transforms')
+
+# image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x)
+image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
+                for x in phase}
+dataset_sizes = {x: len(image_datasets[x]) for x in phase}
+dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
+                    for x in phase}
+# %%
+inputs, classes = next(iter(dataloaders['train']))
+# %%
+# for idx in np.where(classes.numpy() == 1)[0]:
+#     plt.figure()
+#     plt.imshow(inputs[idx].numpy().transpose((1,2,0)))
+#     plt.title(classes[idx].numpy())
+
+#     if idx > 25:
+#         break
+# %%
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+if not modelSaveName.parent.exists():
+    raise NotADirectoryError('Model directory not found')
+
+model = getTFModel(modelInputs['modelType'])
+model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.001)
+# optimizer = optim.Adam(model.parameters(), lr=0.001)
+# %%
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
+
+# Scheduler to update lr
+# Every 7 epochs the learning rate is multiplied by gamma
+setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+
+model = train_model(model, 
+                    criterion, 
+                    optimizer, 
+                    setp_lr_scheduler, 
+                    dataloaders, 
+                    dataset_sizes, 
+                    modelSaveName,
+                    resultsSaveName,
+                    num_epochs=num_epochs
+                    )
+# %%
