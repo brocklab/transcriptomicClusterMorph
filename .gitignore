@@ -16,7 +16,9 @@ __pycache__/
 *.json
 *.lock
 *.pth 
+*.txt
 
 # Keep folder structure
 !.gitkeep
 !data/experimentParams.txt
+.models.txt.swp
