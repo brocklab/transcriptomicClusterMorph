@@ -4,19 +4,31 @@
 
 # %%
 from src.models.trainBB import makeImageDatasets, train_model, getTFModel
-from src.data.fileManagement import convertDate
 from src.models import modelTools
 from pathlib import Path
 import numpy as np
-import time
 import sys
-import datetime
+import argparse
 
-from torchvision import models
 from torch.optim import lr_scheduler
 import torch.nn as nn
 import torch
 import torch.optim as optim
+
+# %% Add argparse
+parser = argparse.ArgumentParser(description='Network prediction parameters')
+parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
+parser.add_argument('--nIncrease',  type = int, metavar='nIncrease',   help = 'Increase of bounding box around cell')
+parser.add_argument('--maxAmt',     type = int, metavar='maxAmt',      help = 'Max amount of cells')
+parser.add_argument('--batch_size', type = int, metavar='batch_size',  help = 'Batch size')
+parser.add_argument('--num_epochs', type = int, metavar='num_epochs',  help = 'Number of epochs')
+parser.add_argument('--modelType',  type = str, metavar='modelType',   help = 'Type of model (resnet, vgg, etc.)')
+parser.add_argument('--notes',      type = str, metavar='notes',       help = 'Notes on why experiment is being run')
+parser.add_argument('--optimizer',  type = str, metavar='optimizer',   help = 'Optimizer type')
+parser.add_argument('--augmentation',  type = str, metavar='augmentation',   help = 'Image adjustment (None, blackoutCell, stamp)')
+
+# This is for running the notebook directly
+args, unknown = parser.parse_known_args()
 
 # %%
 experiment  = 'TJ2201'
@@ -42,8 +54,17 @@ modelInputs = {
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
 'notes'         : notes,
-'optimizer'     : optimizer
+'optimizer'     : optimizer, 
+'augmentation'  : None
 }
+
+argItems = vars(args)
+
+for item, value in argItems.items():
+    if value is not None:
+        print(f'Replacing {item} value with {value}')
+        modelInputs[item] = value
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
 
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
@@ -78,6 +99,7 @@ model2 = nn.DataParallel(model)
 
 # %%
 modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
 
 with open(resultsSaveName, 'a') as file:
     file.write(modelDetailsPrint)

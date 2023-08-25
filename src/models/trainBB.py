@@ -370,6 +370,7 @@ def getTFModel(modelType, modelPath = '', nClassesNew = 2):
         model.classifier = nn.Sequential(*features)
 
     if len(str(modelPath)) > 0:
+        print('Loading saved model')
         device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
         modelSaved = torch.load(modelPath, map_location=device)
         modelSavedCorrect = OrderedDict()

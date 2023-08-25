@@ -1,6 +1,7 @@
 # %%
-from src.models.trainBB import makeImageDatasets, train_model, getTFModel
-from src.models import modelTools
+from src.data.fileManagement import collateModelParameters
+
+from src.models import testBB, trainBB
 from src.data.fileManagement import splitName2Whole
 from src.data.imageProcessing import bbIncrease, bbIncreaseBlackout
 
@@ -15,7 +16,6 @@ import matplotlib.pyplot as plt
 from skimage.io import imread
 from skimage.transform import resize
 from PIL import Image
-import argparse
 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models, transforms
@@ -29,63 +29,8 @@ import detectron2.data.datasets as datasets
 from detectron2.data import MetadataCatalog, DatasetCatalog
 import detectron2
 from detectron2.structures import BoxMode
-
 # %%
-# %% Add argparse
-parser = argparse.ArgumentParser(description='Network prediction parameters')
-parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
-parser.add_argument('--nIncrease',  type = int, metavar='nIncrease',   help = 'Increase of bounding box around cell')
-parser.add_argument('--maxAmt',     type = int, metavar='maxAmt',      help = 'Max amount of cells')
-parser.add_argument('--batch_size', type = int, metavar='batch_size',  help = 'Batch size')
-parser.add_argument('--num_epochs', type = int, metavar='num_epochs',  help = 'Number of epochs')
-parser.add_argument('--modelType',  type = str, metavar='modelType',   help = 'Type of model (resnet, vgg, etc.)')
-parser.add_argument('--notes',      type = str, metavar='notes',       help = 'Notes on why experiment is being run')
-parser.add_argument('--optimizer',  type = str, metavar='optimizer',   help = 'Optimizer type')
-parser.add_argument('--augmentation',  type = str, metavar='augmentation',   help = 'Image adjustment (None, blackoutCell, stamp)')
-
-# This is for running the notebook directly
-args, unknown = parser.parse_known_args()
-# %%
-experiment      = 'TJ2201 and TJ2301-231C2'
-nIncrease       = 25
-maxAmt          = 50000
-batch_size      = 64
-num_epochs      = 32
-modelType       = 'resnet152'
-optimizer       = 'sgd'
-augmentation    = None
-nIms            = 16
-maxImgSize      = 150
-notes = 'Second run for accuracy'
-
-modelID, idSource = modelTools.getModelID(sys.argv)
-modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
-resultsSaveName = Path(f'../results/classificationTraining/classifySingleCellCrop-{modelID}.txt')
-modelInputs = {
-
-'experiment'    : experiment, 
-'nIncrease'     : nIncrease,
-'maxAmt'        : maxAmt,
-'batch_size'    : batch_size,
-'num_epochs'    : num_epochs,
-'modelType'     : modelType,
-'modelName'     : modelSaveName.parts[-1],
-'modelIDSource' : idSource,
-'notes'         : notes,
-'optimizer'     : optimizer,
-'nIms'          : nIms,
-'maxImgSize'    : maxImgSize,
-'augmentation'  : augmentation
-
-}
-
-argItems = vars(args)
-
-for item, value in argItems.items():
-    if value is not None:
-        print(f'Replacing {item} value with {value}')
-        modelInputs[item] = value
-modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+dfExperiment = collateModelParameters(generate=True)
 
 # %%
 experiment = 'TJ2201'
@@ -114,7 +59,6 @@ for image in tqdm(datasetDictsPre):
 imgPaths = {0: '../data/TJ2201/raw/phaseContrast',
             1: '../data/TJ2301-231C2/raw/phaseContrast'}
 
-modelInputs['imgPaths'] = imgPaths
 # %% Replace file paths
 for image in datasetDictsPre:
     filePath = Path(image['file_name'])
@@ -287,7 +231,6 @@ class singleCellLoader(Dataset):
 datasetDicts = datasetDictsPre + datasetDictsTreat
 phase = ['train', 'test']
 data_transforms = []
-batch_size   = modelInputs['batch_size']
 
 mean = np.array([0.4840, 0.4840, 0.4840])
 std = np.array([0.1047, 0.1047, 0.1047])
@@ -317,51 +260,45 @@ if data_transforms == []:
     print('Not using custom transforms')
 
 # image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x)
-image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
-                for x in phase}
-dataset_sizes = {x: len(image_datasets[x]) for x in phase}
-dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
+
+
+# %%
+modelDict = {'No Augmentation': 'classifySingleCellCrop-1692223986',
+           'No Surrounding' : 'classifySingleCellCrop-1692280532',
+           'No Texture'     : 'classifySingleCellCrop-1692318297'
+}
+
+resDict = {}
+for augName, modelName in tqdm(modelDict.items()):
+
+    modelPath = str(Path('../models/classification') / f'{modelName}.pth')
+    resPath =   str(Path('../results/classificationTraining') / f'{modelName}.txt')
+    modelInputs = testBB.getModelDetails(resPath)
+
+    batch_size   = modelInputs['batch_size']
+    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
                     for x in phase}
+    dataset_sizes = {x: len(image_datasets[x]) for x in phase}
+    dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
+                        for x in phase}
+
+    model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
+    probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
+    res = testBB.testResults(probs, allLabels, scores, modelName)
+
+    resDict[augName] = res
 # %%
-inputs, classes = next(iter(dataloaders['train']))
-# %%
-# for idx in np.where(classes.numpy() == 1)[0]:
-#     plt.figure()
-#     plt.imshow(inputs[idx].numpy().transpose((1,2,0)))
-#     plt.title(classes[idx].numpy())
+plt.figure()
+plt.figure(figsize=(6,6))
+plt.rcParams.update({'font.size': 17})
+plt.grid()
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+for augName, res in resDict.items():
+    auc = res.auc
+    plotLabel = f'{augName} AUC = {auc:0.2f}'
+    plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 
-#     if idx > 25:
-#         break
-# %%
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-if not modelSaveName.parent.exists():
-    raise NotADirectoryError('Model directory not found')
-
-model = getTFModel(modelInputs['modelType'])
-model.to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.001)
-# optimizer = optim.Adam(model.parameters(), lr=0.001)
-# %%
-modelDetailsPrint = modelTools.printModelVariables(modelInputs)
-
-with open(resultsSaveName, 'a') as file:
-    file.write(modelDetailsPrint)
-
-# Scheduler to update lr
-# Every 7 epochs the learning rate is multiplied by gamma
-setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-
-model = train_model(model, 
-                    criterion, 
-                    optimizer, 
-                    setp_lr_scheduler, 
-                    dataloaders, 
-                    dataset_sizes, 
-                    modelSaveName,
-                    resultsSaveName,
-                    num_epochs=num_epochs
-                    )
-# %%
+plt.title('Treated Cell Classification')
+plt.legend(fontsize=12, loc='lower right')

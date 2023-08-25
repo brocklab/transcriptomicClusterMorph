@@ -106,7 +106,7 @@ class testResults:
     - scores: The softmax of the probabilities
     - labels: The actual labels    
     """
-    def __init__(self, probs, allLabels, scores, imageNames, modelName, resultName = ''):
+    def __init__(self, probs, allLabels, scores, modelName, imageNames = '', resultName = ''):
         self.probs =  probs
         self.labels = allLabels
         self.scores = scores

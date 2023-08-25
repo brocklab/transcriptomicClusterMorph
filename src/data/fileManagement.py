@@ -10,6 +10,7 @@ import cv2
 from tqdm import tqdm
 import pickle
 from pathlib import Path
+import ast
 
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.data.datasets import load_coco_json
@@ -26,7 +27,6 @@ def collateModelParameters(generate = False):
     outPath = Path(__file__).resolve().parent / '../../' / 'results' / 'classificationTraining'
     if generate == True:
         outFiles = [outPath / outFile for outFile in list(outPath.iterdir())]
-        print(outFiles)
         allModelDetails = {}
         for outFile in outFiles:
             modelDetails = getModelDetails(outFile)
@@ -43,9 +43,9 @@ def collateModelParameters(generate = False):
                     allModelDetails[detail].append(modelDetails[detail])
                 
         dfDetails = pd.DataFrame(allModelDetails)
-        dfDetails.to_csv(outPath / 'allModelDetails.csv')
+        dfDetails.to_csv(outPath / '..' / 'allModelDetails.csv')
     else:
-        dfDetailsPath = outPath / 'allModelDetails.csv'
+        dfDetailsPath = outPath / '..' / 'allModelDetails.csv'
         if not dfDetailsPath.exists():
             print('Generating results...')
             collateModelParameters(generate=True)
@@ -73,7 +73,8 @@ def getModelDetails(outPath) -> dict:
         if val.replace('.','').isnumeric():
             val = int(float(val))
         modelDetails[detail] = val
-
+    if 'imgPaths' in modelDetails.keys():
+        modelDetails['imgPaths'] = ast.literal_eval(modelDetails['imgPaths'])
     return modelDetails
 
 def makeNewExperimentDirectory(experimentName):

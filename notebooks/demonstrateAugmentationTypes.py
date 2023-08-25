@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 from skimage.io import imread
 from skimage.transform import resize
 from PIL import Image
-import argparse
 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models, transforms
@@ -30,21 +29,6 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 import detectron2
 from detectron2.structures import BoxMode
 
-# %%
-# %% Add argparse
-parser = argparse.ArgumentParser(description='Network prediction parameters')
-parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
-parser.add_argument('--nIncrease',  type = int, metavar='nIncrease',   help = 'Increase of bounding box around cell')
-parser.add_argument('--maxAmt',     type = int, metavar='maxAmt',      help = 'Max amount of cells')
-parser.add_argument('--batch_size', type = int, metavar='batch_size',  help = 'Batch size')
-parser.add_argument('--num_epochs', type = int, metavar='num_epochs',  help = 'Number of epochs')
-parser.add_argument('--modelType',  type = str, metavar='modelType',   help = 'Type of model (resnet, vgg, etc.)')
-parser.add_argument('--notes',      type = str, metavar='notes',       help = 'Notes on why experiment is being run')
-parser.add_argument('--optimizer',  type = str, metavar='optimizer',   help = 'Optimizer type')
-parser.add_argument('--augmentation',  type = str, metavar='augmentation',   help = 'Image adjustment (None, blackoutCell, stamp)')
-
-# This is for running the notebook directly
-args, unknown = parser.parse_known_args()
 # %%
 experiment      = 'TJ2201 and TJ2301-231C2'
 nIncrease       = 25
@@ -78,15 +62,6 @@ modelInputs = {
 'augmentation'  : augmentation
 
 }
-
-argItems = vars(args)
-
-for item, value in argItems.items():
-    if value is not None:
-        print(f'Replacing {item} value with {value}')
-        modelInputs[item] = value
-modelDetailsPrint = modelTools.printModelVariables(modelInputs)
-
 # %%
 experiment = 'TJ2201'
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
@@ -315,53 +290,39 @@ if data_transforms == []:
         ])
     }
     print('Not using custom transforms')
-
+data_transforms['train'] = transforms.Compose([transforms.ToTensor()])
+data_transforms['test'] =  transforms.Compose([transforms.ToTensor()])
 # image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x)
-image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
-                for x in phase}
-dataset_sizes = {x: len(image_datasets[x]) for x in phase}
-dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
+# %%
+augmentationDict = {'No Augmentation': None, 'No Texture': 'blackoutCell', 'No Surrounding': 'stamp'}
+exampleDict = {}
+for augmentationName, augmentation in tqdm(augmentationDict.items()):
+    modelInputs['augmentation'] = augmentation
+    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
                     for x in phase}
+    dataset_sizes = {x: len(image_datasets[x]) for x in phase}
+    dataloaders = {x: DataLoader(image_datasets[x], batch_size=1, shuffle=False)
+                        for x in phase}
+    inputs, classes = next(iter(dataloaders['train']))
+
+    exampleDict[augmentationName] = inputs[0].numpy().transpose((1,2,0))
 # %%
-inputs, classes = next(iter(dataloaders['train']))
+plt.subplot(131)
+plt.imshow(exampleDict['No Augmentation'])
+plt.title('No Augmentation')
+plt.axis('off')
+
+plt.subplot(132)
+plt.imshow(exampleDict['No Surrounding'])
+plt.title('No Surrounding')
+plt.axis('off')
+
+plt.subplot(133)
+plt.imshow(exampleDict['No Texture'])
+plt.title('No Texture')
+plt.axis('off')
+
 # %%
-# for idx in np.where(classes.numpy() == 1)[0]:
-#     plt.figure()
-#     plt.imshow(inputs[idx].numpy().transpose((1,2,0)))
-#     plt.title(classes[idx].numpy())
-
-#     if idx > 25:
-#         break
-# %%
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-if not modelSaveName.parent.exists():
-    raise NotADirectoryError('Model directory not found')
-
-model = getTFModel(modelInputs['modelType'])
-model.to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.001)
-# optimizer = optim.Adam(model.parameters(), lr=0.001)
-# %%
-modelDetailsPrint = modelTools.printModelVariables(modelInputs)
-
-with open(resultsSaveName, 'a') as file:
-    file.write(modelDetailsPrint)
-
-# Scheduler to update lr
-# Every 7 epochs the learning rate is multiplied by gamma
-setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-
-model = train_model(model, 
-                    criterion, 
-                    optimizer, 
-                    setp_lr_scheduler, 
-                    dataloaders, 
-                    dataset_sizes, 
-                    modelSaveName,
-                    resultsSaveName,
-                    num_epochs=num_epochs
-                    )
-# %%
+for img, label in dataloaders['train']:
+    plt.imshow(img[0][0].numpy(), cmap = 'gray')
+    break
