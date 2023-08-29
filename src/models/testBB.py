@@ -28,7 +28,7 @@ def predictDataset(datasetDict, model):
     pass
 
 def testModel(model, loaders, mode = 'test', testSummaryPath='') -> list:
-    device_str = "cuda"
+    device_str = "cpu"
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
     model.to(device)
     probs = []

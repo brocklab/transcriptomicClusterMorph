@@ -302,3 +302,45 @@ for augName, res in resDict.items():
 
 plt.title('Treated Cell Classification')
 plt.legend(fontsize=12, loc='lower right')
+# %%
+modelDict = {'0 px'     : 'classifySingleCellCrop-1692914142',
+             '25 px'    : 'classifySingleCellCrop-1692969603',
+             '65 px'    : 'classifySingleCellCrop-1693024624'
+}
+
+resDict = {}
+for augName, modelName in tqdm(modelDict.items()):
+
+    modelPath = str(Path('../models/classification') / f'{modelName}.pth')
+    resPath =   str(Path('../results/classificationTraining') / f'{modelName}.txt')
+    modelInputs = testBB.getModelDetails(resPath)
+
+    batch_size   = modelInputs['batch_size']
+    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
+                    for x in phase}
+    dataset_sizes = {x: len(image_datasets[x]) for x in phase}
+    dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
+                        for x in phase}
+
+    model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
+    probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
+    res = testBB.testResults(probs, allLabels, scores, modelName)
+
+    resDict[augName] = res
+
+# %%
+plt.figure()
+plt.figure(figsize=(6,6))
+plt.rcParams.update({'font.size': 17})
+plt.grid()
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+for augName, res in resDict.items():
+    auc = res.auc
+    plotLabel = f'{augName} AUC = {auc:0.2f}'
+    plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
+
+
+plt.title('Treated Cell Classification \nIncreasing BB')
+plt.legend(fontsize=12, loc='lower right')
+plt.savefig('../figures/treatedIncreasingBB.png', dpi = 500)

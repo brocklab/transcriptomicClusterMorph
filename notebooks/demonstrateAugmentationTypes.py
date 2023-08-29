@@ -322,7 +322,9 @@ plt.imshow(exampleDict['No Texture'])
 plt.title('No Texture')
 plt.axis('off')
 
+plt.savefig('../figures/augmentations.png', dpi=600)
 # %%
 for img, label in dataloaders['train']:
     plt.imshow(img[0][0].numpy(), cmap = 'gray')
     break
+# %%

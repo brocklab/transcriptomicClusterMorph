@@ -55,7 +55,7 @@ modelInputs = {
 'modelIDSource' : idSource,
 'notes'         : notes,
 'optimizer'     : optimizer, 
-'augmentation'  : None
+'augmentation'  : 'blackoutCell'
 }
 
 argItems = vars(args)

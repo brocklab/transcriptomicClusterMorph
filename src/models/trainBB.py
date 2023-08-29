@@ -179,7 +179,9 @@ class singleCellLoader(Dataset):
             maxAmt = min(cts)
         else:
             maxAmt = self.maxAmt
-            
+
+        print(len(datasetDicts))
+        print(f'Max amount: {maxAmt} \t cts: {cts}')    
         if maxAmt > min(cts):
             self.maxAmt = min(cts)
 
