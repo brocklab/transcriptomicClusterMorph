@@ -46,7 +46,7 @@ with open(resultsSaveName, 'a') as file:
     file.write(modelDetailsPrint)
 # %%
 dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-0.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
@@ -55,8 +55,10 @@ wellSize = {}
 for seg in datasetDicts:
     well = seg['file_name'].split('_')[1]
     if well not in wellSize.keys():
-        wellSize[well] = 0
-    wellSize[well] += len(seg['annotations'])
+        wellSize[well] = [0, 0]
+    for cell in seg['annotations']:
+        catID = int(cell['category_id'])
+        wellSize[well][catID] += 1
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,

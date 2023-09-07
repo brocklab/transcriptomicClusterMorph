@@ -40,7 +40,8 @@ modelInputs = {
 'modelType'     : modelType,
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
-'notes'         : notes
+'notes'         : notes,
+'augmentation'  : None
 
 }
 experiment = 'TJ2310'

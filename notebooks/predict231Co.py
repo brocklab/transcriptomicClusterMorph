@@ -71,7 +71,7 @@ dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
 datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] not in co]
+datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,
