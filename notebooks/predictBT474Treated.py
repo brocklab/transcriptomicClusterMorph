@@ -29,6 +29,8 @@ import detectron2.data.datasets as datasets
 from detectron2.data import MetadataCatalog, DatasetCatalog
 import detectron2
 from detectron2.structures import BoxMode
+from src.models import testBB, trainBB
+
 # %% Add argparse
 parser = argparse.ArgumentParser(description='Network prediction parameters')
 parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
@@ -344,3 +346,29 @@ model = train_model(model,
                     num_epochs=num_epochs
                     )
 # %%
+modelDict = {   
+            'Treated v Non': 'classifySingleCellCrop-1694123566',
+            'Lineage 1 Classification': 'classifySingleCellCrop-1682975256'
+}
+
+resDict = {}
+for augName, modelName in tqdm(modelDict.items()):
+
+    modelPath = str(Path('../models/classification') / f'{modelName}.pth')
+    resPath =   str(Path('../results/classificationTraining') / f'{modelName}.txt')
+    modelInputs = testBB.getModelDetails(resPath)
+
+    if 'augmentation' not in modelInputs.keys():
+        modelInputs['augmentation'] = None
+
+    batch_size   = modelInputs['batch_size']
+    # dataloaders, dataset_sizes = trainBB.makeImageDatasets(
+    #                                             datasetDicts, 
+    #                                             dataPath,
+    #                                             modelInputs
+    #                                             )
+    model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
+    probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
+    res = testBB.testResults(probs, allLabels, scores, modelName)
+
+    resDict[augName] = res

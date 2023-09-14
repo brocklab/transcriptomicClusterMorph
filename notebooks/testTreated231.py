@@ -303,7 +303,7 @@ for augName, res in resDict.items():
 plt.title('Treated Cell Classification')
 plt.legend(fontsize=12, loc='lower right')
 # %%
-modelDict = {'0 px'     : 'classifySingleCellCrop-1692914142',
+modelDict = {'0 px'     : ' ',
              '25 px'    : 'classifySingleCellCrop-1692969603',
              '65 px'    : 'classifySingleCellCrop-1693024624'
 }
