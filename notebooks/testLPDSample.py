@@ -1,18 +1,14 @@
 # %%
-from src.models.trainBB import makeImageDatasets, train_model, getTFModel
+from src.models.trainBB import makeImageDatasets, getTFModel
 from src.models import testBB, trainBB
-from src.data.fileManagement import convertDate, getModelDetails
+from src.data.fileManagement import getModelDetails
 from src.models import modelTools
 from pathlib import Path
 import numpy as np
-import time
 import sys
-import datetime
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from torchvision import models
-from torch.optim import lr_scheduler
 import torch.nn as nn
 import torch
 import torch.optim as optim
@@ -30,6 +26,9 @@ notes = 'Full test with Adam'
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
 resultsSaveName = Path(f'../results/classificationTraining/classifySingleCellCrop-{modelID}.txt')
+
+experiment = 'TJ2310'
+
 modelInputs = {
 
 'experiment'    : experiment, 
@@ -44,9 +43,7 @@ modelInputs = {
 'augmentation'  : None
 
 }
-experiment = 'TJ2310'
 # %%
-dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
@@ -63,9 +60,6 @@ dataloader, dataset_sizes = makeImageDatasets(datasetDicts,
                                                modelInputs,
                                                phase=['none']
                                             )
-# %%
-
-# %%
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -87,6 +81,7 @@ if not outPath.exists():
     outPath = Path(str(outPath).replace('.out', '.txt'))
 assert outPath.exists(), outPath
 modelDetails = getModelDetails(outPath)
+modelDetails['augmentation'] = None
 print(modelDetails)
 model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
 

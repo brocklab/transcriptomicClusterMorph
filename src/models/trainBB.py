@@ -7,9 +7,9 @@ import copy
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
-import pickle 
 from pathlib import Path
 from collections import OrderedDict
+import json
 
 from skimage.io import imread
 from skimage.transform import resize
@@ -71,8 +71,9 @@ class singleCellLoader(Dataset):
             c += 1
             assert c < 1000
                 
-        experimentParamsLoc = experimentParamsLoc / 'experimentParams.pickle'
-        experimentParams = pickle.load(open(experimentParamsLoc,"rb"))
+        experimentParamsLoc = experimentParamsLoc / 'experimentParams.json'
+        with open(experimentParamsLoc, 'r') as json_file:
+            experimentParams = json.load(json_file)        
         self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
         self.nIms = experimentParams[self.experiment]['nIms']
         

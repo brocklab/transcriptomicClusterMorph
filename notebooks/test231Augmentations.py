@@ -87,11 +87,11 @@ plt.legend(fontsize=12, loc='lower right')
 experiment = 'TJ2201'
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
-datasetDicts = np.load(datasetDictPath, allow_pickle=True)
-co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] not in co]
-datasetDicts = [record for record in datasetDicts if len(record['annotations']) > 0]
-# %%
+datasetDicts = np.load(datasetDictPath, allow_pick    # dataloaders, dataset_sizes = trainBB.makeImageDatasets(
+    #                                             datasetDicts, 
+    #                                             dataPath,
+    #                                             modelInputs
+    #                                             )
 modelName = 'classifySplitCoculture-1684861223'
 modelPath = str(Path('../models/classification') / f'{modelName}.pth')
 resPath =   str(Path('../results/classificationTraining') / f'{modelName}.txt')

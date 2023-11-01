@@ -14,6 +14,9 @@ import ast
 
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.data.datasets import load_coco_json
+import detectron2.data.datasets as datasets
+from detectron2.structures import BoxMode
+
 from src.data.imageProcessing import imSplit
 
 def collateModelParameters(generate = False):
@@ -273,16 +276,25 @@ def splitName2Whole(imgName: str):
     imgNameWhole = '_'.join(imgName.split('_')[0:-1])+'.'+ext
     return imgNameWhole
 
-def datasetDict2Coco(datasetDicts, outputLocation, datasetName):
-    def data_dict(datasetDicts):
-        return datasetDicts
-    inputs = [datasetDicts]
-    DatasetCatalog.register(datasetName, lambda x=inputs: data_dict(inputs[0]))
-    MetadataCatalog.get(datasetName).set(thing_classes=[0, 1])
-    convert_to_coco_json(datasetName, output_file=outputLocation, allow_cached=False)
+def loadSegmentationJSON(jsonLocation):
+    """
+    Loads a COCO formatted JSON fileas a dictionary.
+    NOTE: detectron2 *forces* segmentations to be saved as XYWH_ABS, but every piece
+    of this workflow is based on XYXY_ABS, so we manually convert each annotation.
 
-def loadDatasetDictJSON(datasetLocation):
-    register_coco_instances('data', {}, "../data/sartorius/segmentations/train.json", "../data/sartorius/images/livecell_train_val_images")
+    Inputs:
+    jsonLocation: Location of json file with COCO annotations
+
+    Outputs:
+    datsetDicts: List of segmentations for each image
+    """
+    datasetDicts = datasets.load_coco_json(json_file=jsonLocation, image_root='')
+    datasetDicts = [record for record in datasetDicts if len(record['annotations']) > 0]
+    for record in tqdm(datasetDicts):
+        for cell in record['annotations']:
+            cell['bbox'] = BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+            cell['bbox_mode'] = BoxMode.XYXY_ABS
+    return datasetDicts
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """
