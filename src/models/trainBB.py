@@ -252,7 +252,8 @@ def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [],
             ])
         }
         print('Not using custom transforms')
-
+    else:
+        data_transforms = {'train': transforms.Compose([transforms.ToTensor()]), 'test': transforms.Compose([transforms.ToTensor()])}
     # image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x)
     image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
                     for x in phase}
