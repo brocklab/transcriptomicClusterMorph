@@ -1,7 +1,7 @@
 # %%
 from pathlib import Path
 import numpy as np
-from skimage.io import imread
+from skimage.io import imread, imsave
 import matplotlib.pyplot as plt
 
 from src.visualization.segmentationVis import viewPredictorResult
@@ -11,14 +11,7 @@ from detectron2.utils.visualizer import ColorMode
 # %%
 experiment = 'TJ2201'
 # %%
-dataPath = Path(f'../../data/{experiment}/raw/phaseContrast')
-datasetDictPath = Path(f'../../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
-datasetDicts = np.load(datasetDictPath, allow_pickle=True)
-co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
-# %%
 predictor = modelTools.getSegmentModel('../../models/TJ2201Split16')
-
 # %%
 imNum = 2
 imPath = Path(f'../../data/TJ2201/split16//phaseContrast/phaseContrast_E2_4_2022y04m07d_16h00m_{imNum}.png')
