@@ -95,41 +95,14 @@ class singleCellLoader(Dataset):
         bb = self.bbs[idx]
         poly = self.segmentations[idx]
         nIncrease = self.nIncrease
-        colMin, rowMin, colMax, rowMax = bb
-        rowMin -= nIncrease
-        rowMax += nIncrease
-        colMin -= nIncrease
-        colMax += nIncrease
-
-        # imgOrig = imread(Path('../data/TJ2201/split16/phaseContrast/') / imgName)
-        # poly2 = np.array(poly)
-        # polyx = poly2[:,0]
-        # polyy = poly2[:,1]
-        # plt.figure()
-        # plt.imshow(imgOrig, cmap = 'gray')
-        # plt.plot(polyx, polyy, c = 'red')
-        # plt.title(label)
-
-        # Indexing checks
-        if rowMin <= 0:
-            rowMin = 0
-        if rowMax > img.shape[0]:
-            rowMax = img.shape[0]
-        if colMin <= 0:
-            colMin = 0
-        if colMax >= img.shape[1]:
-            colMax = img.shape[1]
-
-        # Increase the size of the bounding box and crop
-        bbIncreased = [colMin, rowMin, colMax, rowMax]
-        imgCrop = img[bbIncreased[1]:bbIncreased[3], bbIncreased[0]:bbIncreased[2]]
-
-        # imgCrop = bbIncreaseBlackout(poly, bb, imgName, img, self.nIms, label, self.nIncrease)
         imgCrop = bbIncrease(poly, bb, imgName, img, self.nIms, self.nIncrease, augmentation=self.augmentation)
-
         # Pad image
         diffRows = int((maxRows - imgCrop.shape[0])/2)
         diffCols = int((maxCols - imgCrop.shape[1])/2)
+        if diffRows < 0:
+            diffRows = 0
+        if diffCols < 0:
+            diffCols = 0
         pcCrop = F.pad(torch.tensor(imgCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
         pcCrop = resize(pcCrop, (maxRows, maxCols))
 

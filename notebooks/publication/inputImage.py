@@ -2,10 +2,14 @@
 from src.models.trainBB import makeImageDatasets, train_model, getTFModel
 from src.data.fileManagement import convertDate
 from src.models import modelTools
+from src.data.imageProcessing import bbIncrease
+from src.data.fileManagement import splitName2Whole
+
 from pathlib import Path
 import numpy as np
 import sys
 import argparse 
+import matplotlib.pyplot as plt
 
 from torchvision import models
 from torch.optim import lr_scheduler
@@ -29,7 +33,7 @@ args, unknown = parser.parse_known_args()
 
 # %%
 experiment  = 'TJ2201'
-nIncrease   = 25
+nIncrease   = 0
 maxAmt      = 20000
 batch_size  = 64
 num_epochs  = 32
@@ -82,18 +86,106 @@ for seg in datasetDicts:
 
 sum(list(wellSize.values()))
 # %%
-dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                               dataPath,
-                                               modelInputs,
-                                               data_transforms = None,
-                                               isShuffle = False
-                                            )
-np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
+imgs = []
+for nIncrease in [0, 25, 65]:
+    modelInputs['nIncrease'] = nIncrease
+    dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
+                                                dataPath,
+                                                modelInputs,
+                                                data_transforms = None,
+                                                isShuffle = False
+                                                )
+    np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
+    inputs, classes = next(iter(dataloaders['train']))
+    img = inputs[61].numpy().transpose((1,2,0))
+    imgs.append(img)
+
+    if modelInputs['nIncrease'] == 25:
+        imgInput = inputs[60].numpy().transpose((1,2,0))
+
 # %%
-inputs, classes = next(iter(dataloaders['train']))
+plt.imshow(imgInput)
+plt.axis('off')
+plt.savefig('../../figures/publication/exemplar/inputImage_dataloder.png', bbox_inches='tight', pad_inches=0, transparent = True)
 # %%
-import matplotlib.pyplot as plt
-for i in range(64):
-    plt.figure()
-    plt.imshow(inputs[i].numpy().transpose((1,2,0)))
+plt.figure(figsize = (11, 10))
+plt.subplot(131)
+plt.imshow(imgs[0])
+plt.axis('off')
+plt.title('0 px\nIncrease')
+plt.subplot(132)
+plt.imshow(imgs[1])
+plt.axis('off')
+plt.title('25 px\nIncrease')
+plt.subplot(133)
+plt.imshow(imgs[2])
+plt.axis('off')
+plt.title('65 px\nIncrease')
+plt.savefig('../../figures/publication/exemplar/increasingBB_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
+# %%
+imgIdx = 20
+cellIdx = 2
+
+annotations = datasetDicts[imgIdx]['annotations']
+imgName = datasetDicts[imgIdx]['file_name'].split('/')[-1]
+imgNameWhole = splitName2Whole(imgName)
+fullPath = os.path.join('../../data/TJ2201/raw/phaseContrast', imgNameWhole)
+img = imread(fullPath)
+
+bb = annotations[cellIdx]['bbox']
+poly = annotations[cellIdx]['segmentation'][0]
+poly = np.array(np.reshape(poly, (int(len(poly)/2), 2)))
+imgCrop = bbIncrease(poly, bb, imgName, img, 16, nIncrease = 25)
+plt.imshow(imgCrop, cmap = 'gray')
+plt.axis('off')
+# plt.savefig('../../figures/publication/exemplar/inputImage_image.png', bbox_inches='tight', pad_inches=0, transparent = True)
+# %%
+imgIdx = 20
+cellIdx = 11
+
+annotations = datasetDicts[imgIdx]['annotations']
+imgName = datasetDicts[imgIdx]['file_name'].split('/')[-1]
+imgNameWhole = splitName2Whole(imgName)
+fullPath = os.path.join('../../data/TJ2201/raw/phaseContrast', imgNameWhole)
+img = imread(fullPath)
+
+bb = annotations[cellIdx]['bbox']
+poly = annotations[cellIdx]['segmentation'][0]
+poly = np.array(np.reshape(poly, (int(len(poly)/2), 2)))
+imgs = []
+for nIncrease in [0, 25, 65]:
+    imgCrop = bbIncrease(poly, bb, imgName, img, 16, nIncrease)
+    imgs.append(imgCrop)
+# %%
+
+fig = plt.figure(constrained_layout=True, figsize=(10, 4))
+
+# create 3 subfigs (width padding=30%)
+sf1, sf2, sf3 = fig.subfigures(1, 3, wspace=0.1)
+
+# add an axes to each subfig (left=0%, bottom=0%, width=100%, height=90%)
+ax1 = sf1.add_axes([0, 0, 1, 0.9])
+ax2 = sf2.add_axes([0, 0, 1, 0.9])
+ax3 = sf3.add_axes([0, 0, 1, 0.9])
+
+ax1.imshow(imgs[0], cmap = 'gray')
+ax1.axis('off')
+
+ax2.imshow(imgs[1], cmap = 'gray')
+ax2.axis('off')
+
+ax3.imshow(imgs[2], cmap = 'gray')
+ax3.axis('off')
+
+ax1.set_aspect('equal')
+ax2.set_aspect('equal')
+ax3.set_aspect('equal')
+
+sf1.suptitle('0 px\nIncrease',  y = .9)
+sf2.suptitle('25 px\nIncrease', y = .9)
+sf3.suptitle('65 px\nIncrease', y = .9)
+# plt.subplots_adjust(top = 0.95)
+# fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.savefig('../../figures/publication/exemplar/increasingBB_image.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
+
 # %%
