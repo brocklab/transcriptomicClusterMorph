@@ -129,7 +129,7 @@ class singleCellLoader(Dataset):
             - imgNames, list of image names
         """
         # Split off well for training/testing
-        testWell = ['B2']
+        testWell = ['B7']
         print(f'Testing on well(s) {testWell}')
         if self.phase == 'train':
             datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] not in testWell]

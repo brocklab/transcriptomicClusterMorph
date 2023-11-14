@@ -79,8 +79,7 @@ for seg in datasetDicts:
     if well not in wellSize.keys():
         wellSize[well] = 0
     wellSize[well] += len(seg['annotations'])
-
-sum(list(wellSize.values()))
+print(np.array(list(wellSize.values())).sum(axis=0))
 # %%
 imgs = []
 for nIncrease in [0, 25, 65]:
@@ -118,6 +117,36 @@ plt.imshow(imgs[2])
 plt.axis('off')
 plt.title('65 px\nIncrease')
 plt.savefig('../../figures/publication/exemplar/increasingBB_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
+# %%
+imgs = []
+modelInputs['nIncrease'] = 25
+for augmentation in ['None', 'blackoutCell', 'stamp']:
+    modelInputs['augmentation'] = augmentation
+    dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
+                                                dataPath,
+                                                modelInputs,
+                                                data_transforms = None,
+                                                isShuffle = False
+                                                )
+    np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
+    inputs, classes = next(iter(dataloaders['train']))
+    img = inputs[61].numpy().transpose((1,2,0))
+    imgs.append(img)
+# %%
+plt.figure(figsize = (11, 10))
+plt.subplot(131)
+plt.imshow(imgs[0])
+plt.axis('off')
+plt.title('No Augmentation')
+plt.subplot(132)
+plt.imshow(imgs[1])
+plt.axis('off')
+plt.title('No Texture')
+plt.subplot(133)
+plt.imshow(imgs[2])
+plt.axis('off')
+plt.title('No Surrounding')
+plt.savefig('../../figures/publication/exemplar/augmentations_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
 # %%
 imgIdx = 20
 cellIdx = 2
