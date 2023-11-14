@@ -6,6 +6,7 @@ import torch
 import os
 import time
 from pathlib import Path
+from centermask.config import get_cfg
 
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
@@ -52,6 +53,16 @@ def getSegmentModel(modelPath: str, numClasses = 1):
 
     return predictor
 
+def getLIVECell(confidenceThresh = 0.3, homePath = '..'):
+    cfg = get_cfg()
+    cfg.merge_from_file(f'{homePath}/data/sartorius/configs/bt474_config.yaml')
+    cfg.MODEL.WEIGHTS = f"{homePath}/models/segmentation/LIVECell_anchor_free_model.pth"  # path to the model we just trained
+    cfg.MODEL.RETINANET.SCORE_THRESH_TEST = confidenceThresh
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = confidenceThresh
+    cfg.MODEL.FCOS.INFERENCE_TH_TEST = confidenceThresh
+    cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = confidenceThresh
+    predictor = DefaultPredictor(cfg)
+    return predictor
 
 def printModelVariables(modelInputDict: dict):
     """

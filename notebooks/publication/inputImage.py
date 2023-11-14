@@ -5,17 +5,13 @@ from src.models import modelTools
 from src.data.imageProcessing import bbIncrease
 from src.data.fileManagement import splitName2Whole
 
+import os
 from pathlib import Path
 import numpy as np
 import sys
 import argparse 
 import matplotlib.pyplot as plt
-
-from torchvision import models
-from torch.optim import lr_scheduler
-import torch.nn as nn
-import torch
-import torch.optim as optim
+from skimage.io import imread
 # %% Add argparse
 parser = argparse.ArgumentParser(description='Network prediction parameters')
 parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
@@ -138,7 +134,7 @@ poly = np.array(np.reshape(poly, (int(len(poly)/2), 2)))
 imgCrop = bbIncrease(poly, bb, imgName, img, 16, nIncrease = 25)
 plt.imshow(imgCrop, cmap = 'gray')
 plt.axis('off')
-# plt.savefig('../../figures/publication/exemplar/inputImage_image.png', bbox_inches='tight', pad_inches=0, transparent = True)
+plt.savefig('../../figures/publication/exemplar/inputImage_image.png', bbox_inches='tight', pad_inches=0, transparent = True)
 # %%
 imgIdx = 20
 cellIdx = 11

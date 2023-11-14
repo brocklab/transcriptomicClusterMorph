@@ -4,6 +4,8 @@ models/**
 results/**
 figures/**
 src.egg-info/**
+centermask/*
+src/centermask/*
 
 # Annoying add ons
 .ipynb_checkpoints/
