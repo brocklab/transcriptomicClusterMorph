@@ -43,9 +43,9 @@ args, unknown = parser.parse_known_args()
 # %%
 experiment  = 'TJ2321-LPD4Lin1'
 nIncrease   = 10
-maxAmt      = 50000
+maxAmt      = 500000000
 batch_size  = 64
-num_epochs  = 32
+num_epochs  = 10
 modelType   = 'resnet152'
 optimizer = 'sgd'
 notes = 'Initial prediction'
@@ -65,7 +65,8 @@ modelInputs = {
 'modelIDSource' : idSource,
 'notes'         : notes,
 'optimizer'     : optimizer, 
-'augmentation'  : 'blackoutCell'
+'augmentation'  : 'None',
+'testWell'      : ['B2']
 }
 
 argItems = vars(args)
@@ -77,7 +78,7 @@ for item, value in argItems.items():
 modelDetailsPrint = modelTools.printModelVariables(modelInputs)
 # %%
 dataPath = Path(f'../data/{experiment}/split4/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts.npy')
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-0.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
@@ -90,6 +91,8 @@ for seg in datasetDicts:
     for cell in seg['annotations']:
         catID = int(cell['category_id'])
         wellSize[well][catID] += 1
+
+np.array(list(wellSize.values())).sum(axis = 0)
 # %%
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,
@@ -116,7 +119,10 @@ criterion = nn.CrossEntropyLoss()
 #optimizer = optim.SGD(model.parameters(), lr=0.001)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
-model2 = nn.DataParallel(model)
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
 
 # %%
 # Scheduler to update lr

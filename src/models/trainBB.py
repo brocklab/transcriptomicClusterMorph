@@ -59,10 +59,20 @@ class singleCellLoader(Dataset):
         self.seed = randomSeed
         self.transforms = transforms
         self.maxAmt = modelInputs['maxAmt']
+        if 'augmentation' in modelInputs.keys():
+            self.augmentation = modelInputs['augmentation']
+        else:
+            self.augmentation = 'None'
+        if 'testWell' in modelInputs.keys():
+            self.testWell = modelInputs['testWell']
+        else:
+            self.testWell = ['B7']
+
         self.segmentations, self.phenotypes, self.imgNames, self.bbs = self.balance(datasetDicts)
         self.experiment = modelInputs['experiment']
         self.nIncrease = modelInputs['nIncrease']
-        self.augmentation = modelInputs['augmentation']
+
+
         # Static parameters for segmentation
         experimentParamsLoc = dataPath
         c = 0
@@ -129,7 +139,7 @@ class singleCellLoader(Dataset):
             - imgNames, list of image names
         """
         # Split off well for training/testing
-        testWell = ['B7']
+        testWell = self.testWell
         print(f'Testing on well(s) {testWell}')
         if self.phase == 'train':
             datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] not in testWell]

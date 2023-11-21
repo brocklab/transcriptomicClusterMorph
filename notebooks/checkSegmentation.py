@@ -54,16 +54,20 @@ def preprocess(input_image, magnification_downsample_factor=1.0):
 
     return output_image
 # %%
-# experiment = 'TJ2321-LPD4Lin1'
+experiment = 'TJ2321-LPD4Lin1'
 experiment = 'TJ2302'
 # %%
 # dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-# datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts.npy')
-# datasetDicts = np.load(datasetDictPath, allow_pickle=True)
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts.npy')
+datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 dataPath = '../data/TJ2321-LPD4Lin1/raw/phaseContrast'
 # dataPath = '../data/TJ2302/split4/phaseContrast'
 imPaths = [f'{dataPath}/{imName}' for imName in os.listdir(dataPath)]
-
+# %%
+c = 0
+for im in datasetDicts:
+    c += len(im['annotations'])
+print(c)
 # %%
 predictorMe = modelTools.getSegmentModel('../models/sartoriusBT474')
 # %%

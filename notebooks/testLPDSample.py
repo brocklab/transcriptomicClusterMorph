@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import pandas as pd
 
 import torch.nn as nn
 import torch
@@ -73,44 +74,63 @@ criterion = nn.CrossEntropyLoss()
 #optimizer = optim.SGD(model.parameters(), lr=0.001)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
-modelName = 'classifySingleCellCrop-1682975256'
+modelName = 'classifySingleCellCrop-1700187095'
 homePath = Path('../')
 modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
 outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
 if not outPath.exists():
     outPath = Path(str(outPath).replace('.out', '.txt'))
 assert outPath.exists(), outPath
-modelDetails = getModelDetails(outPath)
-modelDetails['augmentation'] = None
-print(modelDetails)
-model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
+modelInputs = getModelDetails(outPath)
+modelInputs['augmentation'] = None
+print(modelInputs)
+model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
 
-dataPath = Path.joinpath(homePath, 'data', modelDetails['experiment'], 'raw', 'phaseContrast')
+dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
-dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
-                                            dataPath,
-                                            modelDetails,
-                                            phase = ['none'],
-                                            isShuffle = False
-                                            )
-# %%
-inputs, labels = next(iter(dataloader))
-device_str = "cuda"
-device = torch.device(device_str if torch.cuda.is_available() else "cpu")
-model.to(device)
-# %%
-allPreds = []
-for inputs, labels in tqdm(dataloader):
-    inputs = inputs.float()
-    inputs = inputs.to(device)
-    labels = labels.to(device)
+modelInputs['experiment'] = 'TJ2310'
+
+allWells, allProps = [], []
+for testWell in wellSize.keys():
+    modelInputs['testWell'] = testWell
+    dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
+                                                dataPath,
+                                                modelInputs,
+                                                isShuffle = False
+                                                )
+
+    device_str = "cuda"
+    device = torch.device(device_str if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    allPreds = []
+    for inputs, labels in tqdm(dataloaders['test']):
+        inputs = inputs.float()
+        inputs = inputs.to(device)
+        labels = labels.to(device)
 
 
-    outputs = model(inputs)
-    _, preds = torch.max(outputs, 1)
-    allPreds.append(preds.cpu().numpy())
-    # print(sum(preds)/len(preds))
+        outputs = model(inputs)
+        _, preds = torch.max(outputs, 1)
+        allPreds.append(preds.cpu().numpy())
+        # print(sum(preds)/len(preds))
+    preds = np.concatenate(allPreds)
+    prop = sum(preds)/len(preds)*100
+
+    allWells.append(testWell)
+    allProps.append(prop)
+
+    print(f'Test well: {testWell} = {prop:0.2f}%')
+    pd.DataFrame([allWells, allProps]).to_csv('./lpdSample.csv')
+
 # %%
-preds = np.concatenate(allPreds)
-print(sum(preds)/len(preds))
+pd.DataFrame([allWells, allProps]).to_csv('./lpdSample.csv')
 # %%
+lpdSample = pd.read_csv('../data/misc/lpdSample.csv',
+                        index_col=0,
+                        header=None).T
+lpdSample.columns = [0, 'well', 'proportion']
+lpdSample.head()
+# %%
+plt.hist(lpdSample['proportion'].astype(float), bins = 20)
+plt.xlabel('Predicted Lineage 1 Proportion')
+plt.ylabel('Count')

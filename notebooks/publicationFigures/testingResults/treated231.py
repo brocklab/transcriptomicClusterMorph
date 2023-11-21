@@ -30,18 +30,21 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 import detectron2
 from detectron2.structures import BoxMode
 # %%
-# dfExperiment = collateModelParameters(generate=True)
-
-# %%
 experiment = 'TJ2201'
-dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
+homePath = Path('../../../')
+modelPath = homePath / 'models' / 'classification'
+modelNames = list(modelPath.iterdir())
+modelNames = [str(modelName.parts[-1]).split('.')[0] for modelName in modelNames]
+modelNames.sort()
+datasetDictPath = homePath / f'data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy'
+dataPath = homePath / f'data/{experiment}/raw/phaseContrast'
+
 datasetDictsPre = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDictsPre = [seg for seg in datasetDictsPre if seg['file_name'].split('_')[1] in co]
 datasetDictsPre = [record for record in datasetDictsPre if len(record['annotations']) > 0]
 # %%
-datasetDictsTreat = datasets.load_coco_json(json_file='../data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', image_root='')
+datasetDictsTreat = datasets.load_coco_json(json_file=homePath /'data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', image_root='')
 datasetDictsTreat = [record for record in datasetDictsTreat if len(record['annotations']) > 0]
 for record in tqdm(datasetDictsTreat):
     for cell in record['annotations']:
@@ -56,8 +59,8 @@ for image in tqdm(datasetDictsPre):
     for cell in image['annotations']:
         cell['category_id'] = 0
 
-imgPaths = {0: '../data/TJ2201/raw/phaseContrast',
-            1: '../data/TJ2301-231C2/raw/phaseContrast'}
+imgPaths = {0: homePath / 'data/TJ2201/raw/phaseContrast',
+            1: homePath / 'data/TJ2301-231C2/raw/phaseContrast'}
 
 # %% Replace file paths
 for image in datasetDictsPre:
@@ -258,23 +261,24 @@ if data_transforms == []:
         ])
     }
     print('Not using custom transforms')
-
-# image_datasets = {x: singleCellLoader(datasetDicts, experiment, data_transforms[x], dataPath, nIncrease, maxAmt = maxAmt, phase=x)
-
-
 # %%
-modelDict = {'No Augmentation': 'classifySingleCellCrop-1692223986',
-           'No Surrounding' : 'classifySingleCellCrop-1692280532',
-           'No Texture'     : 'classifySingleCellCrop-1692318297'
-}
+modelDict = {
+            #  'No Augmentation': 'classifySingleCellCrop-1692223986',
+             '0 px': 'classifySingleCellCrop-1692914142'
+             }
 
-resDict = {}
+resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
+if resultsFile.exists():
+    modelRes = pickle.load(open(resultsFile, "rb"))
+else:
+    print(f'Results file not found {resultsFile}')
+
 for augName, modelName in tqdm(modelDict.items()):
-
-    modelPath = str(Path('../models/classification') / f'{modelName}.pth')
-    resPath =   str(Path('../results/classificationTraining') / f'{modelName}.txt')
+    
+    modelPath = str(Path(homePath / 'models/classification') / f'{modelName}.pth')
+    resPath =   str(Path(homePath / 'results/classificationTraining') / f'{modelName}.txt')
     modelInputs = testBB.getModelDetails(resPath)
-
+    modelInputs['imgPaths'] = imgPaths
     batch_size   = modelInputs['batch_size']
     image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
                     for x in phase}
@@ -286,61 +290,24 @@ for augName, modelName in tqdm(modelDict.items()):
     probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
     res = testBB.testResults(probs, allLabels, scores, modelName)
 
-    resDict[augName] = res
+    modelRes[modelName] = res
+
+pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
+modelNames = ['classifySingleCellCrop-1692914142']
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})
 plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-for augName, res in resDict.items():
+for model in modelNames:
+    res = modelRes[model]
     auc = res.auc
-    plotLabel = f'{augName} AUC = {auc:0.2f}'
+    plotLabel = f'AUC = {auc:0.2f}'
     plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 
-
-plt.title('Treated Cell Classification')
-plt.legend(fontsize=12, loc='lower right')
+plt.legend(fontsize=12, loc = 'lower right')
+plt.title('Treated Population Identification')
+plt.savefig(homePath / 'figures/publication/results/treatedCellIdentification.png', dpi = 500, bbox_inches = 'tight')
 # %%
-modelDict = {'0 px'     : ' ',
-             '25 px'    : 'classifySingleCellCrop-1692969603',
-             '65 px'    : 'classifySingleCellCrop-1693024624'
-}
-
-resDict = {}
-for augName, modelName in tqdm(modelDict.items()):
-
-    modelPath = str(Path('../models/classification') / f'{modelName}.pth')
-    resPath =   str(Path('../results/classificationTraining') / f'{modelName}.txt')
-    modelInputs = testBB.getModelDetails(resPath)
-
-    batch_size   = modelInputs['batch_size']
-    image_datasets = {x: singleCellLoader(datasetDicts, data_transforms[x], dataPath, phase=x, modelInputs = modelInputs) 
-                    for x in phase}
-    dataset_sizes = {x: len(image_datasets[x]) for x in phase}
-    dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
-                        for x in phase}
-
-    model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
-    probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
-    res = testBB.testResults(probs, allLabels, scores, modelName)
-
-    resDict[augName] = res
-
-# %%
-plt.figure()
-plt.figure(figsize=(6,6))
-plt.rcParams.update({'font.size': 17})
-plt.grid()
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-for augName, res in resDict.items():
-    auc = res.auc
-    plotLabel = f'{augName} AUC = {auc:0.2f}'
-    plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
-
-
-plt.title('Treated Cell Classification \nIncreasing BB')
-plt.legend(fontsize=12, loc='lower right')
-plt.savefig('../figures/treatedIncreasingBB.png', dpi = 500)

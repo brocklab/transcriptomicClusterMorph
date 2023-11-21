@@ -1,10 +1,3 @@
-# %% [markdown[]
-"""
-
-"""
-# %%
-%load_ext autoreload
-%autoreload 2
 # %%
 from src.models.trainBB import singleCellLoader, getTFModel
 from src.data.fileManagement import convertDate, splitName2Whole, collateModelParameters
@@ -56,30 +49,32 @@ for modelName in modelNames2:
     modelRes[modelName] = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
 #     pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
-modelsPlot = ['classifySingleCellCrop-714689',
+modelsPlot = [
+              'classifySingleCellCrop-714689',
               'classifySingleCellCrop-713279', 
               'classifySingleCellCrop-709125', 
             #   'classifySingleCellCrop-720396',
-              'classifySingleCellCrop-727592']
+            #   'classifySingleCellCrop-727592'
+            ]
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})
 plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-for model in modelsPlot[0:-1]:
+for model in modelsPlot:
     modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.out')
     res = modelRes[model]
     auc = res.auc
     plotLabel = f'BB increase {modelDetails["nIncrease"]} px, AUC = {auc:0.2f}'
     plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 
-model = modelsPlot[-1]
-modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.out')
-res = modelRes[model]
-auc = res.auc
-plotLabel = f'Full dataset, AUC = {auc:0.2f}'
-plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
+# model = modelsPlot[-1]
+# modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.out')
+# res = modelRes[model]
+# auc = res.auc
+# plotLabel = f'Full dataset, AUC = {auc:0.2f}'
+# plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 
 plt.legend(fontsize=12)
 plt.title('Phenotype Prediction\nIncreasing Bounding Box')
