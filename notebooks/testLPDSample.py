@@ -74,7 +74,7 @@ criterion = nn.CrossEntropyLoss()
 #optimizer = optim.SGD(model.parameters(), lr=0.001)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
-modelName = 'classifySingleCellCrop-1700187095'
+modelName = 'classifySingleCellCrop-1700026902'
 homePath = Path('../')
 modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
 outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
@@ -118,19 +118,29 @@ for testWell in wellSize.keys():
 
     allWells.append(testWell)
     allProps.append(prop)
-
-    print(f'Test well: {testWell} = {prop:0.2f}%')
     pd.DataFrame([allWells, allProps]).to_csv('./lpdSample.csv')
 
+    print(f'Test well: {testWell} = {prop:0.2f}%')
 # %%
-pd.DataFrame([allWells, allProps]).to_csv('./lpdSample.csv')
-# %%
-lpdSample = pd.read_csv('../data/misc/lpdSample.csv',
-                        index_col=0,
-                        header=None).T
-lpdSample.columns = [0, 'well', 'proportion']
-lpdSample.head()
-# %%
-plt.hist(lpdSample['proportion'].astype(float), bins = 20)
-plt.xlabel('Predicted Lineage 1 Proportion')
-plt.ylabel('Count')
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+lpdSampleNew = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
+lpdSampleNew.columns = [0, 'well', 'proportion']
+lpdSampleNew['proportion'] = lpdSampleNew['proportion'].astype('float')
+lpdSampleNew['model'] = 'new'
+
+lpdSampleOld = pd.read_csv('../data/misc/lpdSample-old.csv', header = None, index_col=0).T
+lpdSampleOld.columns = [0, 'well', 'proportion']
+lpdSampleOld['proportion'] = lpdSampleOld['proportion'].astype('float')
+lpdSampleOld['model'] = 'old'
+
+lpdSampleConcat = pd.concat([lpdSampleOld, lpdSampleNew]).reset_index()
+
+lpdSampleConcat = lpdSampleConcat.sort_values(by = 'proportion', ascending = True)
+
+sns.catplot(
+    data = lpdSampleConcat, x = 'well', y = 'proportion', hue = 'model',
+    kind = 'bar'
+)
