@@ -28,7 +28,7 @@ modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
 resultsSaveName = Path(f'../results/classificationTraining/classifySingleCellCrop-{modelID}.txt')
 
-experiment = 'TJ2310'
+experiment = 'TJ2322-LPD7'
 
 modelInputs = {
 
@@ -44,6 +44,15 @@ modelInputs = {
 'augmentation'  : None
 
 }
+# %%
+import json
+experimentParamsLoc = '/home/user/work/cellMorph/data/experimentParams.json'
+with open(experimentParamsLoc, 'r') as json_file:
+    experimentParams = json.load(json_file)
+experimentParams['TJ2322-LPD7'] = experimentParams['TJ2303-LPD4'].copy()
+experimentJson = json.dumps(experimentParams)
+with open(experimentParamsLoc, 'w') as json_file:
+    json_file.write(experimentJson)
 # %%
 datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts-1.npy')
 datasetDicts = list(np.load(datasetDictPath, allow_pickle=True))
@@ -126,21 +135,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-lpdSampleNew = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
-lpdSampleNew.columns = [0, 'well', 'proportion']
-lpdSampleNew['proportion'] = lpdSampleNew['proportion'].astype('float')
-lpdSampleNew['model'] = 'new'
+lpdSample = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
+lpdSample.columns = [0, 'well', 'proportion']
+lpdSample['proportion'] = lpdSample['proportion'].astype('float')
+lpdSample['model'] = 'new'
+# %%
+plt.hist(lpdSample['proportion'], bins=20)
+plt.xlabel('Predicted Proportion')
+plt.ylabel('Amount')
+plt.grid()
+# %%
 
-lpdSampleOld = pd.read_csv('../data/misc/lpdSample-old.csv', header = None, index_col=0).T
-lpdSampleOld.columns = [0, 'well', 'proportion']
-lpdSampleOld['proportion'] = lpdSampleOld['proportion'].astype('float')
-lpdSampleOld['model'] = 'old'
-
-lpdSampleConcat = pd.concat([lpdSampleOld, lpdSampleNew]).reset_index()
-
-lpdSampleConcat = lpdSampleConcat.sort_values(by = 'proportion', ascending = True)
-
-sns.catplot(
-    data = lpdSampleConcat, x = 'well', y = 'proportion', hue = 'model',
-    kind = 'bar'
-)
+# %%
