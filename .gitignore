@@ -14,6 +14,7 @@ __pycache__/
 
 # Data that might be hanging around
 *.png
+*.jpg
 *.npy
 *.json
 *.lock

@@ -68,7 +68,7 @@ for model in modelNames:
 plt.legend(fontsize=12)
 plt.title('Subpopulation Prediction\nIncreasing Bounding Box')
 
-plt.savefig(homePath / 'figures/publication/results/subPopulationBoundingBox.png', dpi = 500, bbox_inches = 'tight')
+# plt.savefig(homePath / 'figures/publication/results/subPopulationBoundingBox.png', dpi = 500, bbox_inches = 'tight')
 # %% Augmentation results
 modelDict = {   
             'No Augmentation': 'classifySingleCellCrop-713279',

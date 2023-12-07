@@ -38,6 +38,7 @@ def collateModelParameters(generate = False):
                     allModelDetails[detail] = []
 
         for outFile in outFiles:
+            print(outFile)
             modelDetails = getModelDetails(outFile)
             for detail in allModelDetails.keys():
                 if detail not in modelDetails.keys():
