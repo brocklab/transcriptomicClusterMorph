@@ -59,6 +59,9 @@ class singleCellLoader(Dataset):
         self.seed = randomSeed
         self.transforms = transforms
         self.maxAmt = modelInputs['maxAmt']
+
+        # This if/else is to combat old models where we didn't have augmentation or
+        # specific test wells specified
         if 'augmentation' in modelInputs.keys():
             self.augmentation = modelInputs['augmentation']
         else:
@@ -76,17 +79,23 @@ class singleCellLoader(Dataset):
         # Static parameters for segmentation
         experimentParamsLoc = dataPath
         c = 0
+        # Recursively get parents until we're in the data folder
         while experimentParamsLoc.name != 'data':
             experimentParamsLoc = experimentParamsLoc.parent
             c += 1
             assert c < 1000
-                
-        experimentParamsLoc = experimentParamsLoc / 'experimentParams.json'
-        with open(experimentParamsLoc, 'r') as json_file:
-            experimentParams = json.load(json_file)        
-        self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
-        self.nIms = experimentParams[self.experiment]['nIms']
-        
+        # Load old JSON with experiment-specific parameters
+        # As per usual, these should never have been considered static 
+        # but instead should have always been defined prior
+        if 'maxImgSize' not in modelInputs.keys():
+            experimentParamsLoc = experimentParamsLoc / 'experimentParams.json'
+            with open(experimentParamsLoc, 'r') as json_file:
+                experimentParams = json.load(json_file)        
+            self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
+            self.nIms = experimentParams[self.experiment]['nIms']
+        else:
+            self.maxImgSize = modelInputs['maxImgSize']
+            self.nIms = modelInputs['maxImgSize']
         
     def __len__(self):
         return len(self.imgNames)
