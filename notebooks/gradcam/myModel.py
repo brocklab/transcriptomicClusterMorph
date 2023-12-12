@@ -113,47 +113,37 @@ def gradCamModel(img, model, inputs, plotOn = True):
         plt.subplot(121)
         plt.imshow(img_numpy)
         plt.subplot(122)
-        plt.imshow(gb, cmap = 'jet')
+        plt.imshow(cam_image, cmap = 'jet')
         cv2.imwrite('./test.png', cam_imageWrite)
 
     return [img_numpy, cam_image, cam_gb, gb]
 # %%
-experiment  = 'TJ2201'
-nIncrease   = 0
-maxAmt      = 20000
-batch_size  = 64
-num_epochs  = 32
-modelType   = 'resnet152'
-optimizer = 'sgd'
-notes = 'Run on coculture wells only'
-
-modelID, idSource = 0, 0
-modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
-resultsSaveName = Path(f'../results/classificationTraining/classifySingleCellCrop-{modelID}.txt')
-
-
-modelInputs = {
-
-'experiment'    : experiment, 
-'nIncrease'     : nIncrease,
-'maxAmt'        : maxAmt,
-'batch_size'    : batch_size,
-'num_epochs'    : num_epochs,
-'modelType'     : modelType,
-'modelName'     : modelSaveName.parts[-1],
-'modelIDSource' : 0,
-'notes'         : notes,
-'optimizer'     : optimizer, 
-'augmentation'  : None
-}
-
-dataPath = Path.joinpath(homePath, 'data', modelInputs['experiment'], 'raw', 'phaseContrast')
-
+modelNames = { 0: 'classifySingleCellCrop-1701968149',   # 0 px increase
+              25: 'classifySingleCellCrop-713279',   # 25 px increase
+              65: 'classifySingleCellCrop-709125',
+              '0-1': 'classifySingleCellCrop-1702328446'}   # 65 px increase
 imgs = {}
-idx = 62
-idx = 61
-for nIncrease in [0, 25, 65]:
-    modelInputs['nIncrease'] = nIncrease
+allInputs = {}
+allModels = {}
+idx = 39
+# idx = 61
+
+
+
+for modelKey in modelNames.keys():
+    outPath = homePath / 'results/classificationTraining' / f'{modelNames[modelKey]}.out'
+    if not outPath.exists():
+        outPath = outPath.with_suffix('.txt')
+
+    modelInputs = getModelDetails(outPath)
+    modelName = modelNames[modelKey]
+    modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
+    model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
+
+    modelInputs['batch_size'] = 64
+    modelInputs['maxAmt'] = 20000
+    print(modelInputs)
+    dataPath = Path.joinpath(homePath, 'data', modelInputs['experiment'], 'raw', 'phaseContrast')
     dataloaders, dataset_sizes = trainBB. makeImageDatasets(datasetDicts, 
                                                 dataPath,
                                                 modelInputs,
@@ -162,21 +152,23 @@ for nIncrease in [0, 25, 65]:
                                                 )
     np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
     inputs, classes = next(iter(dataloaders['train']))
+    allInputs[modelKey] = inputs
+    allModels[modelKey] = model
     img = inputs[idx]
-    imgs[nIncrease] = img
+    imgs[modelKey] = img
 
     # if modelInputs['nIncrease'] == 25:
     #     imgInput = inputs[60].numpy().transpose((1,2,0))
-plt.subplot(131)
+
+plt.subplot(141)
 plt.imshow(imgs[0].numpy().transpose((1,2,0)))
-plt.subplot(132)
+plt.subplot(142)
 plt.imshow(imgs[25].numpy().transpose((1,2,0)))
-plt.subplot(133)
+plt.subplot(143)
 plt.imshow(imgs[65].numpy().transpose((1,2,0)))
+plt.subplot(144)
+plt.imshow(imgs['0-1'].numpy().transpose((1,2,0)))
 # %%
-modelNames = { 0: 'classifySingleCellCrop-714689',   # 0 px increase
-              25: 'classifySingleCellCrop-713279',   # 25 px increase
-              65: 'classifySingleCellCrop-709125'}   # 65 px increase
 
 pxExampleDict = {}
 idx = 5
@@ -194,8 +186,12 @@ for pixelIncrease in modelNames.keys():
     gradImages = gradCamModel(img, model, inputs, plotOn = True)
     pxExampleDict[pixelIncrease] = gradImages
 # %%
-from src.data.fileManagement import collateModelParameters
-dfExperiment = collateModelParameters(generate=True)
+pxExampleDict = {}
+idx = 42
+for pixelIncrease in modelNames.keys():
+    inputs = allInputs[pixelIncrease]
+    model = allModels[pixelIncrease]
 
-
-# %%
+    img = inputs[idx]
+    gradImages = gradCamModel(img, model, inputs, plotOn = True)
+    pxExampleDict[pixelIncrease] = gradImages

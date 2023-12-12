@@ -93,9 +93,11 @@ class singleCellLoader(Dataset):
                 experimentParams = json.load(json_file)        
             self.maxImgSize = experimentParams[self.experiment]['maxImgSize']
             self.nIms = experimentParams[self.experiment]['nIms']
+
         else:
             self.maxImgSize = modelInputs['maxImgSize']
-            self.nIms = modelInputs['maxImgSize']
+            self.nIms = modelInputs['nIms']
+
         
     def __len__(self):
         return len(self.imgNames)
@@ -149,7 +151,6 @@ class singleCellLoader(Dataset):
         """
         # Split off well for training/testing
         testWell = self.testWell
-        print(f'Testing on well(s) {testWell}')
         if self.phase == 'train':
             datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] not in testWell]
         elif self.phase == 'test':
@@ -173,8 +174,7 @@ class singleCellLoader(Dataset):
         else:
             maxAmt = self.maxAmt
 
-        print(len(datasetDicts))
-        print(f'Max amount: {maxAmt} \t cts: {cts}')    
+        # print(f'Max amount: {maxAmt} \t cts: {cts}')    
         if maxAmt > min(cts):
             self.maxAmt = min(cts)
 

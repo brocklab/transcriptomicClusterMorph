@@ -37,6 +37,9 @@ batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
 optimizer = 'sgd'
+augmentation = None
+nIms = 16
+maxImgSize = 150
 notes = 'Run on coculture wells only'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
@@ -54,9 +57,9 @@ modelInputs = {
 'modelIDSource' : idSource,
 'notes'         : notes,
 'optimizer'     : optimizer, 
-'augmentation'  : 'blackoutCell',
-'nIms'          : 16,
-'maxImgSize'    : 60
+'augmentation'  : augmentation,
+'nIms'          : nIms,
+'maxImgSize'    : maxImgSize
 }
 
 argItems = vars(args)
@@ -82,7 +85,7 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-plt.imshow(inputs[16].numpy().transpose((1,2,0)))
+plt.imshow(inputs[19].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
