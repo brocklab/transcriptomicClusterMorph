@@ -1,14 +1,11 @@
 # %%
-# %load_ext autoreload
-# %autoreload 2
-
-# %%
 from src.models.trainBB import makeImageDatasets, train_model, getTFModel
 from src.models import modelTools
 from pathlib import Path
 import numpy as np
 import sys
 import argparse
+import matplotlib.pyplot as plt
 
 from torch.optim import lr_scheduler
 import torch.nn as nn
@@ -26,13 +23,15 @@ parser.add_argument('--modelType',  type = str, metavar='modelType',   help = 'T
 parser.add_argument('--notes',      type = str, metavar='notes',       help = 'Notes on why experiment is being run')
 parser.add_argument('--optimizer',  type = str, metavar='optimizer',   help = 'Optimizer type')
 parser.add_argument('--augmentation',  type = str, metavar='augmentation',   help = 'Image adjustment (None, blackoutCell, stamp)')
+parser.add_argument('--nIms',       type = int, metavar='augmentation',   help = 'Number of images the initial full image was split into (experiment dependent). 20x magnification: 16, 10x magnification: 4')
+parser.add_argument('--maxImgSize', type = int, metavar='maxImgSize', help = 'The final size of the image. If larger than the bounding box, pad with black, otherwise resize the image')
 
 # This is for running the notebook directly
 args, unknown = parser.parse_known_args()
 
 # %%
 experiment  = 'TJ2201'
-nIncrease   = 25
+nIncrease   = 0
 maxAmt      = 20000
 batch_size  = 64
 num_epochs  = 32
@@ -55,7 +54,9 @@ modelInputs = {
 'modelIDSource' : idSource,
 'notes'         : notes,
 'optimizer'     : optimizer, 
-'augmentation'  : 'blackoutCell'
+'augmentation'  : 'blackoutCell',
+'nIms'          : 16,
+'maxImgSize'    : 60
 }
 
 argItems = vars(args)
@@ -81,7 +82,7 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-# plt.imshow(inputs[16].numpy().transpose((1,2,0)))
+plt.imshow(inputs[16].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
