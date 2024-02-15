@@ -87,6 +87,7 @@ def getModelResults(modelName, homePath, datasetDicts, mode = 'test'):
 
     dataPath = Path.joinpath(homePath, 'data', modelDetails['experiment'], 'raw', 'phaseContrast')
 
+    modelDetails['batch_size'] = 32
     dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
                                                dataPath,
                                                modelDetails,

@@ -1,24 +1,12 @@
 # %%
 from src.models import trainBB
 from src.data.fileManagement import getModelDetails
-from src.models import testBB
-from src.visualization.trainTestRes import plotTrainingRes
 import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
-import pickle 
-from tqdm import tqdm
-import pandas as pd
-from scipy import stats
 
-from torchvision import transforms
-from torch.utils.data import DataLoader
-import torch
-from torchvision import transforms
-import torch.nn.functional as F
+from skimage.io import imsave
 
-import argparse
-import os
 import cv2
 import numpy as np
 import torch
@@ -66,7 +54,7 @@ def getDataloaders(modelName, homePath = homePath):
     return dataloaders, model
 
 
-def gradCamModel(img, model, inputs, plotOn = True):
+def gradCamModel(img, model, plotOn = True):
     img_numpy = img.numpy().transpose([1, 2, 0])
     img_numpy = (img_numpy - np.min(img_numpy))/np.ptp(img_numpy)
     # img_numpy = np.array([img_numpy, img_numpy, img_numpy])
@@ -116,7 +104,7 @@ def gradCamModel(img, model, inputs, plotOn = True):
         plt.imshow(cam_image, cmap = 'jet')
         cv2.imwrite('./test.png', cam_imageWrite)
 
-    return [img_numpy, cam_image, cam_gb, gb]
+    return [img_numpy, cam_image, cam_gb, gb, grayscale_cam]
 # %%
 modelNames = { 0: 'classifySingleCellCrop-1701968149',   # 0 px increase
               25: 'classifySingleCellCrop-713279',   # 25 px increase
@@ -144,7 +132,7 @@ for modelKey in modelNames.keys():
     modelInputs['maxAmt'] = 20000
     print(modelInputs)
     dataPath = Path.joinpath(homePath, 'data', modelInputs['experiment'], 'raw', 'phaseContrast')
-    dataloaders, dataset_sizes = trainBB. makeImageDatasets(datasetDicts, 
+    dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
                                                 dataPath,
                                                 modelInputs,
                                                 data_transforms = None,
@@ -183,7 +171,7 @@ for pixelIncrease in modelNames.keys():
     modelDetails = getModelDetails(outPath)
     model = trainBB.getTFModel(modelDetails['modelType'], modelPath)
 
-    gradImages = gradCamModel(img, model, inputs, plotOn = True)
+    gradImages = gradCamModel(img, model, plotOn = True)
     pxExampleDict[pixelIncrease] = gradImages
 # %%
 pxExampleDict = {}
@@ -193,5 +181,91 @@ for pixelIncrease in modelNames.keys():
     model = allModels[pixelIncrease]
 
     img = inputs[idx]
-    gradImages = gradCamModel(img, model, inputs, plotOn = True)
+    gradImages = gradCamModel(img, model, plotOn = True)
     pxExampleDict[pixelIncrease] = gradImages
+    imsave(f'../../figures/tempPres/gradCam{pixelIncrease}px.png', pxExampleDict[pixelIncrease][1])
+
+# %%
+pixelIncrease = '0-1'
+inputs = allInputs[pixelIncrease]
+model = allModels[pixelIncrease]
+perm = np.random.permutation(64)
+c = 1
+plt.figure()
+for idx in np.arange(16):
+    img = inputs[idx]
+    gradImages = gradCamModel(img, model, plotOn = False)
+
+    plt.subplot(4,4,c)
+    plt.imshow(gradImages[1])
+    plt.axis('off')
+    c += 1
+
+# %%
+overlapInputs = {'shape': [], 'image': []}
+modelKey = 65
+outPath = homePath / 'results/classificationTraining' / f'{modelNames[modelKey]}.out'
+if not outPath.exists():
+    outPath = outPath.with_suffix('.txt')
+
+modelInputs = getModelDetails(outPath)
+modelInputs['batch_size'] = 64
+modelInputs['maxAmt'] = 20000
+dataPath = Path.joinpath(homePath, 'data', modelInputs['experiment'], 'raw', 'phaseContrast')
+dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
+                                            dataPath,
+                                            modelInputs,
+                                            data_transforms = None,
+                                            isShuffle = False
+                                            )
+np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
+inputs, classes = next(iter(dataloaders['train']))
+overlapInputs['image'] = inputs
+
+modelInputs['augmentation'] = 'shape'
+dataloaders, dataset_sizes = trainBB.makeImageDatasets(datasetDicts, 
+                                            dataPath,
+                                            modelInputs,
+                                            data_transforms = None,
+                                            isShuffle = False
+                                            )
+inputs, classes = next(iter(dataloaders['train']))
+overlapInputs['shape'] = inputs
+
+# plt.subplot(121)
+# plt.imshow(overlapInputs['image'][0].numpy().transpose([1,2,0]))
+# plt.subplot(122)
+# plt.imshow(overlapInputs['shape'][0].numpy().transpose([1,2,0]))
+
+# %%
+idx = 42
+model = allModels[modelKey]
+img = overlapInputs['image'][idx]
+shape = overlapInputs['shape'][idx].numpy().transpose([1,2,0])[:, :, 0]
+gradImages = gradCamModel(img, model, plotOn = False)
+
+gradCamGray = gradImages[-1]
+gradCamBinary = gradCamGray > 0.5
+gradCamBinary = gradCamBinary.astype(int)
+
+
+from sklearn.metrics import jaccard_score
+jac = jaccard_score(shape.flatten(), gradCamBinary.flatten())
+
+
+plt.figure()
+plt.subplot(131)
+plt.imshow(gradImages[1])
+plt.axis('off')
+plt.title('Areas of Attention')
+plt.subplot(132)
+plt.imshow(gradCamBinary)
+plt.title('Score > 0.5')
+plt.axis('off')
+plt.subplot(133)
+plt.imshow(shape)
+plt.title('Shape of Cell')
+plt.axis('off')
+plt.suptitle(f'IoU = {jac:0.3f}', y = 0.75)
+plt.savefig('../../figures/tempPres/iougradCamExample.png', dpi = 500)
+# %%

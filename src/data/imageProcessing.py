@@ -303,7 +303,7 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200, augm
     if augmentation == 'blackoutCell':
         maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
 
-        imgWhole[maskBlackout] = 0
+        imgWhole[maskBlackout] = 255
 
     if augmentation == 'outline':
             rr, cc = polygon_perimeter(polyyWhole, polyxWhole)
@@ -314,6 +314,11 @@ def bbIncrease(poly, bb, imgName, imgWhole, nIms, nIncrease=50, padNum=200, augm
         maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
 
         imgWhole[~maskBlackout] = 0
+
+    if augmentation == 'shape':
+        maskBlackout  = polygon2mask(imgWhole.shape, np.array([polyyWhole, polyxWhole], dtype="object").T)
+        imgWhole = maskBlackout
+
 
     bbIncrease = [colMin, rowMin, colMax, rowMax]
     imgBBWholeExpand = imgWhole[bbIncrease[1]:bbIncrease[3], bbIncrease[0]:bbIncrease[2]]

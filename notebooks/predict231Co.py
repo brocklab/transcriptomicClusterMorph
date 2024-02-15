@@ -31,13 +31,13 @@ args, unknown = parser.parse_known_args()
 
 # %%
 experiment  = 'TJ2201'
-nIncrease   = 0
+nIncrease   = 25
 maxAmt      = 20000
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
 optimizer = 'sgd'
-augmentation = None
+augmentation = 'blackoutCell'
 nIms = 16
 maxImgSize = 150
 notes = 'Run on coculture wells only'
@@ -85,7 +85,7 @@ np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 # %%
-plt.imshow(inputs[19].numpy().transpose((1,2,0)))
+plt.imshow(inputs[20].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

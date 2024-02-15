@@ -41,7 +41,10 @@ else:
 modelNames = [
               'classifySingleCellCrop-714689',
               'classifySingleCellCrop-713279', 
-              'classifySingleCellCrop-709125'
+              'classifySingleCellCrop-709125',
+              'classifySingleCellCrop-1707264894',
+              'classifySingleCellCrop-1707668614',
+              'classifySingleCellCrop-1707714016'
              ]
 for modelName in modelNames:
     if modelName not in modelRes.keys():
@@ -59,7 +62,11 @@ plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 for model in modelNames:
-    modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.out')
+    modelPath = homePath / 'results' / 'classificationTraining' / f'{model}.out'
+    if not modelPath.exists():
+        modelPath = homePath / 'results' / 'classificationTraining' / f'{model}.txt'
+    assert modelPath.exists()
+    modelDetails = testBB.getModelDetails(modelPath)
     res = modelRes[model]
     auc = res.auc
     plotLabel = f'BB increase {modelDetails["nIncrease"]} px, AUC = {auc:0.2f}'
