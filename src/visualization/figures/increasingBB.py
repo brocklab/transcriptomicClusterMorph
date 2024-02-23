@@ -123,8 +123,46 @@ augmentationNameDict = {
 c = 0
 for augmentation in augmentations:
     sf = sfs[c]
-    ax = sf.add_axes([0, 0, 1, 0.85])
+    ax = sf.add_axes([0, 0, 1, 0.9])
     ax.imshow(changingAugmentations[augmentation], cmap = 'gray')
-    sf.suptitle(f'{nIncrease} px\nIncrease', fontsize=15)
+    sf.suptitle(augmentationNameDict[augmentation], fontsize=15)
     ax.axis('off')
     c += 1
+fig.savefig(homePath / 'figures/augmentationsDemonstration.png', dpi=600)
+# %%
+idx = 15909
+print(idx)
+c = idx
+nCellsFound = 0
+allCells = []
+allSegs = []
+for seg in datasetDicts[idx:]:
+    annotations = seg['annotations']
+    nCells = len(seg['annotations'])
+    if nCells < 10:
+        # print(f'Skipping {c} \t {nCells}')
+        c += 1
+        continue
+    imgPath = homePath / Path(*Path(seg['file_name']).parts[2:])
+
+    img = imread(imgPath)
+
+    cell = annotations[2]
+
+    allCells.append(cell)
+    allSegs.append(seg)
+    if len(allCells) >=3:
+        break
+
+# %%
+augmentations = [None, 'blackoutCell', 'stamp']
+changingAugmentations = {}
+for cell, seg in zip(allCells, allSegs):
+    imgNameWhole = splitName2Whole(seg['file_name'].split('/')[-1])
+    imgPathWhole = homePath / 'data/TJ2201/raw/phaseContrast' / imgNameWhole
+    imgWhole = imread(imgPathWhole)
+    polyx = cell['segmentation'][0][0::2]
+    polyy = cell['segmentation'][0][1::2]
+    poly = np.array([polyx, polyy]).T
+    imgCrop = bbIncrease(poly, cell['bbox'], seg['file_name'], imgWhole, nIncrease = 25, nIms=16, augmentation=augmentation)
+    changingAugmentations[augmentation] = imgCrop
