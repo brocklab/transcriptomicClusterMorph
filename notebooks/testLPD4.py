@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import time
 import sys
-import datetime
+import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
@@ -48,12 +48,14 @@ modelInputs = {
 'augmentation'  : None
 
 }
-# %%
 
 # %%
 # datasetDictPath = Path(f'../data/{experiment}/{experiment}Segmentations.json')
 # datasetDicts = loadSegmentationJSON(datasetDictPath)
 datasetDicts = np.load('../data/TJ2303-LPD4/TJ2303-LPD4DatasetDicts.npy', allow_pickle=True)
+# %%
+datasetDictPath = Path(f'../data/{experiment}/{experiment}DatasetDicts.npy')
+dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 # %%
 wellSize = {}
 for seg in datasetDicts:
@@ -62,18 +64,72 @@ for seg in datasetDicts:
         wellSize[well] = 0
     wellSize[well] += len(seg['annotations'])
 # %%
-predictor = modelTools.getSegmentModel('../models/sartoriusBT474')
-# %%
-imPath = '/home/user/work/cellMorph/data/TJ2310/split4/phaseContrast/phaseContrast_D8_2_2023y05m25d_07h41m_1.png'
-viewPredictorResult(predictor, imPath)
-# %%
-dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 dataloader, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,
                                                modelInputs,
                                                phase=['none']
                                             )
 # %%
-inputs, labels = next(iter(dataloader))
-
+inputs, classes = next(iter(dataloader))
 # %%
+plt.imshow(inputs[20].numpy().transpose((1,2,0)))
+# %%
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+if not modelSaveName.parent.exists():
+    raise NotADirectoryError('Model directory not found')
+
+model = getTFModel(modelInputs['modelType'])
+model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+#optimizer = optim.SGD(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+# %%
+modelName = 'classifySingleCellCrop-1700026902'
+homePath = Path('../')
+modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
+outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
+if not outPath.exists():
+    outPath = Path(str(outPath).replace('.out', '.txt'))
+assert outPath.exists(), outPath
+modelInputs = getModelDetails(outPath)
+modelInputs['augmentation'] = None
+print(modelInputs)
+model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
+
+dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
+
+modelInputs['experiment'] = 'TJ2310'
+
+allWells, allProps = [], []
+for testWell in wellSize.keys():
+    modelInputs['testWell'] = testWell
+    dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
+                                                dataPath,
+                                                modelInputs,
+                                                isShuffle = False
+                                                )
+
+    device_str = "cuda"
+    device = torch.device(device_str if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    allPreds = []
+    for inputs, labels in tqdm(dataloaders['test']):
+        inputs = inputs.float()
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+
+        outputs = model(inputs)
+        _, preds = torch.max(outputs, 1)
+        allPreds.append(preds.cpu().numpy())
+        # print(sum(preds)/len(preds))
+    preds = np.concatenate(allPreds)
+    prop = sum(preds)/len(preds)*100
+
+    allWells.append(testWell)
+    allProps.append(prop)
+    pd.DataFrame([allWells, allProps]).to_csv('./lpd4Pred.csv')
+
+    print(f'Test well: {testWell} = {prop:0.2f}%')

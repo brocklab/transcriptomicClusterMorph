@@ -20,7 +20,7 @@ __pycache__/
 *.lock
 *.pth 
 *.txt
-
+*.csv 
 # Keep folder structure
 !.gitkeep
 !data/experimentParams.txt

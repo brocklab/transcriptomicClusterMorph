@@ -155,8 +155,7 @@ for seg in datasetDicts[idx:]:
         break
 
 # %%
-augmentations = [None, 'blackoutCell', 'stamp']
-changingAugmentations = {}
+allImgs = []
 for cell, seg in zip(allCells, allSegs):
     imgNameWhole = splitName2Whole(seg['file_name'].split('/')[-1])
     imgPathWhole = homePath / 'data/TJ2201/raw/phaseContrast' / imgNameWhole
@@ -164,5 +163,19 @@ for cell, seg in zip(allCells, allSegs):
     polyx = cell['segmentation'][0][0::2]
     polyy = cell['segmentation'][0][1::2]
     poly = np.array([polyx, polyy]).T
-    imgCrop = bbIncrease(poly, cell['bbox'], seg['file_name'], imgWhole, nIncrease = 25, nIms=16, augmentation=augmentation)
-    changingAugmentations[augmentation] = imgCrop
+    imgCrop = bbIncrease(poly, cell['bbox'], seg['file_name'], imgWhole, nIncrease = 0, nIms=16, augmentation=None)
+    allImgs.append(imgCrop)
+
+fig = plt.figure(constrained_layout=True, figsize=(10, 4))
+sfs = fig.subfigures(1, 3)
+
+c = 0
+for cellImg in allImgs:
+    sf = sfs[c]
+    ax = sf.add_axes([0, 0, 1, 0.9])
+    ax.imshow(cellImg, cmap = 'gray')
+    # sf.suptitle(augmentationNameDict[augmentation], fontsize=15)
+    ax.axis('off')
+    c += 1
+plt.suptitle('Example Inputs', fontsize = 20)
+fig.savefig(homePath / 'figures/example0IncreaseInputs.png', dpi=600)
