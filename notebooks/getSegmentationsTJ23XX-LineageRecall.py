@@ -1,6 +1,6 @@
 # %%
 from src.visualization.segmentationVis import  viewPredictorResult
-from src.data.imageProcessing import imSplit, findFluorescenceColor
+from src.data.imageProcessing import imSplit, findBrightGreen
 from src.models import modelTools
 
 from detectron2.data.datasets import register_coco_instances
@@ -43,7 +43,7 @@ def getRecord(pcName, compositeImg, pcImg, idx, predictor):
     # Get segmentation outlines
     for cellNum in range(nCells):
         mask = outputs[cellNum].pred_masks.numpy()[0]
-        color = findFluorescenceColor(compositeImg, mask)
+        color = findBrightGreen(compositeImg, mask)
         if color == 'green':
             pheno = 1
         else:
@@ -104,13 +104,7 @@ for experiment in experiments:
             
             
             newPcImgName = f'{str(pcName)[0:-4]}_{imNum}.png'
-            record = getRecord(pcName = newPcImgName, 
-                            compositeImg = compositeSplit, 
-                            pcImg = pcSplit, 
-                            idx = idx, 
-                            predictor = predictor)
-            
-            imNum += 1
+            record = getRecord(pcName = newPcImgName, nGreen, BW = segmentGreenHigh(RGB)
             idx += 1
 
             imSplitPath = Path(f'../data/{experiment}/split4/phaseContrast') / Path(newPcImgName).parts[-1]
@@ -158,6 +152,8 @@ for record in datasetDicts:
     if len(newAnnotations) > 0:
         record['annotations'] = newAnnotations
         datasetDictsGreen.append(record)
+
+print(len(datasetDictsGreen))
 # %%
 record = datasetDictsGreen[0]
 

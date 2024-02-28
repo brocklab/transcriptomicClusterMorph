@@ -88,7 +88,7 @@ def segmentGreen(RGB):
 
 def segmentGreenHigh(RGB):
     """
-    Finds green pixels from Incucyte data
+    Finds very bright green pixels from Incucyte data
     Input: RGB image
     Output: # of green pixels and mask of green pixels
     """
@@ -178,6 +178,20 @@ def findFluorescenceColor(RGB, mask):
     else:
         return "NaN"
 
+def findBrightGreen(RGB, mask, thresh = 10):
+    """
+    Finds the fluorescence of a cell
+    Input: RGB image location
+    Output: Color
+    """
+    RGB = RGB.copy()
+    mask = mask.astype('bool')
+    RGB[~np.dstack((mask,mask,mask))] = 0
+    nGreen, BW = segmentGreenHigh(RGB)
+    if nGreen>=thresh:
+        return "green"
+    else:
+        return "NaN"
 def filterCells(cells, confluencyDate=False, edge=False, color=False):
     """
     Filters cells on commonly-occuring issues. 
