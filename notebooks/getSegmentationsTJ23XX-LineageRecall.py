@@ -26,10 +26,10 @@ import os
 from tqdm import tqdm
 # %matplotlib inline
 # %%
-experiments = ['TJ2303-LPD4']
+experiments = ['TJ2442D']
 
 # %%
-def getRecord(pcName, compositeImg, pcImg, idx, predictor = predictor):
+def getRecord(pcName, compositeImg, pcImg, idx, predictor):
     # Go through each cell in each cropped image
     record = {}
     record['file_name'] = pcName
@@ -94,12 +94,13 @@ for experiment in experiments:
         else:
             compositeImg = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
 
-        pcTiles = imSplit(pcImg, nIms = 16)
+        pcTiles = imSplit(pcImg, nIms = 4)
+        compositeTiles = imSplit(compositeImg, nIms = 4)
         
         imNum = 1
-        for pcSplit in pcTiles:
+        for pcSplit, compositeSplit in zip(pcTiles, compositeTiles):
             pcSplit = np.array([pcSplit, pcSplit, pcSplit]).transpose([1,2,0])
-            compositeSplit = []
+            compositeSplit = compositeSplit[:,:,0:3]
             
             
             newPcImgName = f'{str(pcName)[0:-4]}_{imNum}.png'
@@ -114,6 +115,9 @@ for experiment in experiments:
 
             imSplitPath = Path(f'../data/{experiment}/split4/phaseContrast') / Path(newPcImgName).parts[-1]
             imsave(imSplitPath, pcSplit, check_contrast=False)
+            compositeSplitPath = Path(str(imSplitPath).replace('phaseContrast', 'composite'))
+            imsave(compositeSplitPath, compositeSplit, check_contrast=False)
+
             datasetDicts.append(record)
             
             if idx % 100 == 0:
@@ -143,4 +147,18 @@ for experiment in experiments:
 
     datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
     np.save(f'../data/{experiment}/{experiment}DatasetDicts.npy', datasetDicts)
-# %%imSplit
+# %%
+datasetDictsGreen = []
+for record in datasetDicts:
+    record = record.copy()
+    newAnnotations = []
+    for annotation in record['annotations']:
+        if annotation['category_id'] == 1:
+            newAnnotations.append(annotation)
+    if len(newAnnotations) > 0:
+        record['annotations'] = newAnnotations
+        datasetDictsGreen.append(record)
+# %%
+record = datasetDictsGreen[0]
+
+img = imread(datasetDictsGreen)

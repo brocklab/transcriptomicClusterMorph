@@ -86,6 +86,42 @@ def segmentGreen(RGB):
     nGreen = np.sum(BW)
     return nGreen, BW
 
+def segmentGreenHigh(RGB):
+    """
+    Finds green pixels from Incucyte data
+    Input: RGB image
+    Output: # of green pixels and mask of green pixels
+    """
+    # def segment
+    I = RGB.copy()
+
+    # Define thresholds for channel 1 based on histogram settings
+    channel1Min = 0.000;
+    channel1Max = 255.000;
+
+    # Define thresholds for channel 2 based on histogram settings
+    channel2Min = 198.000;
+    channel2Max = 255.000;
+
+    # Define thresholds for channel 3 based on histogram settings
+    channel3Min = 0.000;
+    channel3Max = 84.000;
+
+    # Create mask based on chosen histogram thresholds
+    sliderBW =  np.array(I[:,:,0] >= channel1Min ) & np.array(I[:,:,0] <= channel1Max) & \
+                np.array(I[:,:,1] >= channel2Min ) & np.array(I[:,:,1] <= channel2Max) & \
+                np.array(I[:,:,2] >= channel3Min ) & np.array(I[:,:,2] <= channel3Max)
+    BW = sliderBW
+
+    # Initialize output masked image based on input image.
+    maskedRGBImage = RGB.copy()
+
+    # Set background pixels where BW is false to zero.
+    maskedRGBImage[~np.dstack((BW, BW, BW))] = 0
+
+    nGreen = np.sum(BW)
+    return nGreen, BW
+
 def segmentRed(RGB):
     """
     Finds red pixels from Incucyte data
