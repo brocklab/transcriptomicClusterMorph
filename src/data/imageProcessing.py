@@ -1,19 +1,58 @@
 import numpy as np
 import itertools
 from scipy.interpolate import interp1d
-import os
-from pathlib import Path
 
 from skimage.color import rgb2hsv
-from skimage.morphology import binary_dilation
+from skimage import morphology, measure
 from skimage.segmentation import clear_border
 from skimage.draw import polygon2mask, polygon_perimeter
-from skimage.io import imread
-import matplotlib.pyplot as plt
 import cv2
 # import pyfeats
 
 # %% General tools
+def dilN(im, n = 1):
+    """Dilates image n number of times"""
+    for i in range(n):
+        im = morphology.binary_dilation(im)
+    return im
+def removeImageAbberation(RGB, thresh = 10000):
+    """
+    Block out very large areas where there are green spots in 
+    fluorescence images. 
+    
+    Inputs: 
+        - RGB: RGB image
+        - thresh: Number of pixels required to intervene
+
+    Outputs:
+        - RGBNew: RGB image with aberration blocked out to median values
+    """
+    # Get BW image of very bright green objects
+    nGreen, BW = segmentGreenHigh(RGB)
+    # Do a bit of processing to get an idea of where a cell might be
+    # and where an abberation might be
+    BW = morphology.remove_small_objects(BW)
+    dil = morphology.binary_dilation(BW)
+    # Find and remove blobs
+    labels = measure.label(dil)
+    unique, cts = np.unique(labels, return_counts=True)
+    unique = unique[1:]
+    cts = cts[1:]
+    # Only take away very large aberrations, otherwise there's no solution likely
+    numsHigh = unique[cts>thresh]
+    if len(numsHigh) == 0:
+        return RGB
+    isAbberation = np.isin(labels, numsHigh)
+    # Use convex hull to fully enclose cells
+    convexAbberation = morphology.convex_hull_image(isAbberation)
+    convexAbberation = dilN(convexAbberation, 50)
+
+    RGBNew = RGB.copy()
+    RGBNew[convexAbberation, 1] = np.median(RGBNew[:,:,1])
+    RGBNew[convexAbberation, 2] = np.median(RGBNew[:,:,2])
+    
+    return RGBNew
+
 def imSplit(im, nIms: int=16):
     """
     Splits images into given number of tiles
@@ -43,7 +82,7 @@ def clearEdgeCells(cell):
     NOTE: This could be problematic since some cells are just close enough, but could be solved by stitching each image together, then checking the border.
     """
     mask = cell.mask
-    maskDilate = binary_dilation(mask)
+    maskDilate = morphology.binary_dilation(mask)
     maskFinal = clear_border(maskDilate)
     if np.sum(maskFinal)==0:
         return 0
