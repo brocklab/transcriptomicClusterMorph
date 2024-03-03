@@ -1,6 +1,6 @@
 # %%
 from src.visualization.segmentationVis import  viewPredictorResult
-from src.data.imageProcessing import imSplit, findBrightGreen
+from src.data.imageProcessing import imSplit, findBrightGreen, removeImageAbberation
 from src.models import modelTools
 
 from detectron2.data.datasets import register_coco_instances
@@ -94,6 +94,7 @@ for experiment in experiments:
         else:
             compositeImg = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
 
+        compositeImg, _ = removeImageAbberation(compositeImg)
         pcTiles = imSplit(pcImg, nIms = 4)
         compositeTiles = imSplit(compositeImg, nIms = 4)
         
@@ -104,7 +105,13 @@ for experiment in experiments:
             
             
             newPcImgName = f'{str(pcName)[0:-4]}_{imNum}.png'
-            record = getRecord(pcName = newPcImgName, nGreen, BW = segmentGreenHigh(RGB)
+            record = getRecord(pcName = newPcImgName, 
+                            compositeImg = compositeSplit, 
+                            pcImg = pcSplit, 
+                            idx = idx, 
+                            predictor = predictor)
+            
+            imNum += 1
             idx += 1
 
             imSplitPath = Path(f'../data/{experiment}/split4/phaseContrast') / Path(newPcImgName).parts[-1]
@@ -141,20 +148,3 @@ for experiment in experiments:
 
     datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
     np.save(f'../data/{experiment}/{experiment}DatasetDicts.npy', datasetDicts)
-# %%
-datasetDictsGreen = []
-for record in datasetDicts:
-    record = record.copy()
-    newAnnotations = []
-    for annotation in record['annotations']:
-        if annotation['category_id'] == 1:
-            newAnnotations.append(annotation)
-    if len(newAnnotations) > 0:
-        record['annotations'] = newAnnotations
-        datasetDictsGreen.append(record)
-
-print(len(datasetDictsGreen))
-# %%
-record = datasetDictsGreen[0]
-
-img = imread(datasetDictsGreen)

@@ -41,7 +41,7 @@ def removeImageAbberation(RGB, thresh = 10000):
     # Only take away very large aberrations, otherwise there's no solution likely
     numsHigh = unique[cts>thresh]
     if len(numsHigh) == 0:
-        return RGB
+        return RGB, 0
     isAbberation = np.isin(labels, numsHigh)
     # Use convex hull to fully enclose cells
     convexAbberation = morphology.convex_hull_image(isAbberation)
@@ -51,7 +51,7 @@ def removeImageAbberation(RGB, thresh = 10000):
     RGBNew[convexAbberation, 1] = np.median(RGBNew[:,:,1])
     RGBNew[convexAbberation, 2] = np.median(RGBNew[:,:,2])
     
-    return RGBNew
+    return RGBNew, 1
 
 def imSplit(im, nIms: int=16):
     """

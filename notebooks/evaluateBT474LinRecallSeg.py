@@ -4,7 +4,12 @@ import os
 import matplotlib.pyplot as plt
 from skimage.io import imread
 from pathlib import Path
+from tqdm import tqdm
+
 from detectron2.data.datasets import load_coco_json
+
+from src.data import imageProcessing
+
 # %%
 datasetDicts = load_coco_json('../data/TJ2442D/TJ2442DSegmentations.json', '.')
 # %% Test to see if we found any very green cells
@@ -18,8 +23,17 @@ for record in datasetDicts:
     if len(newAnnotations) > 0:
         record['annotations'] = newAnnotations
         datasetDictsGreen.append(record)
-
-
+# %%
+for record in tqdm(datasetDicts):
+    fileNameComposite = record['file_name'].replace('raw', 'split4').replace('phaseContrast', 'composite')
+    img = imread(fileNameComposite)
+    _, isAbbr = imageProcessing.removeImageAbberation(img)
+    if isAbbr:
+        print(fileNameComposite)
+# %%
+img = imread('../data/misc/loadThis_G6_3_00d00h00m.png')
+img = img[:, :, 0:3]
+_, isAbbr = imageProcessing.removeImageAbberation(img)
 
 # %%
 record = datasetDictsGreen[15]

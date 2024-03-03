@@ -44,7 +44,11 @@ modelNames = [
               'classifySingleCellCrop-709125',
               'classifySingleCellCrop-1707264894',
               'classifySingleCellCrop-1707668614',
-              'classifySingleCellCrop-1707714016'
+              'classifySingleCellCrop-1707714016',
+              'classifySingleCellCrop-1709261519',
+              'classifySingleCellCrop-1709418455.txt',
+              'classifySingleCellCrop-1709372973.txt',
+              'classifySingleCellCrop-1709327523.txt',
              ]
 for modelName in modelNames:
     if modelName not in modelRes.keys():
@@ -107,3 +111,4 @@ for augName, modelName in modelDict.items():
 plt.title('Subpopulation Prediction\nImage Augmentation')
 plt.legend(fontsize=12, loc='lower right')
 plt.savefig(homePath / 'figures/publication/results/subPopulationAugmentation.png', dpi = 500, bbox_inches = 'tight')
+# %%
