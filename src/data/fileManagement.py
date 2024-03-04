@@ -79,6 +79,10 @@ def getModelDetails(outPath) -> dict:
         modelDetails[detail] = val
     if 'imgPaths' in modelDetails.keys():
         modelDetails['imgPaths'] = ast.literal_eval(modelDetails['imgPaths'])
+    if 'test Loss' in x:
+        modelDetails['empty'] = False
+    else:
+        modelDetails['empty'] = True
     return modelDetails
 
 def makeNewExperimentDirectory(experimentName):
