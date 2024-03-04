@@ -7,22 +7,48 @@ from pathlib import Path
 from tqdm import tqdm
 
 from detectron2.data.datasets import load_coco_json
+import detectron2.data.datasets as datasets
+from detectron2.data import MetadataCatalog, DatasetCatalog
 
 from src.data import imageProcessing
 
 # %%
-datasetDicts = load_coco_json('../data/TJ2442D/TJ2442DSegmentations.json', '.')
-# %% Test to see if we found any very green cells
+# %%
+def getGreenRecord(datasetDicts, datasetDictsGreen):
+    for record in tqdm(datasetDicts):
+        record = record.copy()
+        newAnnotations = []
+        for annotation in record['annotations']:
+            if annotation['category_id'] == 1:
+                newAnnotations.append(annotation)
+        if len(newAnnotations) > 0:
+            record['annotations'] = newAnnotations
+            datasetDictsGreen.append(record)
+    return datasetDictsGreen
+
+# %%
 datasetDictsGreen = []
-for record in datasetDicts:
-    record = record.copy()
-    newAnnotations = []
-    for annotation in record['annotations']:
-        if annotation['category_id'] == 1:
-            newAnnotations.append(annotation)
-    if len(newAnnotations) > 0:
-        record['annotations'] = newAnnotations
-        datasetDictsGreen.append(record)
+
+datasetDicts = load_coco_json('../data/TJ2442D/TJ2442DSegmentations.json', '.')
+datasetDictsGreen = getGreenRecord(datasetDicts, datasetDictsGreen)
+datasetDicts = load_coco_json('../data/TJ2442E/TJ2442ESegmentations.json', '.')
+datasetDictsGreen = getGreenRecord(datasetDicts, datasetDictsGreen)
+datasetDicts = load_coco_json('../data/TJ2442F/TJ2442FSegmentations.json', '.')
+datasetDictsGreen = getGreenRecord(datasetDicts, datasetDictsGreen)
+
+# %% Test to see if we found any very green cells
+def getCells(datasetDict):
+    return datasetDict
+inputs = [datasetDictsGreen]
+if 'cellMorph' in DatasetCatalog:
+    DatasetCatalog.remove('cellMorph')
+    MetadataCatalog.remove('cellMorph')
+
+DatasetCatalog.register("cellMorph", lambda x=inputs: getCells(inputs[0]))
+MetadataCatalog.get("cellMorph").set(thing_classes=["cell"])
+
+datasets.convert_to_coco_json('cellMorph', output_file='../data/misc/TJ24XXRecall.json', allow_cached=False)
+
 # %%
 for record in tqdm(datasetDicts):
     fileNameComposite = record['file_name'].replace('raw', 'split4').replace('phaseContrast', 'composite')

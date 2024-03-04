@@ -46,9 +46,9 @@ modelNames = [
               'classifySingleCellCrop-1707668614',
               'classifySingleCellCrop-1707714016',
               'classifySingleCellCrop-1709261519',
-              'classifySingleCellCrop-1709418455.txt',
-              'classifySingleCellCrop-1709372973.txt',
-              'classifySingleCellCrop-1709327523.txt',
+              'classifySingleCellCrop-1709418455',
+              'classifySingleCellCrop-1709372973',
+              'classifySingleCellCrop-1709327523'
              ]
 for modelName in modelNames:
     if modelName not in modelRes.keys():

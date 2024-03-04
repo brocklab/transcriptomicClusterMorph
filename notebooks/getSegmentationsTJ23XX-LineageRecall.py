@@ -26,7 +26,7 @@ import os
 from tqdm import tqdm
 # %matplotlib inline
 # %%
-experiments = ['TJ2442D']
+experiments = ['TJ2442D', 'TJ2442E', 'TJ2442F']
 
 # %%
 def getRecord(pcName, compositeImg, pcImg, idx, predictor):
@@ -94,6 +94,9 @@ for experiment in experiments:
         else:
             compositeImg = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
 
+        if compositeImg.shape[2] > 3:
+            compositeImg = compositeImg[:,:,0:3]
+        
         compositeImg, _ = removeImageAbberation(compositeImg)
         pcTiles = imSplit(pcImg, nIms = 4)
         compositeTiles = imSplit(compositeImg, nIms = 4)
@@ -134,7 +137,7 @@ for experiment in experiments:
                 DatasetCatalog.register("cellMorph", lambda x=inputs: getCells(inputs[0]))
                 MetadataCatalog.get("cellMorph").set(thing_classes=["cell"])
 
-                datasets.convert_to_coco_json('cellMorph', output_file='./test', allow_cached=False)
+                datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
             break
     def getCells(datasetDict):
         return datasetDict
@@ -148,3 +151,5 @@ for experiment in experiments:
 
     datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
     np.save(f'../data/{experiment}/{experiment}DatasetDicts.npy', datasetDicts)
+
+# %%
