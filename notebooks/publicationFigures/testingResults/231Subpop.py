@@ -27,9 +27,9 @@ datasetDictPathFull = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderF
 datasetDictPathPartial = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
 
 # %%
-datasetDicts = np.load(datasetDictPathFull, allow_pickle=True)
-co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
+# datasetDicts = np.load(datasetDictPathFull, allow_pickle=True)
+# co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
+# datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %% Increasing bounding box results
 # Load model results, test on reserve well if not already run
 resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
@@ -39,16 +39,16 @@ else:
     modelRes = {}
 
 modelNames = [
-              'classifySingleCellCrop-714689',
-              'classifySingleCellCrop-713279', 
-              'classifySingleCellCrop-709125',
-              'classifySingleCellCrop-1707264894',
-              'classifySingleCellCrop-1707668614',
-              'classifySingleCellCrop-1707714016',
-              'classifySingleCellCrop-1709261519',
-              'classifySingleCellCrop-1709418455',
-              'classifySingleCellCrop-1709372973',
-              'classifySingleCellCrop-1709327523'
+            #   'classifySingleCellCrop-714689',
+            #   'classifySingleCellCrop-713279', 
+            #   'classifySingleCellCrop-709125',
+              'classifySingleCellCrop-1707264894', # 65 px 
+              'classifySingleCellCrop-1707668614', # 25 px
+              'classifySingleCellCrop-1707714016', # 00 px
+              'classifySingleCellCrop-1709261519', # 55 px
+              'classifySingleCellCrop-1709418455', # 15 px
+              'classifySingleCellCrop-1709372973', # 45 px
+              'classifySingleCellCrop-1709327523'  # 35 px
              ]
 for modelName in modelNames:
     if modelName not in modelRes.keys():
@@ -80,6 +80,31 @@ plt.legend(fontsize=12)
 plt.title('Subpopulation Prediction\nIncreasing Bounding Box')
 
 # plt.savefig(homePath / 'figures/publication/results/subPopulationBoundingBox.png', dpi = 500, bbox_inches = 'tight')
+# %% Instead, plot AUC over nIncrease
+
+increases, aucs = [], []
+
+for model in modelNames:
+    modelPath = homePath / 'results' / 'classificationTraining' / f'{model}.out'
+    if not modelPath.exists():
+        modelPath = homePath / 'results' / 'classificationTraining' / f'{model}.txt'
+    assert modelPath.exists()
+    modelDetails = testBB.getModelDetails(modelPath)
+    print(f'{modelDetails["nIncrease"]}, {modelDetails["maxImgSize"]}')
+    res = modelRes[model]
+    auc = res.auc
+    increases.append(modelDetails['nIncrease'])
+    aucs.append(auc)
+
+# plt.plot(increases, aucs)
+iA = list(zip(increases, aucs))
+iA.sort()
+increases = [i for i, a in iA]
+aucs = [a for i, a in iA]
+plt.scatter(increases, aucs, s = 100)
+plt.plot(increases, aucs)
+plt.xlabel('Pixel Increase')
+plt.ylabel('AUC')
 # %% Augmentation results
 modelDict = {   
             'No Augmentation': 'classifySingleCellCrop-713279',

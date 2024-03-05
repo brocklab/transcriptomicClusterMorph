@@ -36,6 +36,7 @@ else:
     modelRes = {}
 
 modelNames = [
+              'classifySingleCellCrop-1700026902',
               'classifySingleCellCrop-1700167069',
               'classifySingleCellCrop-1700187095',
               'classifySingleCellCrop-1700413166'              
@@ -47,6 +48,11 @@ for modelName in modelNames:
         print(modelRes[modelName].auc)
 pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
+acc = .7
+for i in range(10000):
+    val = np.random.rand
+
+# %%
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})
@@ -57,6 +63,10 @@ for model in modelNames:
     modelDetails = testBB.getModelDetails(homePath / 'results' / 'classificationTraining' / f'{model}.txt')
     res = modelRes[model]
     auc = res.auc
+    acc = res.acc
+    modelName = modelDetails['modelName']
+    nIncrease = modelDetails['nIncrease']
+    print(f'{modelName}: {auc} \t {nIncrease} \t {acc}')
     plotLabel = f'BB increase {modelDetails["nIncrease"]} px, AUC = {auc:0.2f}'
     plt.plot(res.fpr, res.tpr, label=plotLabel, linewidth=3)
 

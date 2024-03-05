@@ -80,8 +80,8 @@ model = getTFModel(modelInputs['modelType'])
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-#optimizer = optim.SGD(model.parameters(), lr=0.001)
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.SGD(model.parameters(), lr=0.001)
+# optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
 modelName = 'classifySingleCellCrop-1700026902'
 modelName = 'classifySingleCellCrop-1700187095'
@@ -98,7 +98,7 @@ model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
 
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
-modelInputs['experiment'] = 'TJ2310'
+modelInputs['experiment'] = 'TJ2322-LPD7'
 
 allWells, allProps = [], []
 for testWell in wellSize.keys():
@@ -118,11 +118,10 @@ for testWell in wellSize.keys():
         inputs = inputs.to(device)
         labels = labels.to(device)
 
-
         outputs = model(inputs)
         _, preds = torch.max(outputs, 1)
         allPreds.append(preds.cpu().numpy())
-        # print(sum(preds)/len(preds))
+        print(sum(preds)/len(preds))
     preds = np.concatenate(allPreds)
     prop = sum(preds)/len(preds)*100
 
@@ -131,20 +130,23 @@ for testWell in wellSize.keys():
     pd.DataFrame([allWells, allProps]).to_csv('./lpdSample.csv')
 
     print(f'Test well: {testWell} = {prop:0.2f}%')
+# %% Test on other dataset
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 
 lpdSample = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
 lpdSample.columns = [0, 'well', 'proportion']
 lpdSample['proportion'] = lpdSample['proportion'].astype('float')
 lpdSample['model'] = 'new'
 # %%
-plt.hist(lpdSample['proportion'], bins=20)
+plt.hist(lpdSample['proportion'], bins='auto')
 plt.xlabel('Predicted Proportion')
 plt.ylabel('Amount')
-plt.grid()
+plt.axvline(16.1573, color = 'r', label = 'Abundance Seq')
+plt.axvline(np.mean(lpdSample['proportion']), color = 'magenta', label = 'Mean Imaging Proportion')
+plt.legend()
 # %%
 
 # %%
