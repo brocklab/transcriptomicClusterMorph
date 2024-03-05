@@ -207,7 +207,7 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [], phase = ['train', 'test'], isShuffle=True):
+def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [], phase = ['train', 'test'], isShuffle=False):
     """
     Creates pytorch image datasets using transforms
 

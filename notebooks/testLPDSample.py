@@ -84,6 +84,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
 modelName = 'classifySingleCellCrop-1700026902'
+modelName = 'classifySingleCellCrop-1700187095'
 homePath = Path('../')
 modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
 outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')

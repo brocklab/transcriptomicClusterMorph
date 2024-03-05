@@ -26,4 +26,4 @@ for modelName, isEmpty in zip(dfExperiment['modelName'], dfExperiment['empty']):
 
         if modelPath.exists():
             print(modelName)
-    
+# %%
