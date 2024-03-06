@@ -103,8 +103,10 @@ increases = [i for i, a in iA]
 aucs = [a for i, a in iA]
 plt.scatter(increases, aucs, s = 100)
 plt.plot(increases, aucs)
+plt.xticks(increases)
 plt.xlabel('Pixel Increase')
 plt.ylabel('AUC')
+plt.savefig('../../../figures/publication/results/increasingBBSubpop.png', dpi = 500, bbox_inches = 'tight')
 # %% Augmentation results
 modelDict = {   
             'No Augmentation': 'classifySingleCellCrop-713279',

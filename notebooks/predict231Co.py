@@ -39,7 +39,7 @@ modelType   = 'resnet152'
 optimizer = 'sgd'
 augmentation = None
 nIms = 16
-maxImgSize = 150
+maxImgSize = 300
 notes = 'Run on coculture wells only'
 
 modelID, idSource = modelTools.getModelID(sys.argv)
