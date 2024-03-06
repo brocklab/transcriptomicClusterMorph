@@ -36,6 +36,8 @@ parser.add_argument('--modelType',  type = str, metavar='modelType',   help = 'T
 parser.add_argument('--notes',      type = str, metavar='notes',       help = 'Notes on why experiment is being run')
 parser.add_argument('--optimizer',  type = str, metavar='optimizer',   help = 'Optimizer type')
 parser.add_argument('--augmentation',  type = str, metavar='augmentation',   help = 'Image adjustment (None, blackoutCell, stamp)')
+parser.add_argument('--maxImgSize', type = int, metavar='maxImgSize', help = 'The final size of the image. If larger than the bounding box, pad with black, otherwise resize the image')
+parser.add_argument('--nIms',       type = int, metavar='augmentation',   help = 'Number of images the initial full image was split into (experiment dependent). 20x magnification: 16, 10x magnification: 4')
 
 # This is for running the notebook directly
 args, unknown = parser.parse_known_args()
@@ -45,10 +47,12 @@ experiment  = 'TJ2321-LPD4Lin1'
 nIncrease   = 10
 maxAmt      = 500000000
 batch_size  = 64
-num_epochs  = 10
+num_epochs  = 32
 modelType   = 'resnet152'
 optimizer = 'sgd'
 notes = 'Initial prediction'
+maxImgSize = 150
+nIms = 4
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -66,7 +70,9 @@ modelInputs = {
 'notes'         : notes,
 'optimizer'     : optimizer, 
 'augmentation'  : 'None',
-'testWell'      : ['B2']
+'testWell'      : ['B2'],
+'maxImgSize'    : maxImgSize,
+'nIms'          : nIms
 }
 
 argItems = vars(args)
@@ -98,14 +104,13 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
                                                dataPath,
                                                modelInputs
                                             )
-                                            #    nIncrease    = modelInputs['nIncrease'], 
-                                            #    maxAmt       = modelInputs['maxAmt'], 
-                                            #    batch_size   = modelInputs['batch_size']
-                                            #    )
 # %%
 np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
+# %%
+import matplotlib.pyplot as plt
+plt.imshow(inputs[20].numpy().transpose((1,2,0)))
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
