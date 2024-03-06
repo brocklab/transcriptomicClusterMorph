@@ -134,17 +134,19 @@ for testWell in wellSize.keys():
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 # import seaborn as sns
 
 lpdSample = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
+lpdSample = pd.read_csv('./lpdSample.csv', header = None, index_col=0).T
 lpdSample.columns = [0, 'well', 'proportion']
 lpdSample['proportion'] = lpdSample['proportion'].astype('float')
 lpdSample['model'] = 'new'
 # %%
-plt.hist(lpdSample['proportion'], bins='auto')
+plt.hist(lpdSample['proportion'], bins='doane')
 plt.xlabel('Predicted Proportion')
 plt.ylabel('Amount')
-plt.axvline(16.1573, color = 'r', label = 'Abundance Seq')
+plt.axvline(28.55, color = 'r', label = 'Abundance Seq')
 plt.axvline(np.mean(lpdSample['proportion']), color = 'magenta', label = 'Mean Imaging Proportion')
 plt.legend()
 # %%
