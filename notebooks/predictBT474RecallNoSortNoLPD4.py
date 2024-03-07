@@ -143,7 +143,7 @@ batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
 optimizer = 'sgd'
-notes = 'Initial prediction'
+notes = ''
 maxImgSize = 150
 nIms = 4
 
