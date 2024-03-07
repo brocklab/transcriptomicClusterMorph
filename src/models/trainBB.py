@@ -207,7 +207,7 @@ class singleCellLoader(Dataset):
 
         return [np.array(itm, dtype='object') for itm in list(zip(*l))]
 
-def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [], phase = ['train', 'test'], isShuffle=False):
+def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [], phase = ['train', 'test'], isShuffle=True):
     """
     Creates pytorch image datasets using transforms
 
@@ -266,7 +266,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     # if device.type != 'cuda':
     #     raise Exception('Incorrect device')
     for epoch in tqdm(range(num_epochs), leave=False):
-        # print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        print(f'Epoch {epoch}/{num_epochs - 1}')
         # print('-' * 10)
 
         # Each epoch has a training and validation phase
