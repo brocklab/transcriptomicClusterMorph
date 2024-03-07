@@ -60,13 +60,32 @@ datasetDictsTransfect = getPhaseRecord(datasetDicts, [])
 datasetDictsLPD4 = np.load('../data/TJ2303-LPD4/TJ2303-LPD4DatasetDicts.npy', allow_pickle=True)
 
 # %%
-experiment  = 'TJ2302'
+parser = argparse.ArgumentParser(description='Network prediction parameters')
+parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
+parser.add_argument('--nIncrease',  type = int, metavar='nIncrease',   help = 'Increase of bounding box around cell')
+parser.add_argument('--maxAmt',     type = int, metavar='maxAmt',      help = 'Max amount of cells')
+parser.add_argument('--batch_size', type = int, metavar='batch_size',  help = 'Batch size')
+parser.add_argument('--num_epochs', type = int, metavar='num_epochs',  help = 'Number of epochs')
+parser.add_argument('--modelType',  type = str, metavar='modelType',   help = 'Type of model (resnet, vgg, etc.)')
+parser.add_argument('--notes',      type = str, metavar='notes',       help = 'Notes on why experiment is being run')
+parser.add_argument('--optimizer',  type = str, metavar='optimizer',   help = 'Optimizer type')
+parser.add_argument('--augmentation',  type = str, metavar='augmentation',   help = 'Image adjustment (None, blackoutCell, stamp)')
+parser.add_argument('--maxImgSize', type = int, metavar='maxImgSize', help = 'The final size of the image. If larger than the bounding box, pad with black, otherwise resize the image')
+parser.add_argument('--nIms',       type = int, metavar='augmentation',   help = 'Number of images the initial full image was split into (experiment dependent). 20x magnification: 16, 10x magnification: 4')
+
+# This is for running the notebook directly
+args, unknown = parser.parse_known_args()
+# %%
+experiment  = 'TJ2321-LPD4Lin1'
 nIncrease   = 20
-maxAmt      = 9e9
+maxAmt      = 500000000
 batch_size  = 64
-num_epochs  = 32
+num_epochs  = 10
 modelType   = 'resnet152'
-notes = 'Full test with Adam'
+optimizer = 'sgd'
+notes = 'Testing non-green transfected against LPD4'
+maxImgSize = 150
+nIms = 4
 
 modelID, idSource = modelTools.getModelID(sys.argv)
 modelSaveName = Path(f'../models/classification/classifySingleCellCrop-{modelID}.pth')
@@ -81,10 +100,21 @@ modelInputs = {
 'modelType'     : modelType,
 'modelName'     : modelSaveName.parts[-1],
 'modelIDSource' : idSource,
-'notes'         : notes
-
+'notes'         : notes,
+'optimizer'     : optimizer, 
+'augmentation'  : 'None',
+'testWell'      : ['B2'],
+'maxImgSize'    : maxImgSize,
+'nIms'          : nIms
 }
 
+argItems = vars(args)
+
+for item, value in argItems.items():
+    if value is not None:
+        print(f'Replacing {item} value with {value}')
+        modelInputs[item] = value
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
 # %%
 experiment = 'TJ2342A'
 trainLoaders, testLoaders = [], []
@@ -156,6 +186,11 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 model2 = nn.DataParallel(model)
 
 # %%
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
+
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
 # Scheduler to update lr
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
@@ -172,3 +207,22 @@ model = train_model(model,
                     )
 
 # %%
+homePath = Path('..')
+modelName = modelInputs['modelName'].split('.')[0]
+probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
+imgNames = ''
+res = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+res = vars(res)
+for val in res.keys():
+    if isinstance(res[val], np.ndarray):
+        res[val] = res[val].tolist()
+# %%
+import json
+json_file_loc = '../results/classificationResults/bt474Experiments.json'
+with open(json_file_loc, 'r') as json_file:
+    modelRes = json.load(json_file)
+
+modelRes[modelName] = res
+# %%
+with open(json_file_loc, 'w') as json_file:
+    json_file.write(json.dumps(modelRes))

@@ -140,10 +140,10 @@ experiment  = 'TJ2321-LPD4Lin1'
 nIncrease   = 20
 maxAmt      = 500000000
 batch_size  = 64
-num_epochs  = 32
+num_epochs  = 10
 modelType   = 'resnet152'
 optimizer = 'sgd'
-notes = ''
+notes = 'Comparing transfected green lpd7 vs non green'
 maxImgSize = 150
 nIms = 4
 
@@ -230,6 +230,11 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 model2 = nn.DataParallel(model)
 
 # %%
+modelDetailsPrint = modelTools.printModelVariables(modelInputs)
+
+
+with open(resultsSaveName, 'a') as file:
+    file.write(modelDetailsPrint)
 # Scheduler to update lr
 # Every 7 epochs the learning rate is multiplied by gamma
 setp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
@@ -245,3 +250,22 @@ model = train_model(model,
                     num_epochs=num_epochs
                     )
 # %%
+homePath = Path('..')
+modelName = modelInputs['modelName'].split('.')[0]
+probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
+imgNames = ''
+res = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+res = vars(res)
+for val in res.keys():
+    if isinstance(res[val], np.ndarray):
+        res[val] = res[val].tolist()
+# %%
+import json
+json_file_loc = '../results/classificationResults/bt474Experiments.json'
+with open(json_file_loc, 'r') as json_file:
+    modelRes = json.load(json_file)
+
+modelRes[modelName] = res
+# %%
+with open(json_file_loc, 'w') as json_file:
+    json_file.write(json.dumps(modelRes))
