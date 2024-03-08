@@ -102,7 +102,7 @@ model = train_model(model,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=num_epochs
+                    num_epochs=modelInputs['num_epochs']
                     )
 # %%
 # from detectron2.data import MetadataCatalog, DatasetCatalog

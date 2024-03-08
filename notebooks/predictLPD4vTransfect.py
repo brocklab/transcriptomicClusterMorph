@@ -27,38 +27,92 @@ from torch.optim import lr_scheduler
 import torch.nn as nn
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import DataLoader, ConcatDataset, Subset
+
+from skimage.measure import regionprops
+from skimage.draw import polygon2mask
 
 from src.models import trainBB
 from src.data.fileManagement import getModelDetails
 # %%
-def getPhaseRecord(datasetDicts, newDatasetDicts = []):
+def getAreaEcc(polygon, imageShape):
+    polyx = polygon[::2]
+    polyy = polygon[1::2]
+    polygonSki = list(zip(polyy, polyx))
+    mask = polygon2mask(imageShape, polygonSki)
+    reg = regionprops(mask.astype(np.uint8))
+
+    area = reg[0].area
+    eccentricity = reg[0].eccentricity
+    
+    return area, eccentricity
+
+def filterTransfect(datasetDicts):
+    newDatasetDicts = []
+    c = 0
     for record in tqdm(datasetDicts):
         record = record.copy()
         newAnnotations = []
+        image_shape = [record['height'], record['width']]
 
         for annotation in record['annotations']:
             annotation['bbox'] = detectron2.structures.BoxMode.convert(annotation['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
             annotation['bbox_mode'] = BoxMode.XYXY_ABS
             if annotation['category_id'] == 0:
                 annotation['category_id'] = 1
+            else:
+                annotation['category_id'] = 0
+
+            
+            segmentation = annotation['segmentation'][0]
+            area, ecc = getAreaEcc(segmentation, image_shape)
+
+            if ecc > 0.8 and annotation['category_id'] == 1:
                 newAnnotations.append(annotation)
         if len(newAnnotations) > 0:
             record['annotations'] = newAnnotations
             newDatasetDicts.append(record)
+            c += len(newAnnotations)
+        if c > 10000:
+            return newDatasetDicts
     return newDatasetDicts
 
-# for record in tqdm(datasetDictsTreat):
-#     for cell in record['annotations']:
-#         cell['bbox'] = detectron2.structures.BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
-#         cell['bbox_mode'] = BoxMode.XYXY_ABS
-# %%
+def filterLPD4(datasetDicts):
+    newDatasetDicts = []
+    c = 0
+    for record in tqdm(datasetDicts):
+        record = record.copy()
+        newAnnotations = []
+        image_shape = [record['height'], record['width']]
 
+        for annotation in record['annotations']:
+            segmentation = annotation['segmentation'][0]
+            area, ecc = getAreaEcc(segmentation, image_shape)
+
+            if ecc > 0.8:
+                newAnnotations.append(annotation)
+        if len(newAnnotations) > 0:
+            record['annotations'] = newAnnotations
+            newDatasetDicts.append(record)
+            c += len(newAnnotations)
+
+        if c > 10000:
+            return newDatasetDicts
+    return newDatasetDicts
+
+
+# %%
 datasetDicts = load_coco_json('../data/TJ2342A/TJ2342ASegmentations.json', '.')
-datasetDictsTransfect = getPhaseRecord(datasetDicts, [])
+datasetDictsTransfect = filterTransfect(datasetDicts)
 # %%
 datasetDictsLPD4 = np.load('../data/TJ2303-LPD4/TJ2303-LPD4DatasetDicts.npy', allow_pickle=True)
-
+datasetDictsLPD4 = filterLPD4(datasetDictsLPD4)
+# %%
+c = 0
+for record in datasetDictsTransfect:
+    for annotation in record:
+        c += len(annotation)
+print(c)
 # %%
 parser = argparse.ArgumentParser(description='Network prediction parameters')
 parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
@@ -119,21 +173,6 @@ modelDetailsPrint = modelTools.printModelVariables(modelInputs)
 experiment = 'TJ2342A'
 trainLoaders, testLoaders = [], []
 modelInputs['experiment'] = experiment
-modelInputs['maxAmt'] = 5000
-dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-
-dataloaders, dataset_sizes = makeImageDatasets(datasetDictsTransfect, 
-                                            dataPath,
-                                            modelInputs,
-                                            phase = ['train', 'test']
-                                            )
-
-trainLoaders.append(dataloaders['train'].dataset)
-testLoaders.append(dataloaders['test'].dataset)
-# %%
-experiment = 'TJ2342A'
-trainLoaders, testLoaders = [], []
-modelInputs['experiment'] = experiment
 modelInputs['maxAmt'] = 10000
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
 
@@ -144,11 +183,12 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDictsTransfect,
                                             )
 transfectTrain = Subset(dataloaders.dataset, range(0, 7000))
 transfectTest = Subset(dataloaders.dataset, range(7000, 10000))
-
+# %%
+inputs, classes = next(iter(dataloaders))
+plt.imshow(inputs[19].numpy().transpose((1,2,0)))
 # %%
 dataPath = Path(f'../data/TJ2303-LPD4/raw/phaseContrast')
 modelInputs['experiment'] = 'TJ2303-LPD4'
-from torch.utils.data import Subset
 dataloaders, dataset_sizes = makeImageDatasets(datasetDictsLPD4, 
                                                dataPath,
                                                modelInputs,
@@ -156,7 +196,9 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDictsLPD4,
                                             )
 lpd4Train = Subset(dataloaders.dataset, range(0, 7000))
 lpd4Test = Subset(dataloaders.dataset, range(7000, 10000))
-
+# %%
+inputs, classes = next(iter(dataloaders))
+plt.imshow(inputs[19].numpy().transpose((1,2,0)))
 # %%
 trainLoader = DataLoader(ConcatDataset([transfectTrain, lpd4Train]),
                             batch_size = modelInputs['batch_size'],
@@ -203,7 +245,7 @@ model = train_model(model,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=num_epochs
+                    num_epochs=modelInputs['num_epochs']
                     )
 
 # %%

@@ -11,7 +11,14 @@ with open(json_file_loc, 'r') as json_file:
 
 # %%
 models = list(modelRes.keys())
-models = models[-3:]
+models = ['classifySingleCellCrop-1709841378',
+          'classifySingleCellCrop-1709844237',
+          'classifySingleCellCrop-1709847182']
 
 for model in models:
     det = getModelDetails(f'../../results/classificationTraining/{model}.txt')
+    print(det['modelName'])
+# %%
+for model in models:
+    res = modelRes[model]
+    plt.plot(res['fpr'], res['tpr'])

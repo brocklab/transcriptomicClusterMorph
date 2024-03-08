@@ -130,6 +130,6 @@ model = train_model(model2,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=num_epochs
+                    num_epochs=modelInputs['num_epochs']
                     )
 # %%

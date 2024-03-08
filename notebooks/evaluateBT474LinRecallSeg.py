@@ -141,6 +141,15 @@ def removeImageAbberation(RGB, thresh = 10000):
 img = imread('../data/misc/loadThis_G6_3_00d00h00m.png')
 img = img[:, :, 0:3]
 imgNew = removeImageAbberation(img)
+
+plt.subplot(121)
+plt.imshow(img)
+plt.axis('off')
+plt.subplot(122)
+plt.imshow(imgNew)
+plt.axis('off')
+
+plt.savefig('../figures/tempPres/imageAbberation.png', dpi = 500)
 # %%
 img = imread(fileNameComposite)
 imgNew = removeImageAbberation(img)

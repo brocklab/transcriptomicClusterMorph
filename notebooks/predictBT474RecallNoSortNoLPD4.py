@@ -57,6 +57,12 @@ datasetDictsGreen = {}
 datasetDicts = load_coco_json('../data/TJ2342A/TJ2342ASegmentations.json', '.')
 datasetDictsGreen['TJ2342A'] = getGreenRecord(datasetDicts, [])
 
+datasetDicts = load_coco_json('../data/TJ2442B/TJ2442BSegmentations.json', '.')
+datasetDictsGreen['TJ2442B'] = getGreenRecord(datasetDicts, [])
+
+datasetDicts = load_coco_json('../data/TJ2442C/TJ2442CSegmentations.json', '.')
+datasetDictsGreen['TJ2442C'] = getGreenRecord(datasetDicts, [])
+
 datasetDicts = load_coco_json('../data/TJ2442D/TJ2442DSegmentations.json', '.')
 datasetDictsGreen['TJ2442D'] = getGreenRecord(datasetDicts, [])
 
@@ -247,7 +253,7 @@ model = train_model(model,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=num_epochs
+                    num_epochs=modelInputs['num_epochs']
                     )
 # %%
 homePath = Path('..')

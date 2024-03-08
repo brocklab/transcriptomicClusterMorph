@@ -74,5 +74,5 @@ model = train_model(model,
                     dataloaders, 
                     dataset_sizes, 
                     modelSaveName, 
-                    num_epochs=num_epochs
+                    num_epochs=modelInputs['num_epochs']
                     )

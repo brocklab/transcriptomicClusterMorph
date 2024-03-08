@@ -77,6 +77,7 @@ datasetDicts = np.load(datasetDictPath, allow_pickle=True)
 co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
 datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
 # %%
+modelInputs['batch_size'] = 2
 dataloaders, dataset_sizes = makeImageDatasets(datasetDicts, 
                                                dataPath,
                                                modelInputs
@@ -84,8 +85,12 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
 np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
-# %%
-plt.imshow(inputs[20].numpy().transpose((1,2,0)))
+plt.subplot(121)
+plt.imshow(inputs[0].numpy().transpose((1,2,0)))
+plt.subplot(122)
+plt.imshow(inputs[1].numpy().transpose((1,2,0)))
+
+print(classes)
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -120,5 +125,5 @@ model = train_model(model,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=num_epochs
+                    num_epochs=modelInputs['num_epochs']
                     )
