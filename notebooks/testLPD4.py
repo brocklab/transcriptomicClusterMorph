@@ -88,6 +88,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 # %%
 modelName = 'classifySingleCellCrop-1700026902'
 modelName = 'classifySingleCellCrop-1700187095'
+modelName = 'classifySingleCellCrop-1709878770'
 
 homePath = Path('../')
 modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')

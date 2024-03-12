@@ -151,6 +151,6 @@ plt.axis('off')
 
 plt.savefig('../figures/tempPres/imageAbberation.png', dpi = 500)
 # %%
-img = imread(fileNameComposite)
-imgNew = removeImageAbberation(img)
-
+nGreen, BW = imageProcessing.segmentGreenHigh(img)
+plt.imshow(BW)
+plt.axis('off')

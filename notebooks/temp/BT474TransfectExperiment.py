@@ -19,8 +19,20 @@ for model in models:
     det = getModelDetails(f'../../results/classificationTraining/{model}.txt')
     print(det['modelName'])
 # %%
+plt.figure()
+plt.figure(figsize=(6,6))
+plt.rcParams.update({'font.size': 17})
+plt.grid()
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+c = 0
+labels = ['Transfect vs. LPD4', 'Transfect Green vs. Non']
 for model in models:
     res = modelRes[model]
-    plt.plot(res['fpr'], res['tpr'])
-    print(res['auc'])
+    plotLabel = f'AUC = {res["auc"]:0.2f}'
+    plt.plot(res['fpr'], res['tpr'], linewidth = 3, label = labels[c])
+    c +=1
+
+plt.legend()
+plt.savefig('../../figures/tempPres/transfectPred.png', dpi = 500)
 # %%

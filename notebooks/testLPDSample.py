@@ -85,6 +85,8 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 # %%
 modelName = 'classifySingleCellCrop-1700026902'
 modelName = 'classifySingleCellCrop-1700187095'
+modelName = 'classifySingleCellCrop-1709878770'
+modelName = 'classifySingleCellCrop-1709892454'
 homePath = Path('../')
 modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
 outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
@@ -121,13 +123,12 @@ for testWell in wellSize.keys():
         outputs = model(inputs)
         _, preds = torch.max(outputs, 1)
         allPreds.append(preds.cpu().numpy())
-        print(sum(preds)/len(preds))
     preds = np.concatenate(allPreds)
     prop = sum(preds)/len(preds)*100
 
     allWells.append(testWell)
     allProps.append(prop)
-    pd.DataFrame([allWells, allProps]).to_csv('./lpdSample.csv')
+    pd.DataFrame([allWells, allProps]).to_csv('./lpdSample-modelTransfectvTransfect.csv')
 
     print(f'Test well: {testWell} = {prop:0.2f}%')
 # %% Test on other dataset
@@ -137,8 +138,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 # import seaborn as sns
 
-lpdSample = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
-lpdSample = pd.read_csv('./lpdSample.csv', header = None, index_col=0).T
+# lpdSample = pd.read_csv('../data/misc/lpdSample-new.csv', header = None, index_col=0).T
+lpdSample = pd.read_csv('./lpdSample-modelTransfect.csv', header = None, index_col=0).T
 lpdSample.columns = [0, 'well', 'proportion']
 lpdSample['proportion'] = lpdSample['proportion'].astype('float')
 lpdSample['model'] = 'new'
@@ -146,7 +147,7 @@ lpdSample['model'] = 'new'
 plt.hist(lpdSample['proportion'], bins='doane')
 plt.xlabel('Predicted Proportion')
 plt.ylabel('Amount')
-plt.axvline(28.55, color = 'r', label = 'Abundance Seq')
+plt.axvline(16.9, color = 'r', label = 'Abundance Seq')
 plt.axvline(np.mean(lpdSample['proportion']), color = 'magenta', label = 'Mean Imaging Proportion')
 plt.legend()
 # %%

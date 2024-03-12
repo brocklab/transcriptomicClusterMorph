@@ -26,7 +26,7 @@ import os
 from tqdm import tqdm
 # %matplotlib inline
 # %%
-experiments = ['TJ2442D', 'TJ2442E', 'TJ2442F']
+experiments = ['TJ2443LineageRecallSort']
 
 # %%
 def getRecord(pcName, compositeImg, pcImg, idx, predictor):
@@ -88,21 +88,37 @@ for experiment in experiments:
     allPcIms = list(pcPath.iterdir())
     for pcName in tqdm(allPcIms[idx:]):
         compositeName = Path(str(pcName).replace('phaseContrast', 'composite'))
+        greenUncalibratedName = Path(str(pcName).replace('phaseContrast', 'greenUncalibrated'))
+        greenCalibratedName = Path(str(pcName).replace('phaseContrast', 'greenCalibrated').replace('png', 'tif'))
+
         pcImg = imread(pcName)
         if compositeName.exists():
             compositeImg = imread(compositeName)
         else:
             compositeImg = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
 
+        assert greenUncalibratedName.exists()
+        if greenUncalibratedName.exists():
+            greenUncalibrated = imread(greenUncalibratedName)
+        else:
+            greenUncalibrated = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
+
+        if greenCalibratedName.exists():
+            greenCalibrated = imread(greenCalibratedName)
+        else:
+            greenCalibrated = np.array([pcImg, pcImg, pcImg]).transpose([1,2,0])
+                
         if compositeImg.shape[2] > 3:
             compositeImg = compositeImg[:,:,0:3]
         
         compositeImg, _ = removeImageAbberation(compositeImg)
         pcTiles = imSplit(pcImg, nIms = 4)
         compositeTiles = imSplit(compositeImg, nIms = 4)
+        greenUncalibratedTiles = imSplit(greenUncalibrated, nIms = 4)
+        greenCalibratedTiles = imSplit(greenCalibrated, nIms = 4)
         
         imNum = 1
-        for pcSplit, compositeSplit in zip(pcTiles, compositeTiles):
+        for pcSplit, compositeSplit, greenUncSplit, greenCalSplit in zip(pcTiles, compositeTiles, greenUncalibratedTiles, greenCalibratedTiles):
             pcSplit = np.array([pcSplit, pcSplit, pcSplit]).transpose([1,2,0])
             compositeSplit = compositeSplit[:,:,0:3]
             
@@ -121,7 +137,13 @@ for experiment in experiments:
             imsave(imSplitPath, pcSplit, check_contrast=False)
             compositeSplitPath = Path(str(imSplitPath).replace('phaseContrast', 'composite'))
             imsave(compositeSplitPath, compositeSplit, check_contrast=False)
-
+            greenUncalibratedSplitPath = Path(str(imSplitPath).replace('phaseContrast', 'greenUncalibrated'))
+            greenCalibratedSplitPath = Path(str(imSplitPath).replace('phaseContrast', 'greenCalibrated'))
+            
+            if greenUncalibratedName.exists():
+                imsave(greenUncalibratedSplitPath, greenUncSplit)
+            if greenCalibratedName.exists():
+                imsave(greenCalibratedSplitPath, greenCalSplit)
             datasetDicts.append(record)
             
             if idx % 100 == 0:
