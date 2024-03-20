@@ -29,10 +29,9 @@ from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
-from detectron2.data import MetadataCatalog, DatasetCatalog, DatasetMapper, build_detection_train_loader
+from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
 
-from detectron2.data import transforms as T
 from src.data import imageProcessing, fileManagement
 # %% Working with split images
 experiment = 'TJ2406-MDAMB436-20X'
@@ -55,7 +54,7 @@ def getCells(experiment, imgType, stage=None):
             segFiles = segFiles[0:trainNum]
         elif stage == 'test':
             segFiles = segFiles[trainNum:]
-    print(len(segFiles))
+
     datasetDicts = []
     homePath = Path('../data')
     for segFile in tqdm(segFiles):
@@ -134,41 +133,71 @@ MetadataCatalog.get("cellMorph_" + "test").set(thing_classes=["cell"])
 
 
 cell_metadata = MetadataCatalog.get("cellMorph_train")
-# %% Visualization of data loader
-datasetDicts = getCells(inputs[0], inputs[1], 'test')
-for d in random.sample(datasetDicts, 2):
-    print(d["file_name"])
-    img = cv2.imread(d["file_name"])
-    visualizer = Visualizer(img[:, :, ::-1], metadata=cell_metadata, scale=1.5)
-    out = visualizer.draw_dataset_dict(d)
-    plt.imshow(out.get_image()[:, :, ::-1])
-    plt.show()
 # %%
-from detectron2.engine import DefaultTrainer
-
 cfg = get_cfg()
 if not torch.cuda.is_available():
     print('CUDA not available, resorting to CPU')
     cfg.MODEL.DEVICE='cpu'
 cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-cfg.DATASETS.TRAIN = ("cellMorph_train",)
+cfg.DATASETS.TRAIN = ("cellMorph_Train",)
 cfg.DATASETS.TEST = ()
 cfg.DATALOADER.NUM_WORKERS = 2
 cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
 cfg.SOLVER.IMS_PER_BATCH = 2  # This is the real "batch size" commonly known to deep learning people
 cfg.SOLVER.BASE_LR = 0.00025  # pick a good LR
-cfg.SOLVER.MAX_ITER = 10000    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
+cfg.SOLVER.MAX_ITER = 10000    # 300 iterations seems good enough for this toy dataset you will need to train longer for a practical dataset
 cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (cell). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
-# NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
-cfg.OUTPUT_DIR = '../models/segmentation/mdamb436Seg_2'
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # %%
-os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-trainer = DefaultTrainer(cfg)
-trainer.resume_or_load(resume=False)
-trainer.train()
+cfg.OUTPUT_DIR = '../models/segmentation/mdamb436Seg'
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
+predictor = DefaultPredictor(cfg)
+# %%
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
+from detectron2.data import build_detection_test_loader
+evaluator = COCOEvaluator('cellMorph_test', output_dir=cfg.OUTPUT_DIR)
+val_loader = build_detection_test_loader(cfg, "cellMorph_test")
+print(inference_on_dataset(predictor.model, val_loader, evaluator))
+# %% Get images not in train/test
+imgName = '/home/user/work/cellMorph/data/TJ2406-MDAMB436-20X/raw/phaseContrast/phaseContrast_B2_2_2024y01m29d_10h25m.png'
+imgName = '/home/user/work/cellMorph/data/TJ2406-MDAMB436-20X/raw/phaseContrast/phaseContrast_B2_1_2024y01m29d_10h25m.png'
+img = imread(imgName)
+imgsSplit = imageProcessing.imSplit(img)
+imgSplit = imgsSplit[3]
 
+plt.imshow(imgSplit, cmap = 'gray')
 
+pcSplit = np.array([imgSplit, imgSplit, imgSplit]).transpose([1,2,0])
+outputs = predictor(pcSplit)['instances'].to("cpu")
+# %%
+from src.visualization.segmentationVis import viewPredictorResult
+
+viewPredictorResult(predictor, pcSplit)
 
 # %%
+imgSplit = imgsSplit[4]
+pcSplit = np.array([imgSplit, imgSplit, imgSplit]).transpose([1,2,0])
+
+plt.imshow(pcSplit)
+outputs = predictor(pcSplit)['instances'].to("cpu")  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+nCells = len(outputs)
+for cellNum in range(nCells):
+    print(outputs[cellNum].scores)
+    mask = outputs[cellNum].pred_masks.numpy()[0]
+    pheno = 0
+
+    contours = measure.find_contours(mask, .5)
+    if len(contours) < 1:
+        continue
+    fullContour = np.vstack(contours)
+
+    px = fullContour[:,1]
+    py = fullContour[:,0]
+    poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
+    poly = [p for x in poly for p in x]
+    
+    if outputs[cellNum].scores > .9:
+        plt.plot(px, py)
+# %%
+viewPredictorResult(predictor, pcSplit)
