@@ -144,18 +144,13 @@ for experiment in datasetDictsGreen.keys():
     datasets.convert_to_coco_json('cellMorph', output_file=fileName, allow_cached=False)
 
 # %%
-def makeDatasets(modelName, homePath = '../../../'):
-    modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
-    outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
-    if not outPath.exists():
-        outPath = Path(str(outPath).replace('.out', '.txt'))
-    assert outPath.exists(), outPath
-    modelInputs = getModelDetails(outPath)
+def makeDatasets(modelInputs):
+
     experiments = datasetDictsGreen.keys()
     loaders = []
     for experiment in experiments:
         modelInputs['experiment'] = experiment
-        dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
+        dataPath = Path(f'../../../data/{experiment}/raw/phaseContrast')
 
         dataloader, dataset_sizes = makeImageDatasets(datasetDictsGreen[experiment], 
                                                     dataPath,
@@ -188,6 +183,9 @@ def makeDatasets(modelName, homePath = '../../../'):
 
 
 # %%
+
+
+# %%
 homePath = Path('../../../')
 resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
 if resultsFile.exists():
@@ -196,21 +194,29 @@ else:
     modelRes = {}
 
 modelNames = [
-            #   'classifySingleCellCrop-714689',
-            #   'classifySingleCellCrop-713279', 
-            #   'classifySingleCellCrop-709125',
-              'classifySingleCellCrop-1707264894', # 65 px 
-              'classifySingleCellCrop-1707668614', # 25 px
-              'classifySingleCellCrop-1707714016', # 00 px
-              'classifySingleCellCrop-1709261519', # 55 px
-              'classifySingleCellCrop-1709418455', # 15 px
-              'classifySingleCellCrop-1709372973', # 45 px
-              'classifySingleCellCrop-1709327523'  # 35 px
-             ]
+    'classifySingleCellCrop-1711380928',
+    'classifySingleCellCrop-1711394245',
+    'classifySingleCellCrop-1711407593'
+]
+
 for modelName in modelNames:
     if modelName not in modelRes.keys():
         print(modelName)
-        probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts)
-        modelRes[modelName] = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+        modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
+        outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
+        if not outPath.exists():
+            outPath = Path(str(outPath).replace('.out', '.txt'))
+        assert outPath.exists(), outPath
+        modelInputs = getModelDetails(outPath)
+        model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
 
-pickle.dump(modelRes, open(resultsFile, "wb"))
+        print(modelName)
+        dataloaders = makeDatasets(modelInputs)
+        probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
+        modelRes[modelName] = testBB.testResults(probs, allLabels, scores, modelName)
+
+# pickle.dump(modelRes, open(resultsFile, "wb"))
+# %%
+for modelName in modelNames:
+    res = modelRes[modelName]
+    print(res.auc)
