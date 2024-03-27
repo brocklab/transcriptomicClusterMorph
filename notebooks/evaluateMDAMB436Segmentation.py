@@ -176,7 +176,7 @@ from src.visualization.segmentationVis import viewPredictorResult
 viewPredictorResult(predictor, pcSplit)
 
 # %%
-imgSplit = imgsSplit[4]
+imgSplit = imgsSplit[3]
 pcSplit = np.array([imgSplit, imgSplit, imgSplit]).transpose([1,2,0])
 
 plt.imshow(pcSplit)
@@ -201,3 +201,4 @@ for cellNum in range(nCells):
         plt.plot(px, py)
 # %%
 viewPredictorResult(predictor, pcSplit)
+# %%

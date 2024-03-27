@@ -227,7 +227,10 @@ def findBrightGreen(RGB, mask, thresh = 10):
     mask = mask.astype('bool')
     RGB[~np.dstack((mask,mask,mask))] = 0
     nGreen, BW = segmentGreenHigh(RGB)
-    if nGreen>=thresh:
+
+    if thresh == 0:
+        return nGreen
+    elif nGreen>=thresh:
         return "green"
     else:
         return "NaN"
