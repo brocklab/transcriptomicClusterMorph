@@ -64,7 +64,7 @@ def getModelDetails(outPath) -> dict:
     Outputs:
         - modelDetails: Dictionary of model parameters
     """
-    print(outPath)
+    # print(outPath)
     with open(outPath) as outFile:
         x = outFile.read()
     detailsSplit = x.split('~ Model Details ~')[1]

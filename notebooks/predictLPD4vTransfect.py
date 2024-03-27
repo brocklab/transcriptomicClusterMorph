@@ -86,6 +86,8 @@ def filterLPD4(datasetDicts):
         image_shape = [record['height'], record['width']]
 
         for annotation in record['annotations']:
+            annotation['bbox'] = detectron2.structures.BoxMode.convert(annotation['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+            annotation['bbox_mode'] = BoxMode.XYXY_ABS
             segmentation = annotation['segmentation'][0]
             area, ecc = getAreaEcc(segmentation, image_shape)
 
