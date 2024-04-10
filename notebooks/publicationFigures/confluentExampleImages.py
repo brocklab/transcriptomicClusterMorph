@@ -5,6 +5,9 @@ from skimage.io import imread, imsave
 import matplotlib.pyplot as plt
 from skimage import exposure
 # %%
+# Division amount
+amt = 3
+
 subPopPath = Path('../../data/TJ2201/raw/')
 subPopFile = '_B7_5_2022y04m10d_12h00m.png'
 
@@ -14,8 +17,9 @@ subPopHighContrast = exposure.equalize_adapthist(subPopPhase)
 
 axis1, axis2 = subPopHighContrast.shape
 
-subPopHighContrast = subPopHighContrast[0:int(axis1/2), 0:int(axis2/2)]
-subPopComposite = subPopComposite[0:int(axis1/2), 0:int(axis2/2)]
+
+subPopHighContrast = subPopHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
+subPopComposite = subPopComposite[0:int(axis1/amt), 0:int(axis2/amt)]
 
 plt.subplot(121)
 plt.imshow(subPopHighContrast, cmap = 'gray')
@@ -35,8 +39,8 @@ lineageHighContrast = exposure.equalize_adapthist(lineagePhase)
 
 axis1, axis2 = lineageHighContrast.shape
 
-lineageHighContrast = lineageHighContrast[0:int(axis1/2), 0:int(axis2/2)]
-lineageComposite = lineageComposite[0:int(axis1/2), 0:int(axis2/2)]
+lineageHighContrast = lineageHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
+lineageComposite = lineageComposite[0:int(axis1/amt), 0:int(axis2/amt)]
 
 plt.subplot(121)
 plt.imshow(lineageHighContrast, cmap = 'gray')
@@ -61,8 +65,8 @@ treatedHighContrast = exposure.equalize_adapthist(treatedPhase)
 
 axis1, axis2 = treatedHighContrast.shape
 
-untreatedHighContrast = untreatedHighContrast[0:int(axis1/2), 0:int(axis2/2)]
-treatedHighContrast = treatedHighContrast[0:int(axis1/2), 0:int(axis2/2)]
+untreatedHighContrast = untreatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
+treatedHighContrast = treatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
 
 plt.subplot(121)
 plt.imshow(untreatedHighContrast, cmap = 'gray')
@@ -71,3 +75,5 @@ plt.imshow(treatedHighContrast, cmap = 'gray')
 
 imsave('../../figures/publication/exemplar/untreated.png', untreatedHighContrast)
 imsave('../../figures/publication/exemplar/treated.png', treatedHighContrast)
+
+# %%
