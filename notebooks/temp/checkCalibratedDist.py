@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 import random
 from tqdm import tqdm
 from pathlib import Path
-
+from src.data import imageProcessing
 from skimage import morphology, measure
+from skimage.draw import polygon2mask
+
 # %%
 homePath = Path('../../')
 
@@ -81,6 +83,8 @@ def filterCalibratedFluoro(calImg, compositeImg = [], minVal = 0, thresh = 5.25,
     calFilt = calImg.copy()
     # background = restoration.rolling_ball(calFilt)
     # calFilt = calFilt - background
+    if thresh == 'adaptive':
+        thresh = np.mean(calFilt.ravel()) + 8*MAD(calFilt.ravel())
     calFilt[calFilt < thresh] = minVal
     
     BW = calFilt.copy()
@@ -156,4 +160,65 @@ for prop in allProps:
 area = np.array(area)
 plt.hist(area[area < 100])
 
+# %% Check against segmentations
+from detectron2.structures import BoxMode
+from detectron2.data.datasets import load_coco_json
+
+def getGreenRecord(datasetDicts):
+    for record in tqdm(datasetDicts):
+        record = record.copy()
+        newAnnotations = []
+
+        for annotation in record['annotations']:
+            annotation['bbox'] = BoxMode.convert(annotation['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+            annotation['bbox_mode'] = BoxMode.XYXY_ABS
+            # if annotation['category_id'] == 1:
+            #     newAnnotations.append(annotation)
+        # if len(newAnnotations) > 0:
+        #     record['annotations'] = newAnnotations
+        #     datasetDictsGreen.append(record)
+    return datasetDicts
+# %%
+datasetDicts = load_coco_json('../../data/TJ2342A/TJ2342ASegmentations.json', '.')
+datasetDicts = getGreenRecord(datasetDicts)
+# %%
+allGreen = []
+for idx in tqdm(range(len(datasetDicts))):
+    record = datasetDicts[idx]
+    fileName = '../' + record['file_name']
+    fileSplit = fileName.split('_')
+    imNum = int(fileSplit[-1].split('.png')[0])
+    fileName = '_'.join(fileSplit[0:-1])+'.png'
+    img = imread(fileName)
+    imgComposite = imread(fileName.replace('phaseContrast', 'composite'))
+    imgCal = imread(fileName.replace('phaseContrast', 'greenCalibrated').replace('.png', '.tif'))
+    
+    imgsSplit = imageProcessing.imSplit(img, nIms = 16)
+    compositesSplit = imageProcessing.imSplit(imgComposite, nIms = 16)
+    calsSplit = imageProcessing.imSplit(imgCal, nIms = 16)
+
+    imgSplit = imgsSplit[imNum - 1]
+    compositeSplit = compositesSplit[imNum-1]
+    calSplit = calsSplit[imNum-1]
+
+    imgFilt, props =filterCalibratedFluoro(imgCal, thresh = 'adaptive')
+
+    # plt.figure()
+    newAnnotations = []
+    for annotation in record['annotations']:
+        poly = annotation['segmentation'][0]
+        polyx = poly[::2]
+        polyy = poly[1::2]
+        polygonSki = list(zip(polyy, polyx))
+        mask = polygon2mask(img.shape[0:2], polygonSki)
+
+        maskGreen= mask.astype(int)*imgFilt
+        nGreen = np.sum(maskGreen)
+        if nGreen > 0:
+            allGreen.append(nGreen)
+        # plt.plot(polyx, polyy, linewidth = 2)
+    # plt.imshow(img, cmap = 'gray')
+
+    if idx > 500:
+        break
 # %%
