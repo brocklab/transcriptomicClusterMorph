@@ -31,7 +31,7 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.structures import BoxMode
-
+from detectron2.data.datasets import load_coco_json
 from src.data import imageProcessing, fileManagement
 # %% Working with split images
 experiment = 'TJ2406-MDAMB436-20X'
@@ -162,7 +162,10 @@ print(inference_on_dataset(predictor.model, val_loader, evaluator))
 # %% Get images not in train/test
 imgName = '/home/user/work/cellMorph/data/TJ2406-MDAMB436-20X/raw/phaseContrast/phaseContrast_B2_2_2024y01m29d_10h25m.png'
 imgName = '/home/user/work/cellMorph/data/TJ2406-MDAMB436-20X/raw/phaseContrast/phaseContrast_B2_1_2024y01m29d_10h25m.png'
+imgName = '/home/user/work/cellMorph/data/TJ2453-436Co/raw/phaseContrast/phaseContrast_B2_3_2024y04m10d_12h02m.png'
 img = imread(imgName)
+composite = imread(imgName.replace('phaseContrast', 'composite'))
+compositesSplit = imageProcessing.imSplit(composite)
 imgsSplit = imageProcessing.imSplit(img)
 imgSplit = imgsSplit[3]
 
@@ -176,10 +179,12 @@ from src.visualization.segmentationVis import viewPredictorResult
 viewPredictorResult(predictor, pcSplit)
 
 # %%
-imgSplit = imgsSplit[3]
+idx = 6
+imgSplit = imgsSplit[idx]
+compositeSplit = compositesSplit[idx]
 pcSplit = np.array([imgSplit, imgSplit, imgSplit]).transpose([1,2,0])
 
-plt.imshow(pcSplit)
+plt.imshow(compositeSplit)
 outputs = predictor(pcSplit)['instances'].to("cpu")  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
 nCells = len(outputs)
 for cellNum in range(nCells):
@@ -202,3 +207,48 @@ for cellNum in range(nCells):
 # %%
 viewPredictorResult(predictor, pcSplit)
 # %%
+# %%
+def convertRecords(datasetDicts):
+    newDatasetDicts = []
+    for record in tqdm(datasetDicts):
+        well = record['file_name'].split('_')[1]
+        if well.endswith('10') or well.endswith('11'):
+            continue
+        record = record.copy()
+
+        for annotation in record['annotations']:
+            annotation['bbox'] = BoxMode.convert(annotation['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+            annotation['bbox_mode'] = BoxMode.XYXY_ABS
+        newDatasetDicts.append(record)
+    return newDatasetDicts
+# %%
+datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}Segmentations.json', '.')
+datasetDicts = convertRecords(datasetDicts)
+# %%
+for idx in range(10):
+    record = datasetDicts[idx]
+    fileName = record['file_name']
+    fileSplit = fileName.split('_')
+    imNum = int(fileSplit[-1].split('.png')[0])
+    fileName = '_'.join(fileSplit[0:-1])+'.png'
+    img = imread(fileName.replace('phaseContrast', 'composite'))
+    imgsSplit = imageProcessing.imSplit(img, nIms = 16)
+
+    imgSplit = imgsSplit[imNum-1]
+    plt.figure()
+    for annotation in record['annotations']:
+        if annotation['category_id'] == 1:
+            color = 'green'
+        else:
+            color = 'red'
+        poly = annotation['segmentation'][0]
+        polyx = poly[::2]
+        polyy = poly[1::2]
+
+        plt.plot(polyx, polyy, c = color, linewidth = 2)
+
+    plt.imshow(imgSplit, cmap = 'gray')
+# %%
+nCells = 0
+for record in datasetDicts:
+    nCells += len(record['annotations'])
