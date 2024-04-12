@@ -13,6 +13,7 @@ from pathlib import Path
 from src.data import imageProcessing
 from skimage import morphology, measure
 from skimage.draw import polygon2mask
+from skimage.measure import regionprops
 
 # %%
 homePath = Path('../../')
@@ -183,6 +184,7 @@ datasetDicts = load_coco_json('../../data/TJ2342A/TJ2342ASegmentations.json', '.
 datasetDicts = getGreenRecord(datasetDicts)
 # %%
 allGreen = []
+datasetDictsGreen = []
 for idx in tqdm(range(len(datasetDicts))):
     record = datasetDicts[idx]
     fileName = '../' + record['file_name']
@@ -211,14 +213,63 @@ for idx in tqdm(range(len(datasetDicts))):
         polyy = poly[1::2]
         polygonSki = list(zip(polyy, polyx))
         mask = polygon2mask(img.shape[0:2], polygonSki)
-
+        reg = regionprops(mask.astype(np.uint8))
+        eccentricity = reg[0].eccentricity
+        if eccentricity < 0.8:
+            continue
         maskGreen= mask.astype(int)*imgFilt
         nGreen = np.sum(maskGreen)
-        if nGreen > 0:
+        if nGreen > 100:
             allGreen.append(nGreen)
+            newAnnotations.append(annotation)
+    record['annotations'] = newAnnotations
+    if len(newAnnotations) > 0:
+        datasetDictsGreen.append(record)
         # plt.plot(polyx, polyy, linewidth = 2)
     # plt.imshow(img, cmap = 'gray')
 
     if idx > 500:
         break
 # %%
+idx = 0
+while True:
+
+    record = datasetDictsGreen[idx]
+    fileName = '../' + record['file_name']
+    fileSplit = fileName.split('_')
+    imNum = int(fileSplit[-1].split('.png')[0])
+    fileName = '_'.join(fileSplit[0:-1])+'.png'
+    img = imread(fileName)
+    imgComposite = imread(fileName.replace('phaseContrast', 'composite'))
+    imgCal = imread(fileName.replace('phaseContrast', 'greenCalibrated').replace('.png', '.tif'))
+    
+    imgsSplit = imageProcessing.imSplit(img, nIms = 16)
+    compositesSplit = imageProcessing.imSplit(imgComposite, nIms = 16)
+    calsSplit = imageProcessing.imSplit(imgCal, nIms = 16)
+
+    imgSplit = imgsSplit[imNum - 1]
+    compositeSplit = compositesSplit[imNum-1]
+    calSplit = calsSplit[imNum-1]
+
+    imgFilt, props =filterCalibratedFluoro(imgCal, thresh = 'adaptive')
+
+    plt.figure()
+    newAnnotations = []
+    for annotation in record['annotations']:
+        poly = annotation['segmentation'][0]
+        polyx = poly[::2]
+        polyy = poly[1::2]
+        polygonSki = list(zip(polyy, polyx))
+        mask = polygon2mask(img.shape[0:2], polygonSki)
+
+        maskGreen= mask.astype(int)*imgFilt
+        nGreen = np.sum(maskGreen)
+        plt.plot(polyx, polyy, linewidth = 1)
+    
+    plt.imshow(imgFilt, cmap = 'gray')
+    plt.figure()
+    plt.imshow(imgComposite)
+
+    idx += 1
+    if idx > 5:
+        break

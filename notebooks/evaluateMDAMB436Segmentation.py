@@ -222,10 +222,11 @@ def convertRecords(datasetDicts):
         newDatasetDicts.append(record)
     return newDatasetDicts
 # %%
+experiment = 'TJ2453-436Co'
 datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}Segmentations.json', '.')
 datasetDicts = convertRecords(datasetDicts)
 # %%
-for idx in range(10):
+for idx in range(10, 20):
     record = datasetDicts[idx]
     fileName = record['file_name']
     fileSplit = fileName.split('_')
@@ -249,6 +250,44 @@ for idx in range(10):
 
     plt.imshow(imgSplit, cmap = 'gray')
 # %%
-nCells = 0
+from src.visualization.segmentationVis import  viewPredictorResult
+from src.data.imageProcessing import imSplit, findBrightGreen, removeImageAbberation
+from src.models import modelTools
+
+
+predictor = modelTools.getSegmentModel('../models/segmentation/mdamb436Seg')
+
+# %%
+img = '../data/TJ2453-436Co/raw/phaseContrast/phaseContrast_B2_1_2024y04m08d_12h02m.png'
+img = imread(img)
+imgSplit = imSplit(img, nIms = 16)
+img = imgSplit[4]
+img = np.array([img, img, img]).transpose([1, 2, 0])
+viewPredictorResult(predictor, img)
+# %%
+newRecords = []
 for record in datasetDicts:
-    nCells += len(record['annotations'])
+    if 'phaseContrast_B2_1_2024y04m08d_12h' in record['file_name']:
+        newRecords.append(record)
+
+# %%
+record = newRecords[0]
+fileName = record['file_name']
+fileSplit = fileName.split('_')
+imNum = int(fileSplit[-1].split('.png')[0])
+fileName = '_'.join(fileSplit[0:-1])+'.png'
+img = imread(fileName)
+imgComposite = imread(fileName.replace('phaseContrast', 'composite'))
+
+imgsSplit = imageProcessing.imSplit(img, nIms = 16)
+compositesSplit = imageProcessing.imSplit(imgComposite, nIms = 16)
+
+imgSplit = imgsSplit[imNum - 1]
+compositeSplit = compositesSplit[imNum-1]
+for annotation in record['annotations']:
+    poly = annotation['segmentation'][0]
+    polyx = poly[::2]
+    polyy = poly[1::2]
+    polygonSki = list(zip(polyy, polyx))
+    plt.plot(polyx, polyy, linewidth = 1)
+plt.imshow(imgComposite)

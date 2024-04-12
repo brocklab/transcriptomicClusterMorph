@@ -134,7 +134,7 @@ for pcName in tqdm(allPcIms[idx:]):
             MetadataCatalog.get("cellMorph").set(thing_classes=["cell"])
 
             datasets.convert_to_coco_json('cellMorph', output_file=datasetDictsPath, allow_cached=False)
-        break
+        
 def getCells(datasetDict):
     return datasetDict
 inputs = [datasetDicts]
