@@ -36,7 +36,7 @@ args, unknown = parser.parse_known_args()
 # %%
 experiment  = 'TJ2453-436Co'
 nIncrease   = 25
-maxAmt      = 20000
+maxAmt      = 200000000000
 batch_size  = 64
 num_epochs  = 32
 modelType   = 'resnet152'
@@ -88,7 +88,7 @@ def convertRecords(datasetDicts):
         newDatasetDicts.append(record)
     return newDatasetDicts
 # %%
-datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}Segmentations.json', '.')
+datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}SegmentationsFiltered.json', '.')
 datasetDicts = convertRecords(datasetDicts)
 # %%
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
@@ -97,7 +97,7 @@ dataloaders, dataset_sizes = makeImageDatasets(datasetDicts,
                                                dataPath,
                                                modelInputs
                                             )
-np.unique(dataloaders['test'].dataset.phenotypes, return_counts=True)
+np.unique(dataloaders['train'].dataset.phenotypes, return_counts=True)
 # %%
 inputs, classes = next(iter(dataloaders['train']))
 plt.subplot(121)
