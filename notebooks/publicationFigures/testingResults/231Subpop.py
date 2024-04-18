@@ -101,6 +101,8 @@ iA = list(zip(increases, aucs))
 iA.sort()
 increases = [i for i, a in iA]
 aucs = [a for i, a in iA]
+plt.figure()
+plt.figure(figsize=(8,5))
 plt.scatter(increases, aucs, s = 100)
 plt.plot(increases, aucs)
 plt.xticks(increases)

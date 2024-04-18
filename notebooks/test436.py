@@ -1,5 +1,6 @@
 # %%
-from src.models.trainBB import makeImageDatasets, train_model, getTFModel
+from src.data.fileManagement import getModelDetails
+
 from src.models import testBB
 from src.models import modelTools
 from pathlib import Path
@@ -32,24 +33,60 @@ def convertRecords(datasetDicts):
     return newDatasetDicts
 # %%
 experiment  = 'TJ2453-436Co'
-datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}Segmentations.json', '.')
-datasetDicts = convertRecords(datasetDicts)
-# %%
-modelName = 'classifySingleCellCrop-1713070074'
-homePath = Path('../')
-probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')
-# %%
-res = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
-# %%
-experiment  = 'TJ2453-436Co'
 datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}SegmentationsFiltered.json', '.')
 datasetDicts = convertRecords(datasetDicts)
 # %%
-modelName = 'classifySingleCellCrop-1713133318'
+modelNames = [
+            'classifySingleCellCrop-1713133318',
+            'classifySingleCellCrop-1713198231',
+            'classifySingleCellCrop-1713219654',
+            'classifySingleCellCrop-1713276348',
+            'classifySingleCellCrop-1713297660',
+            'classifySingleCellCrop-1713369737',
+            'classifySingleCellCrop-1713398690',
+            'classifySingleCellCrop-1713420430'
+]
+resDict = {}
 homePath = Path('../')
-probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')
+for modelName in modelNames:
+    probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')
+    res = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+    resDict[modelName] = res
 # %%
-resFiltered = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
+oldModelNames = list(resDict.keys())
+for modelName in oldModelNames:
+    if modelName not in modelNames:
+        resDict.pop(modelName)
+# %%
+aucs, nIncreases = [], []
+for modelName in modelNames:
+    modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
+    outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
+    if not outPath.exists():
+        outPath = Path(str(outPath).replace('.out', '.txt'))
+    assert outPath.exists(), outPath
+    modelDetails = getModelDetails(outPath)
+    if modelDetails['nIncrease'] > 100:
+        continue
+    aucs.append(resDict[modelName].auc)
+    nIncreases.append(modelDetails['nIncrease'])
+# %%
+iA = list(zip(nIncreases, aucs))
+iA.sort()
+nIncreases = [i for i, a in iA]
+aucs = [a for i, a in iA]
+
+
+plt.figure()
+plt.figure(figsize=(8,5))
+plt.rcParams.update({'font.size': 17})
+plt.scatter(nIncreases, aucs, s = 100)
+plt.plot(nIncreases, aucs)
+plt.xticks(nIncreases)
+plt.xlabel('Pixel Increase')
+plt.ylabel('AUC')
+plt.savefig('../figures/publication/results/increasingBBSubpop436.png', dpi = 500, bbox_inches = 'tight')
+
 # %%
 plt.figure()
 plt.figure(figsize=(6,6))

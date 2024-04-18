@@ -20,7 +20,9 @@ axs[1].axis('off')
 axs[1].text(0.0, 1.0, 'b', transform=axs[1].transAxes + trans,
         fontsize='large', va='top', ha = 'left')
 
-fig.savefig('../../figures/publication/multipanel/increasingBB.png', dpi = 500)
+fig.savefig('../../figures/publication/multipanel/increasingBB.png', 
+            dpi = 500,
+            bbox_inches = 'tight')
 # %%
 augmentations = imread('../../figures/publication/results/augmentationsDemonstration.png')
 augmentationResults = imread('../../figures/publication/results/subPopulationAugmentation.png')
