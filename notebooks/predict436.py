@@ -35,7 +35,7 @@ args, unknown = parser.parse_known_args()
 
 # %%
 experiment  = 'TJ2453-436Co'
-nIncrease   = 25
+nIncrease   = 65
 maxAmt      = 200000000000
 batch_size  = 64
 num_epochs  = 32

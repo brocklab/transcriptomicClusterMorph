@@ -77,3 +77,24 @@ imsave('../../figures/publication/exemplar/untreated.png', untreatedHighContrast
 imsave('../../figures/publication/exemplar/treated.png', treatedHighContrast)
 
 # %%
+amt = 3
+
+path436 = Path('../../data/TJ2453-436Co/raw/')
+file436 = '_E9_3_2024y04m09d_08h02m.png'
+subPopPhase = imread(path436 / 'phaseContrast' / Path('phaseContrast' + file436))
+subPopComposite = imread(path436 / 'composite' / Path('composite' + file436))
+subPopHighContrast = exposure.equalize_adapthist(subPopPhase)
+
+axis1, axis2 = subPopHighContrast.shape
+
+
+subPopHighContrast = subPopHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
+subPopComposite = subPopComposite[0:int(axis1/amt), 0:int(axis2/amt)]
+
+plt.subplot(121)
+plt.imshow(subPopHighContrast, cmap = 'gray')
+plt.subplot(122)
+plt.imshow(subPopComposite)
+
+imsave('../../figures/publication/exemplar/436CoPhase.png', subPopHighContrast)
+imsave('../../figures/publication/exemplar/436CoComposite.png', subPopComposite)
