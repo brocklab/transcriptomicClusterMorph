@@ -259,12 +259,19 @@ def makeImageDatasets(datasetDicts, dataPath, modelInputs, data_transforms = [],
 
     return dataloaders, dataset_sizes
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, resultsSaveName, num_epochs = 25, best_acc = 0):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, savePath, resultsSaveName, num_epochs = 25, best_acc = 0, nImprove = 0):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     best_model_wts = copy.deepcopy(model.state_dict())
     # if device.type != 'cuda':
     #     raise Exception('Incorrect device')
+
+    # Count the number of epochs since we improved
+    if nImprove > 0:
+        currentImprove = 0
+    else:
+        currentImprove = -1e6
+    
     for epoch in tqdm(range(num_epochs), leave=False):
         print(f'Epoch {epoch}/{num_epochs - 1}')
         # print('-' * 10)
@@ -321,8 +328,11 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 print(improvementResults)
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-
-            with open(resultsSaveName, 'a') as file:
+            else:
+                currentImprove +=1
+            
+            if currentImprove >= nImprove:
+                break
                 file.write(f'{currentResults} \n {improvementResults} \n')
         # Always save model on each epoch
         model.load_state_dict(best_model_wts)
