@@ -330,10 +330,12 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 best_model_wts = copy.deepcopy(model.state_dict())
             else:
                 currentImprove +=1
-            
-            if currentImprove >= nImprove:
-                break
+            with open(resultsSaveName, 'a') as file:
                 file.write(f'{currentResults} \n {improvementResults} \n')
+            if currentImprove >= nImprove:
+                with open(resultsSaveName, 'a') as file:
+                    file.write(f'{currentResults} \n {improvementResults} \n')
+                break
         # Always save model on each epoch
         model.load_state_dict(best_model_wts)
         torch.save(model.state_dict(), savePath)
