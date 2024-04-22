@@ -6,7 +6,7 @@ import torch
 import os
 import time
 from pathlib import Path
-from centermask.config import get_cfg
+# from centermask.config import get_cfg
 
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
