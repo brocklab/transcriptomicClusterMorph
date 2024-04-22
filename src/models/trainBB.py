@@ -265,8 +265,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
 
     # Count the number of epochs since we improved
     if nImprove > 0:
+        currentImproveInit = 0
         currentImprove = 0
     else:
+        currentImproveInit = -1e6
         currentImprove = -1e6
 
     for epoch in tqdm(range(num_epochs), leave=False):
@@ -325,7 +327,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 print(improvementResults)
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-                currentImprove = 0
+                currentImprove = currentImproveInit
             elif phase == 'test':
                 currentImprove +=1
             
