@@ -15,9 +15,6 @@ from skimage.io import imread
 from skimage.transform import resize
 from skimage.draw import polygon2mask
 
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
-
 from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader
