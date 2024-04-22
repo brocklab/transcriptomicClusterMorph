@@ -138,6 +138,5 @@ model = train_model(model,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=modelInputs['num_epochs'],
-                    nImprove = 5
+                    num_epochs=modelInputs['num_epochs']
                     )

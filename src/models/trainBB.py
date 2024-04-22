@@ -271,7 +271,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
         currentImprove = 0
     else:
         currentImprove = -1e6
-    
+
     for epoch in tqdm(range(num_epochs), leave=False):
         print(f'Epoch {epoch}/{num_epochs - 1}')
         # print('-' * 10)
@@ -328,14 +328,16 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 print(improvementResults)
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-            else:
+                currentImprove = 0
+            elif phase == 'test':
                 currentImprove +=1
-
+            
             with open(resultsSaveName, 'a') as file:
                 file.write(f'{currentResults} \n {improvementResults} \n')
-            print(f'~~~{currentImprove} \t {nImprove}~~~~')
-            if currentImprove >= nImprove:
-                break
+        print(f'~~~{currentImprove} \t {nImprove}~~~~')
+        if currentImprove >= nImprove:
+            print('Breaking due to no improvement')
+            break
             
         # Always save model on each epoch
         model.load_state_dict(best_model_wts)
