@@ -35,7 +35,7 @@ args, unknown = parser.parse_known_args()
 
 # %%
 experiment  = 'TJ2453-436Co'
-nIncrease   = 65
+nIncrease   = 105
 maxAmt      = 200000000000
 batch_size  = 64
 num_epochs  = 32
@@ -139,6 +139,11 @@ model = train_model(model,
                     modelSaveName,
                     resultsSaveName,
                     num_epochs=modelInputs['num_epochs'],
-                    nImprove=5
+                    nImprove = 5
                     )
 # %%
+import numpy as np
+statements = []
+for i in np.arange(10, 80, 5):
+    statements.append(f'python ./predict436.py --nIncrease {i} --num_epochs 32 --batch_size 32')
+print(';'.join(statements))

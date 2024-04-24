@@ -330,10 +330,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 currentImprove = currentImproveInit
             elif phase == 'test':
                 currentImprove +=1
-            
+            # print(f'~~~{currentImprove} \t {nImprove}~~~~')
+            improveStatement = f'It has been {currentImprove} epochs since improvement'
             with open(resultsSaveName, 'a') as file:
-                file.write(f'{currentResults} \n {improvementResults} \n')
-        print(f'~~~{currentImprove} \t {nImprove}~~~~')
+                file.write(f'{currentResults} \n {improvementResults} \n {improveStatement} \n')
         if currentImprove >= nImprove:
             print('Breaking due to no improvement')
             break
