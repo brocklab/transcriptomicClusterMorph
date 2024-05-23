@@ -30,26 +30,33 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 import detectron2
 from detectron2.structures import BoxMode
 # %%
-experiment = 'TJ2201'
-homePath = Path('../../../')
-modelPath = homePath / 'models' / 'classification'
-modelNames = list(modelPath.iterdir())
-modelNames = [str(modelName.parts[-1]).split('.')[0] for modelName in modelNames]
-modelNames.sort()
-datasetDictPath = homePath / f'data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy'
-dataPath = homePath / f'data/{experiment}/raw/phaseContrast'
+experiment = 'TJ2454-2311kb3'
+dataPath = Path(f'../../../data/{experiment}/raw/phaseContrast')
+# datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
+# datasetDictsPre = np.load(datasetDictPath, allow_pickle=True)
+# co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
+# datasetDictsPre = [seg for seg in datasetDictsPre if seg['file_name'].split('_')[1] in co]
+# datasetDictsPre = [record for record in datasetDictsPre if len(record['annotations']) > 0]
 
-datasetDictsPre = np.load(datasetDictPath, allow_pickle=True)
-co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-datasetDictsPre = [seg for seg in datasetDictsPre if seg['file_name'].split('_')[1] in co]
+nCells = 0
+datasetDictsPre = datasets.load_coco_json(json_file='../../../data/TJ2454-2311kb3/TJ2454-2311kb3Segmentations.json', image_root='')
 datasetDictsPre = [record for record in datasetDictsPre if len(record['annotations']) > 0]
+for record in tqdm(datasetDictsPre):
+    for cell in record['annotations']:
+        cell['bbox'] = detectron2.structures.BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+        cell['bbox_mode'] = BoxMode.XYXY_ABS
+        nCells += 1
+print(nCells)
 # %%
-datasetDictsTreat = datasets.load_coco_json(json_file=homePath /'data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', image_root='')
+nCells = 0
+datasetDictsTreat = datasets.load_coco_json(json_file='../../../data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', image_root='')
 datasetDictsTreat = [record for record in datasetDictsTreat if len(record['annotations']) > 0]
 for record in tqdm(datasetDictsTreat):
     for cell in record['annotations']:
         cell['bbox'] = detectron2.structures.BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
         cell['bbox_mode'] = BoxMode.XYXY_ABS
+        nCells += 1
+print(nCells)
 # %%
 # Set labels appropriately
 for image in tqdm(datasetDictsTreat):
@@ -59,13 +66,13 @@ for image in tqdm(datasetDictsPre):
     for cell in image['annotations']:
         cell['category_id'] = 0
 
-imgPaths = {0: homePath / 'data/TJ2201/raw/phaseContrast',
-            1: homePath / 'data/TJ2301-231C2/raw/phaseContrast'}
+imgPaths = {0: '../../../data/TJ2454-2311kb3/raw/phaseContrast',
+            1: '../../../data/TJ2301-231C2/raw/phaseContrast'}
 
 # %% Replace file paths
 for image in datasetDictsPre:
     filePath = Path(image['file_name'])
-    image['file_name'] = str(Path(*filePath.parts[1:]))
+    # image['file_name'] = str(Path(*filePath.parts[1:]))
 for image in datasetDictsTreat:
     filePath = Path(image['file_name'])
     image['file_name'] = str(filePath).replace('raw', 'split16')
@@ -264,9 +271,10 @@ if data_transforms == []:
 # %%
 modelDict = {
             #  'No Augmentation': 'classifySingleCellCrop-1692223986',
-             '0 px': 'classifySingleCellCrop-1692914142'
+            #  '0 px': 'classifySingleCellCrop-1692914142'
+            '0 px': 'classifySingleCellCrop-1715810868'
              }
-
+homePath = Path('../../../')
 resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
 if resultsFile.exists():
     modelRes = pickle.load(open(resultsFile, "rb"))
@@ -294,7 +302,7 @@ for augName, modelName in tqdm(modelDict.items()):
 
 pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
-modelNames = ['classifySingleCellCrop-1692914142']
+modelNames = ['classifySingleCellCrop-1715810868']
 plt.figure()
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})

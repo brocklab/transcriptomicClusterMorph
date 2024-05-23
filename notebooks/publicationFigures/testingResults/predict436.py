@@ -142,8 +142,3 @@ model = train_model(model,
                     nImprove = 5
                     )
 # %%
-import numpy as np
-statements = []
-for i in np.arange(10, 80, 5):
-    statements.append(f'python ./predict436.py --nIncrease {i} --num_epochs 32 --batch_size 32')
-print(';'.join(statements))

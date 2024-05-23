@@ -9,6 +9,7 @@ import sys
 import argparse
 import matplotlib.pyplot as plt
 from tqdm import tqdm 
+import pickle
 
 from torch.optim import lr_scheduler
 import torch.nn as nn
@@ -32,26 +33,60 @@ def convertRecords(datasetDicts):
         newDatasetDicts.append(record)
     return newDatasetDicts
 # %%
+
+
+# %%
 experiment  = 'TJ2453-436Co'
-datasetDicts = load_coco_json(f'../data/{experiment}/{experiment}SegmentationsFiltered.json', '.')
+datasetDicts = load_coco_json(f'../../../data/{experiment}/{experiment}SegmentationsFiltered.json', '.')
 datasetDicts = convertRecords(datasetDicts)
 # %%
+nCells = {0:0, 1:0}
+allCells = 0
+for record in tqdm(datasetDicts):
+    for cell in record['annotations']:
+        nCells[cell['category_id']] += 1
+        allCells += 1
+print(nCells)
+print(allCells)
+# %%
+# %%
+# modelNames = [
+#             'classifySingleCellCrop-1713133318',
+#             'classifySingleCellCrop-1713198231',
+#             'classifySingleCellCrop-1713219654',
+#             'classifySingleCellCrop-1713276348',
+#             'classifySingleCellCrop-1713297660',
+#             'classifySingleCellCrop-1713369737',
+#             'classifySingleCellCrop-1713398690',
+#             'classifySingleCellCrop-1713420430'
+# ]
 modelNames = [
-            'classifySingleCellCrop-1713133318',
-            'classifySingleCellCrop-1713198231',
-            'classifySingleCellCrop-1713219654',
-            'classifySingleCellCrop-1713276348',
-            'classifySingleCellCrop-1713297660',
-            'classifySingleCellCrop-1713369737',
-            'classifySingleCellCrop-1713398690',
-            'classifySingleCellCrop-1713420430'
+  'classifySingleCellCrop-1713877339',
+  'classifySingleCellCrop-1713995212',
+  'classifySingleCellCrop-1714240541',
+  'classifySingleCellCrop-1714050628',
+  'classifySingleCellCrop-1715279688',
+  'classifySingleCellCrop-1713637563',
+  'classifySingleCellCrop-1715352389',
+  'classifySingleCellCrop-1715437881',
+  'classifySingleCellCrop-1715472070',
+  'classifySingleCellCrop-1714106112',
+  'classifySingleCellCrop-1714334242',
+  'classifySingleCellCrop-1715386736'
 ]
-resDict = {}
-homePath = Path('../')
+homePath = Path('../../../')
+resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
+if resultsFile.exists():
+    resDict = pickle.load(open(resultsFile, "rb"))
+else:
+    resDict = {}
+
 for modelName in modelNames:
     probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')
     res = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
     resDict[modelName] = res
+pickle.dump(resDict, open(resultsFile, "wb"))
+
 # %%
 oldModelNames = list(resDict.keys())
 for modelName in oldModelNames:
@@ -67,6 +102,9 @@ for modelName in modelNames:
     assert outPath.exists(), outPath
     modelDetails = getModelDetails(outPath)
     if modelDetails['nIncrease'] > 100:
+        continue
+    nIncrease = modelDetails['nIncrease']
+    if nIncrease not in [0, 15, 15, 25, 35, 45, 55, 65, 75]:
         continue
     aucs.append(resDict[modelName].auc)
     nIncreases.append(modelDetails['nIncrease'])
@@ -85,22 +123,22 @@ plt.plot(nIncreases, aucs)
 plt.xticks(nIncreases)
 plt.xlabel('Pixel Increase')
 plt.ylabel('AUC')
-plt.savefig('../figures/publication/results/increasingBBSubpop436.png', dpi = 500, bbox_inches = 'tight')
+plt.savefig('../../../figures/publication/results/increasingBBSubpop436.png', dpi = 500, bbox_inches = 'tight')
 
-# %%
-plt.figure()
-plt.figure(figsize=(6,6))
-plt.rcParams.update({'font.size': 17})
-plt.grid()
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-auc = res.auc
-plotLabel = f'BB increase AUC = {auc:0.2f}'
-plt.plot(res.fpr, res.tpr, 
-         label=f'All cells AUC={res.auc:0.2f}', linewidth=3)
-plt.plot(resFiltered.fpr, resFiltered.tpr, 
-         label=f'Better labeling AUC={resFiltered.auc:0.2f}', 
-         linewidth=3)
-plt.legend(fontsize = 10, loc = 'lower right')
-plt.title('MDA-MB-436 Classification')
+# # %%
+# plt.figure()
+# plt.figure(figsize=(6,6))
+# plt.rcParams.update({'font.size': 17})
+# plt.grid()
+# plt.xlabel('False Positive Rate')
+# plt.ylabel('True Positive Rate')
+# auc = res.auc
+# plotLabel = f'BB increase AUC = {auc:0.2f}'
+# plt.plot(res.fpr, res.tpr, 
+#          label=f'All cells AUC={res.auc:0.2f}', linewidth=3)
+# plt.plot(resFiltered.fpr, resFiltered.tpr, 
+#          label=f'Better labeling AUC={resFiltered.auc:0.2f}', 
+#          linewidth=3)
+# plt.legend(fontsize = 10, loc = 'lower right')
+# plt.title('MDA-MB-436 Classification')
 # %%

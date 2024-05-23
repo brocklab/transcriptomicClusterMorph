@@ -88,13 +88,20 @@ for item, value in argItems.items():
 modelDetailsPrint = modelTools.printModelVariables(modelInputs)
 
 # %%
-experiment = 'TJ2201'
+experiment = 'TJ2454-2311kb3'
 dataPath = Path(f'../data/{experiment}/raw/phaseContrast')
-datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
-datasetDictsPre = np.load(datasetDictPath, allow_pickle=True)
-co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-datasetDictsPre = [seg for seg in datasetDictsPre if seg['file_name'].split('_')[1] in co]
+# datasetDictPath = Path(f'../data/{experiment}/split16/{experiment}DatasetDictNoBorderFull.npy')
+# datasetDictsPre = np.load(datasetDictPath, allow_pickle=True)
+# co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
+# datasetDictsPre = [seg for seg in datasetDictsPre if seg['file_name'].split('_')[1] in co]
+# datasetDictsPre = [record for record in datasetDictsPre if len(record['annotations']) > 0]
+
+datasetDictsPre = datasets.load_coco_json(json_file='../data/TJ2454-2311kb3/TJ2454-2311kb3Segmentations.json', image_root='')
 datasetDictsPre = [record for record in datasetDictsPre if len(record['annotations']) > 0]
+for record in tqdm(datasetDictsPre):
+    for cell in record['annotations']:
+        cell['bbox'] = detectron2.structures.BoxMode.convert(cell['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+        cell['bbox_mode'] = BoxMode.XYXY_ABS
 # %%
 datasetDictsTreat = datasets.load_coco_json(json_file='../data/TJ2301-231C2/TJ2301-231C2SegmentationsNoBorder.json', image_root='')
 datasetDictsTreat = [record for record in datasetDictsTreat if len(record['annotations']) > 0]
@@ -111,14 +118,14 @@ for image in tqdm(datasetDictsPre):
     for cell in image['annotations']:
         cell['category_id'] = 0
 
-imgPaths = {0: '../data/TJ2201/raw/phaseContrast',
+imgPaths = {0: '../data/TJ2454-2311kb3/raw/phaseContrast',
             1: '../data/TJ2301-231C2/raw/phaseContrast'}
 
 modelInputs['imgPaths'] = imgPaths
 # %% Replace file paths
 for image in datasetDictsPre:
     filePath = Path(image['file_name'])
-    image['file_name'] = str(Path(*filePath.parts[1:]))
+    # image['file_name'] = str(Path(*filePath.parts[1:]))
 for image in datasetDictsTreat:
     filePath = Path(image['file_name'])
     image['file_name'] = str(filePath).replace('raw', 'split16')
@@ -362,6 +369,7 @@ model = train_model(model,
                     dataset_sizes, 
                     modelSaveName,
                     resultsSaveName,
-                    num_epochs=modelInputs['num_epochs']
+                    num_epochs=modelInputs['num_epochs'],
+                    nImprove = 5
                     )
 # %%

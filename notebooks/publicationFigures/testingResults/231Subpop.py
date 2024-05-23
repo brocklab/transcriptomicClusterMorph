@@ -27,9 +27,15 @@ datasetDictPathFull = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorderF
 datasetDictPathPartial = homePath / 'data/TJ2201/split16/TJ2201DatasetDictNoBorder.npy'
 
 # %%
-# datasetDicts = np.load(datasetDictPathFull, allow_pickle=True)
-# co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
-# datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
+datasetDicts = np.load(datasetDictPathFull, allow_pickle=True)
+co = ['B7','B8','B9','B10','B11','C7','C8','C9','C10','C11','D7','D8','D9','D10','D11','E7','E8','E9','E10','E11']
+datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in co]
+# %%
+nCells = {0:0, 1:0}
+for record in tqdm(datasetDicts):
+    for cell in record['annotations']:
+        nCells[cell['category_id']] += 1
+print(nCells)
 # %% Increasing bounding box results
 # Load model results, test on reserve well if not already run
 resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
