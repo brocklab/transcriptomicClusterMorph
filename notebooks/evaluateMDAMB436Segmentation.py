@@ -114,7 +114,7 @@ def getCells(experiment, imgType, stage=None):
             record["annotations"] = cells  
             datasetDicts.append(record)
             idx+=1
-        return datasetDicts
+    return datasetDicts
               
 # %%
 if 'cellMorph_train' in DatasetCatalog:
@@ -128,11 +128,15 @@ inputs = [experiment, imgType, 'train']
 DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
 MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
 
-DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
+DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], 'train'))
 MetadataCatalog.get("cellMorph_" + "test").set(thing_classes=["cell"])
 
 
 cell_metadata = MetadataCatalog.get("cellMorph_train")
+
+ddTrain = getCells(inputs[0], inputs[1], inputs[2])
+ddTest  = getCells(inputs[0], inputs[1], 'test')
+
 # %%
 cfg = get_cfg()
 if not torch.cuda.is_available():

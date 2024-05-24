@@ -102,6 +102,119 @@ for nIncrease in nIncreases:
     ax.axis('off')
     c += 1
 fig.savefig(homePath / 'figures/increasingBBDemonstration.png', dpi=600)
+# %%
+from tqdm import tqdm
+from detectron2.data.datasets import load_coco_json
+from detectron2.structures import BoxMode
+
+def convertRecords(datasetDicts):
+    newDatasetDicts = []
+    for record in tqdm(datasetDicts):
+        well = record['file_name'].split('_')[1]
+        if well.endswith('10') or well.endswith('11'):
+            continue
+        record = record.copy()
+
+        for annotation in record['annotations']:
+            annotation['bbox'] = BoxMode.convert(annotation['bbox'], from_mode = BoxMode.XYWH_ABS, to_mode = BoxMode.XYXY_ABS)
+            annotation['bbox_mode'] = BoxMode.XYXY_ABS
+        newDatasetDicts.append(record)
+    return newDatasetDicts
+experiment  = 'TJ2453-436Co'
+datasetDicts = load_coco_json(homePath / f'data/{experiment}/{experiment}SegmentationsFiltered.json', '.')
+datasetDicts = convertRecords(datasetDicts)
+# %%
+from src.data.imageProcessing import imSplit
+idx = random.randint(0,len(datasetDicts))
+# idx = 15902
+idx = 15909
+print(idx)
+c = idx
+for seg in datasetDicts[idx:]:
+    annotations = seg['annotations']
+    nCells = len(seg['annotations'])
+    if nCells < 10:
+        # print(f'Skipping {c} \t {nCells}')
+        c += 1
+        continue
+    imgPath = homePath / 'data' / Path(*Path(seg['file_name']).parts[2:])
+
+    imgPath = str(imgPath)
+    
+    imgSplitPath = imgPath.split('_')
+    imNum = int(imgSplitPath[-1].split('.png')[0])
+
+    imgPath = '_'.join(imgSplitPath[0:-1])+'.png'
+
+    img = imread(imgPath)
+
+    imgSplit = imSplit(img, nIms = 16)
+    img = imgSplit[imNum]
+    img = np.array([img, img, img]).transpose([1, 2, 0])
+
+    cell = annotations[2]
+
+    break
+# %%
+print(c)
+polyx = cell['segmentation'][0][0::2]
+polyy = cell['segmentation'][0][1::2]
+bb = cell['bbox']
+# plt.imshow(img)
+# plt.plot(polyx, polyy, 'b--', linewidth=3)
+
+# Plot only cell
+maxRows, maxCols = 150, 150
+polygon = list(zip(polyy, polyx))
+
+mask = polygon2mask(img.shape[0:2], polygon)
+bb = [int(corner) for corner in bb]
+pcCrop = img[bb[1]:bb[3], bb[0]:bb[2]].copy()
+maskCrop = mask[bb[1]:bb[3], bb[0]:bb[2]].copy().astype('bool')
+
+pcCrop[~np.dstack((maskCrop,maskCrop,maskCrop))] = 0
+pcCrop = torch.tensor(pcCrop[:,:,0])
+
+# Keep aspect ratio and scale down data to be maxSize x maxSize (should be rare)
+
+if pcCrop.shape[0]>maxRows:
+    pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[0])
+if pcCrop.shape[1]>maxCols:
+    pcCrop = rescale(pcCrop, maxRows/pcCrop.shape[1])
+
+# Now pad out the amount to make it maxSize x maxSize
+diffRows = int((maxRows - pcCrop.shape[0])/2)+1
+diffCols = int((maxCols - pcCrop.shape[1])/2)
+pcCrop = F.pad(torch.tensor(pcCrop), pad=(diffCols, diffCols, diffRows, diffRows)).numpy()
+# Resize in case the difference was not actually an integer
+pcCropFull = resize(pcCrop, (maxRows, maxCols))
+
+
+# Increase bounding box
+imgNameWhole = splitName2Whole(seg['file_name'].split('/')[-1])
+imgPathWhole = homePath / f'data/{experiment}/raw/phaseContrast' / imgNameWhole
+imgWhole = imread(imgPathWhole)
+nIncreases = [0, 55, 65]
+increasingBB = {}
+num = 1
+for nIncrease in nIncreases:
+    polyx = cell['segmentation'][0][0::2]
+    polyy = cell['segmentation'][0][1::2]
+    poly = np.array([polyx, polyy]).T
+    imgCrop = bbIncrease(poly, cell['bbox'], seg['file_name'], imgWhole, nIncrease = nIncrease, nIms=16)
+    increasingBB[nIncrease] = imgCrop
+# 
+fig = plt.figure(constrained_layout=True, figsize=(10, 4))
+sfs = fig.subfigures(1, 3)
+c = 0
+for nIncrease in nIncreases:
+    sf = sfs[c]
+    ax = sf.add_axes([0, 0, 1, 0.85])
+    ax.imshow(increasingBB[nIncrease], cmap = 'gray')
+    sf.suptitle(f'{nIncrease} px\nIncrease', fontsize=15)
+    ax.axis('off')
+    c += 1
+
 
 # %%
 augmentations = [None, 'blackoutCell', 'stamp']

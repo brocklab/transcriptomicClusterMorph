@@ -1,7 +1,8 @@
 
 # %%
 # f cellMorphHelper
-
+from src.data.imageProcessing import imSplit
+from src.data.fileManagement import getImageBase
 import torch
 import detectron2
 
@@ -38,7 +39,7 @@ experiment = 'TJ2201'
 imgType = 'phaseContrast'
 
 def getCells(experiment, imgType, stage=None):
-    segDir = os.path.join('../data',experiment,'segmentedIms')
+    segDir = os.path.join('../../data',experiment,'segmentations','manual')
     segFiles = os.listdir(segDir)
     segFiles = [segFile for segFile in segFiles if segFile.endswith('.npy')]
     idx = 0
@@ -62,15 +63,15 @@ def getCells(experiment, imgType, stage=None):
         seg = np.load(segFull, allow_pickle=True)
         seg = seg.item()
 
-        splitMasks = cellMorphHelper.imSplit(seg['masks'])
+        splitMasks = imSplit(seg['masks'])
         nSplits = len(splitMasks)
 
-        splitDir = f'{experiment}Split{nSplits}'
-        imgBase = cellMorphHelper.getImageBase(seg['filename'].split('/')[-1])    
+        splitDir = f'{experiment}/split{nSplits}'
+        imgBase = getImageBase(seg['filename'].split('/')[-1])    
         for splitNum in range(1, len(splitMasks)+1):
             imgFile = f'{imgType}_{imgBase}_{splitNum}.png'
-            imgPath = os.path.join('../data', splitDir, imgType, imgFile)
-            assert os.path.isfile(imgPath)
+            imgPath = os.path.join('../../data', splitDir, imgType, imgFile)
+            assert os.path.isfile(imgPath), imgPath
             record = {}
             record['file_name'] = imgPath
             record['image_id'] = idx
@@ -137,9 +138,9 @@ cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # %% AG2021Split16
-cfg.OUTPUT_DIR = '../models/AG2021Split16'
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
-predictor = DefaultPredictor(cfg)
+# cfg.OUTPUT_DIR = '../../models/AG2021Split16'
+# cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
+# predictor = DefaultPredictor(cfg)
 
 """
 |   AP   |  AP50  |  AP75  |  APs   |  APm   |  APl  |
@@ -147,19 +148,19 @@ predictor = DefaultPredictor(cfg)
 | 28.366 | 60.145 | 23.121 | 23.563 | 34.049 | 0.000 |
 """
 # %%
-from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
-from detectron2.data import build_detection_test_loader
-evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/AG2021Split16')
-val_loader = build_detection_test_loader(cfg, "cellMorph_test")
-print(inference_on_dataset(predictor.model, val_loader, evaluator))
+# from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
+# from detectron2.data import build_detection_test_loader
+# evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/AG2021Split16')
+# val_loader = build_detection_test_loader(cfg, "cellMorph_test")
+# print(inference_on_dataset(predictor.model, val_loader, evaluator))
 # %%
-cfg.OUTPUT_DIR = '../models/TJ2201Split16'
+cfg.OUTPUT_DIR = '../../models/segmentation/TJ2201Split16'
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
 predictor = DefaultPredictor(cfg)
 # %%
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
 from detectron2.data import build_detection_test_loader
-evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/TJ2201Split16')
+evaluator = COCOEvaluator('cellMorph_test', output_dir='../../models/segmentation/TJ2201Split16')
 val_loader = build_detection_test_loader(cfg, "cellMorph_test")
 print(inference_on_dataset(predictor.model, val_loader, evaluator))
 """
@@ -167,6 +168,8 @@ print(inference_on_dataset(predictor.model, val_loader, evaluator))
 |:------:|:------:|:------:|:------:|:------:|:-------:|
 | 62.206 | 90.053 | 73.858 | 54.832 | 69.244 | 100.000 |
 """
+# %%
+'../../data/TJ2201'
 # %%
 from detectron2.data.datasets import convert_to_coco_json
 convert_to_coco_json('cellMorph_test', '../models/tj2201Split16/cellMorph_test_coco_format.json')

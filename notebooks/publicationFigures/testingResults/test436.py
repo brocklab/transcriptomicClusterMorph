@@ -82,6 +82,8 @@ else:
     resDict = {}
 
 for modelName in modelNames:
+    if modelName in resDict:
+        continue
     probs, allLabels, scores, imgNames = testBB.getModelResults(modelName, homePath, datasetDicts, mode = 'test')
     res = testBB.testResults(probs, allLabels, scores, imgNames, modelName)
     resDict[modelName] = res

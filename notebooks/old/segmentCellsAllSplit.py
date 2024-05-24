@@ -4,8 +4,8 @@
 This is to be run using fully-validated masks from cellpose
 """
 # %%
-import cellMorphHelper
-
+from src.data.imageProcessing import imSplit
+from src.data.fileManagement import getImageBase
 import torch
 import detectron2
 
@@ -66,11 +66,11 @@ def getCells(experiment, imgType, stage=None):
         seg = np.load(segFull, allow_pickle=True)
         seg = seg.item()
 
-        splitMasks = cellMorphHelper.imSplit(seg['masks'])
+        splitMasks = imSplit(seg['masks'])
         nSplits = len(splitMasks)
 
         splitDir = f'{experiment}Split{nSplits}'
-        imgBase = cellMorphHelper.getImageBase(seg['filename'].split('/')[-1])    
+        imgBase = getImageBase(seg['filename'].split('/')[-1])    
         for splitNum in range(1, len(splitMasks)+1):
             imgFile = f'{imgType}_{imgBase}_{splitNum}.png'
             imgPath = os.path.join('../data', splitDir, imgType, imgFile)
