@@ -101,7 +101,7 @@ for nIncrease in nIncreases:
     sf.suptitle(f'{nIncrease} px\nIncrease', fontsize=15)
     ax.axis('off')
     c += 1
-fig.savefig(homePath / 'figures/increasingBBDemonstration.png', dpi=600)
+fig.savefig(homePath / 'figures/publication/results/increasingBBDemonstration.png', dpi=600)
 # %%
 from tqdm import tqdm
 from detectron2.data.datasets import load_coco_json
@@ -127,8 +127,7 @@ datasetDicts = convertRecords(datasetDicts)
 from src.data.imageProcessing import imSplit
 idx = random.randint(0,len(datasetDicts))
 # idx = 15902
-idx = 15909
-print(idx)
+idx = 18836
 c = idx
 for seg in datasetDicts[idx:]:
     annotations = seg['annotations']
@@ -155,7 +154,6 @@ for seg in datasetDicts[idx:]:
     cell = annotations[2]
 
     break
-# %%
 print(c)
 polyx = cell['segmentation'][0][0::2]
 polyy = cell['segmentation'][0][1::2]
@@ -194,7 +192,7 @@ pcCropFull = resize(pcCrop, (maxRows, maxCols))
 imgNameWhole = splitName2Whole(seg['file_name'].split('/')[-1])
 imgPathWhole = homePath / f'data/{experiment}/raw/phaseContrast' / imgNameWhole
 imgWhole = imread(imgPathWhole)
-nIncreases = [0, 55, 65]
+nIncreases = [25, 55, 75]
 increasingBB = {}
 num = 1
 for nIncrease in nIncreases:
@@ -215,6 +213,7 @@ for nIncrease in nIncreases:
     ax.axis('off')
     c += 1
 
+fig.savefig(homePath / 'figures/publication/results/increasingBBDemonstration436.png', dpi=600)
 
 # %%
 augmentations = [None, 'blackoutCell', 'stamp']
