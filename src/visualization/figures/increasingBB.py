@@ -90,14 +90,25 @@ for nIncrease in nIncreases:
     poly = np.array([polyx, polyy]).T
     imgCrop = bbIncrease(poly, cell['bbox'], seg['file_name'], imgWhole, nIncrease = nIncrease, nIms=16)
     increasingBB[nIncrease] = imgCrop
+    print(imgCrop.shape)
 # 
 fig = plt.figure(constrained_layout=True, figsize=(10, 4))
 sfs = fig.subfigures(1, 3)
 c = 0
+startDict = {
+                0:  [1, 1],
+                25: [1, 1],
+                65: [1, 1]}
+factor = 200/322 #200 um/ 322 px
+pxIncrease = int(10/factor)
 for nIncrease in nIncreases:
+    img =increasingBB[nIncrease]
+    start = startDict[nIncrease]
+
+    img[start[0]:start[0]+2, start[1]:(start[1]+pxIncrease)] = 0
     sf = sfs[c]
     ax = sf.add_axes([0, 0, 1, 0.85])
-    ax.imshow(increasingBB[nIncrease], cmap = 'gray')
+    ax.imshow(img, cmap = 'gray')
     sf.suptitle(f'{nIncrease} px\nIncrease', fontsize=15)
     ax.axis('off')
     c += 1
@@ -201,14 +212,28 @@ for nIncrease in nIncreases:
     poly = np.array([polyx, polyy]).T
     imgCrop = bbIncrease(poly, cell['bbox'], seg['file_name'], imgWhole, nIncrease = nIncrease, nIms=16)
     increasingBB[nIncrease] = imgCrop
-# 
-fig = plt.figure(constrained_layout=True, figsize=(10, 4))
+fig = plt.figure(constrained_layout=True, figsize=(10,3))
 sfs = fig.subfigures(1, 3)
 c = 0
+nIncrease0 = nIncreases[0]
+ratio = increasingBB[nIncreases[0]].shape[0]/increasingBB[nIncreases[0]].shape[1]
+factor = 200/322 #200 um/ 322 px
+pxIncrease = int(30/factor)
+startDict = {
+                25: 2,
+                55: 2,
+                75: 2}
 for nIncrease in nIncreases:
+    start = startDict[nIncrease]
+    img =increasingBB[nIncrease]
+
+    img[start:start+5, start:(start+pxIncrease)] = 0
     sf = sfs[c]
     ax = sf.add_axes([0, 0, 1, 0.85])
-    ax.imshow(increasingBB[nIncrease], cmap = 'gray')
+    ax.imshow(img, cmap = 'gray')
+    d = np.diff(ax.get_xlim())[0] / np.diff(ax.get_ylim())[0]
+    # ax.set_aspect(-d)
+    ax.set_box_aspect(ratio)
     sf.suptitle(f'{nIncrease} px\nIncrease', fontsize=15)
     ax.axis('off')
     c += 1

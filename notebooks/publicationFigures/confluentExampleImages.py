@@ -18,7 +18,6 @@ subPopHighContrast = exposure.equalize_adapthist(subPopPhase)
 axis1, axis2 = subPopHighContrast.shape
 
 
-subPopHighContrast = subPopHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
 subPopComposite = subPopComposite[0:int(axis1/amt), 0:int(axis2/amt)]
 
 plt.subplot(121)
@@ -68,6 +67,19 @@ axis1, axis2 = treatedHighContrast.shape
 untreatedHighContrast = untreatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
 treatedHighContrast = treatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
 
+
+
+pxAmt = 2
+initStart = 300
+initEnd = int(initStart+322/pxAmt)
+untreatedHighContrast = untreatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
+untreatedHighContrast[310:330, initStart:initEnd] = 0
+# Make line for scale bar
+plt.imshow(untreatedHighContrast, cmap = 'gray')
+plt.axis('off')
+print(f'Pixel bar is {200/pxAmt} um')
+
+
 plt.subplot(121)
 plt.imshow(untreatedHighContrast, cmap = 'gray')
 plt.subplot(122)
@@ -98,3 +110,4 @@ plt.imshow(subPopComposite)
 
 imsave('../../figures/publication/exemplar/436CoPhase.png', subPopHighContrast)
 imsave('../../figures/publication/exemplar/436CoComposite.png', subPopComposite)
+# %%

@@ -1,7 +1,7 @@
 # %%
 from pathlib import Path
 import numpy as np
-from skimage.io import imread
+from skimage.io import imread, imsave
 import matplotlib.pyplot as plt
 
 from src.visualization.segmentationVis import viewPredictorResult
@@ -20,10 +20,26 @@ datasetDicts = [seg for seg in datasetDicts if seg['file_name'].split('_')[1] in
 predictor = modelTools.getSegmentModel('../../models/TJ2201Split16')
 
 # %%
+imPathFull = Path(f'../../data/TJ2201/raw/phaseContrast/phaseContrast_E2_4_2022y04m07d_16h00m.png')
+imDisp = imread(imPathFull)
+factor = 200/322 #200 um/ 322 px
+pxIncrease = int(200/factor)
+imShape = imDisp.shape
+
+imDisp[1000:1020, imShape[1]-pxIncrease-10:imShape[1]-10] = 0
+plt.imshow(imDisp, cmap = 'gray')
+imsave('../../figures/publication/exemplar/segmentationFull.png', imDisp)
+# %%
 imNum = 2
 imPath = Path(f'../../data/TJ2201/split16//phaseContrast/phaseContrast_E2_4_2022y04m07d_16h00m_{imNum}.png')
 im = imread(imPath)
+imDisp = im[:,:,0]
+factor = 200/322 #200 um/ 322 px
+pxIncrease = int(50/factor)
+imShape = im.shape
 
+imDisp[240:250, imShape[1]-pxIncrease-10:imShape[1]-10] = 0
+plt.imshow(imDisp, cmap = 'gray')
 # How you would quickly visualize this with detectron2:
 # viewPredictorResult(predictor, imPath)
 # %%

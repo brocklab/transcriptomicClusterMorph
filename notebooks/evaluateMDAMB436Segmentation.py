@@ -54,7 +54,7 @@ def getCells(experiment, imgType, stage=None):
             segFiles = segFiles[0:trainNum]
         elif stage == 'test':
             segFiles = segFiles[trainNum:]
-
+    print(len(segFiles))
     datasetDicts = []
     homePath = Path('../data')
     for segFile in tqdm(segFiles):
@@ -80,7 +80,7 @@ def getCells(experiment, imgType, stage=None):
             splitImgPath = f'{str(imgFile)[0:-4]}_{splitNum}.png'.replace('raw', 'split16')
             imgFile = f'{imgType}_{imgBase}_{splitNum}.png'
             imgPath = os.path.join(Path('../data'), splitDir, imgType, imgFile)
-            imsave(imgPath, splitImg)
+            # imsave(imgPath, splitImg)
             assert os.path.isfile(imgPath)
             record = {}
             record['file_name'] = imgPath
@@ -111,7 +111,7 @@ def getCells(experiment, imgType, stage=None):
                     "category_id": 0,
                 }
                 cells.append(cell)
-            record["annotations"] = cells  
+            record["annotations"] = cells
             datasetDicts.append(record)
             idx+=1
     return datasetDicts
@@ -128,7 +128,7 @@ inputs = [experiment, imgType, 'train']
 DatasetCatalog.register("cellMorph_" + "train", lambda x=inputs: getCells(inputs[0], inputs[1], inputs[2]))
 MetadataCatalog.get("cellMorph_" + "train").set(thing_classes=["cell"])
 
-DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], 'train'))
+DatasetCatalog.register("cellMorph_" + "test", lambda x=inputs: getCells(inputs[0], inputs[1], 'test'))
 MetadataCatalog.get("cellMorph_" + "test").set(thing_classes=["cell"])
 
 
@@ -154,15 +154,18 @@ cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # %%
-cfg.OUTPUT_DIR = '../models/segmentation/mdamb436Seg'
+cfg.OUTPUT_DIR = '../models/segmentation/TJ2201Split16'
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
 predictor = DefaultPredictor(cfg)
 # %%
-from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.data import build_detection_test_loader
 evaluator = COCOEvaluator('cellMorph_test', output_dir=cfg.OUTPUT_DIR)
 val_loader = build_detection_test_loader(cfg, "cellMorph_test")
 print(inference_on_dataset(predictor.model, val_loader, evaluator))
+# %%
+from detectron2.engine import DefaultTrainer
+trainer = DefaultTrainer(cfg)
 # %% Get images not in train/test
 imgName = '/home/user/work/cellMorph/data/TJ2406-MDAMB436-20X/raw/phaseContrast/phaseContrast_B2_2_2024y01m29d_10h25m.png'
 imgName = '/home/user/work/cellMorph/data/TJ2406-MDAMB436-20X/raw/phaseContrast/phaseContrast_B2_1_2024y01m29d_10h25m.png'
@@ -295,3 +298,4 @@ for annotation in record['annotations']:
     polygonSki = list(zip(polyy, polyx))
     plt.plot(polyx, polyy, linewidth = 1)
 plt.imshow(imgComposite)
+# %%

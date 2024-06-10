@@ -32,6 +32,11 @@ from src.models import trainBB
 from src.data.fileManagement import getModelDetails
 
 # %%
+aucs = [0.95, .8, .75]
+pcc = [0.96, 0.79, -0.03]
+
+plt.scatter(aucs, pcc)
+# %%
 def getGreenRecord(datasetDicts, datasetDictsGreen = []):
     for record in tqdm(datasetDicts):
         record = record.copy()

@@ -61,4 +61,4 @@ axs[1].axis('off')
 axs[1].text(0.0, 1.0, 'b)', transform=axs[1].transAxes + trans,
         fontsize='large', weight = 'bold', va='top', ha = 'left')
 fig.savefig('../../figures/publication/multipanel/augmentations.png', dpi = 500)
-# %%
+# %% 
