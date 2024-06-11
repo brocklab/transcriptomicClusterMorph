@@ -105,7 +105,7 @@ for nIncrease in nIncreases:
     img =increasingBB[nIncrease]
     start = startDict[nIncrease]
 
-    img[start[0]:start[0]+2, start[1]:(start[1]+pxIncrease)] = 0
+    # img[start[0]:start[0]+2, start[1]:(start[1]+pxIncrease)] = 0
     sf = sfs[c]
     ax = sf.add_axes([0, 0, 1, 0.85])
     ax.imshow(img, cmap = 'gray')
@@ -227,7 +227,7 @@ for nIncrease in nIncreases:
     start = startDict[nIncrease]
     img =increasingBB[nIncrease]
 
-    img[start:start+5, start:(start+pxIncrease)] = 0
+    # img[start:start+5, start:(start+pxIncrease)] = 0
     sf = sfs[c]
     ax = sf.add_axes([0, 0, 1, 0.85])
     ax.imshow(img, cmap = 'gray')

@@ -28,7 +28,7 @@ increasingSubpop436 = imread('../../figures/publication/results/increasingBBDemo
 
 subPopResults436 = imread('../../figures/publication/results/increasingBBSubpop436.png')
 
-fig, axs = plt.subplots(2, figsize = (4, 4), height_ratios = [1.75,3], layout = 'constrained')
+fig, axs = plt.subplots(2, figsize = (4, 4), height_ratios = [1.45,3], layout = 'constrained')
 trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
 
 axs[0].imshow(increasingSubpop436, aspect = 'auto')

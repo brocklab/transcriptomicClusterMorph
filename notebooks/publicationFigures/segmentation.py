@@ -23,7 +23,7 @@ predictor = modelTools.getSegmentModel('../../models/TJ2201Split16')
 imPathFull = Path(f'../../data/TJ2201/raw/phaseContrast/phaseContrast_E2_4_2022y04m07d_16h00m.png')
 imDisp = imread(imPathFull)
 factor = 200/322 #200 um/ 322 px
-pxIncrease = int(200/factor)
+pxIncrease = int(150/factor)
 imShape = imDisp.shape
 
 imDisp[1000:1020, imShape[1]-pxIncrease-10:imShape[1]-10] = 0
@@ -40,6 +40,7 @@ imShape = im.shape
 
 imDisp[240:250, imShape[1]-pxIncrease-10:imShape[1]-10] = 0
 plt.imshow(imDisp, cmap = 'gray')
+imsave('../../figures/publication/exemplar/patch.png', imDisp)
 # How you would quickly visualize this with detectron2:
 # viewPredictorResult(predictor, imPath)
 # %%

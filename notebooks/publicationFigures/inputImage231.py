@@ -11,7 +11,7 @@ import numpy as np
 import sys
 import argparse 
 import matplotlib.pyplot as plt
-from skimage.io import imread
+from skimage.io import imread, imsave
 # %% Add argparse
 parser = argparse.ArgumentParser(description='Network prediction parameters')
 parser.add_argument('--experiment', type = str, metavar='experiment',  help = 'Experiment to run')
@@ -101,7 +101,7 @@ for nIncrease in [0, 25, 65]:
 # %%
 plt.imshow(imgInput)
 plt.axis('off')
-plt.savefig('../../figures/publication/exemplar/inputImage_dataloder.png', bbox_inches='tight', pad_inches=0, transparent = True)
+# plt.savefig('../../figures/publication/exemplar/inputImage_dataloder.png', bbox_inches='tight', pad_inches=0, transparent = True)
 # %%
 plt.figure(figsize = (11, 10))
 plt.subplot(131)
@@ -116,7 +116,7 @@ plt.subplot(133)
 plt.imshow(imgs[2])
 plt.axis('off')
 plt.title('65 px\nIncrease')
-plt.savefig('../../figures/publication/exemplar/increasingBB_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
+# plt.savefig('../../figures/publication/exemplar/increasingBB_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
 # %%
 imgs = []
 modelInputs['nIncrease'] = 25
@@ -146,7 +146,7 @@ plt.subplot(133)
 plt.imshow(imgs[2])
 plt.axis('off')
 plt.title('No Surrounding')
-plt.savefig('../../figures/publication/exemplar/augmentations_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
+# plt.savefig('../../figures/publication/exemplar/augmentations_dataloader.png', bbox_inches='tight', pad_inches=0.1, transparent = True)
 # %%
 imgIdx = 20
 cellIdx = 2
@@ -161,9 +161,12 @@ bb = annotations[cellIdx]['bbox']
 poly = annotations[cellIdx]['segmentation'][0]
 poly = np.array(np.reshape(poly, (int(len(poly)/2), 2)))
 imgCrop = bbIncrease(poly, bb, imgName, img, 16, nIncrease = 25)
+factor = 200/322 #200 um/ 322 px
+pxIncrease = int(30/factor)
+# imgCrop[1:5, 1:1+pxIncrease] = 0
 plt.imshow(imgCrop, cmap = 'gray')
 plt.axis('off')
-plt.savefig('../../figures/publication/exemplar/inputImage_image.png', bbox_inches='tight', pad_inches=0, transparent = True)
+imsave('../../figures/publication/exemplar/inputImage_image.png', imgCrop)
 # %%
 imgIdx = 20
 cellIdx = 11

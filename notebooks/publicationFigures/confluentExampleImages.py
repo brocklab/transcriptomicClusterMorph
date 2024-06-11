@@ -68,16 +68,17 @@ untreatedHighContrast = untreatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)
 treatedHighContrast = treatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
 
 
-
-pxAmt = 2
+factor = 200/322 #200 um/ 322 px
+pxIncrease = int(100/factor)
+# pxAmt = 2
 initStart = 300
-initEnd = int(initStart+322/pxAmt)
+initEnd = int(initStart+pxIncrease)
 untreatedHighContrast = untreatedHighContrast[0:int(axis1/amt), 0:int(axis2/amt)]
 untreatedHighContrast[310:330, initStart:initEnd] = 0
 # Make line for scale bar
 plt.imshow(untreatedHighContrast, cmap = 'gray')
 plt.axis('off')
-print(f'Pixel bar is {200/pxAmt} um')
+print(f'Pixel bar is {30} um')
 
 
 plt.subplot(121)
