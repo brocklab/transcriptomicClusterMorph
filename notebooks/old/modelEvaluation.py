@@ -138,21 +138,21 @@ cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
 # %% AG2021Split16
-# cfg.OUTPUT_DIR = '../../models/AG2021Split16'
-# cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
-# predictor = DefaultPredictor(cfg)
+cfg.OUTPUT_DIR = '../../models/segmentation/TJ2201Split16'
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
+predictor = DefaultPredictor(cfg)
 
 """
 |   AP   |  AP50  |  AP75  |  APs   |  APm   |  APl  |
 |:------:|:------:|:------:|:------:|:------:|:-----:|
-| 28.366 | 60.145 | 23.121 | 23.563 | 34.049 | 0.000 |
+| 66.381 | 91.523 | 79.507 | 55.568 | 74.764 |  nan  |
 """
 # %%
-# from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
-# from detectron2.data import build_detection_test_loader
-# evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/AG2021Split16')
-# val_loader = build_detection_test_loader(cfg, "cellMorph_test")
-# print(inference_on_dataset(predictor.model, val_loader, evaluator))
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset, SemSegEvaluator
+from detectron2.data import build_detection_test_loader
+evaluator = COCOEvaluator('cellMorph_test', output_dir='./models/AG2021Split16')
+val_loader = build_detection_test_loader(cfg, "cellMorph_test")
+print(inference_on_dataset(predictor.model, val_loader, evaluator))
 # %%
 cfg.OUTPUT_DIR = '../../models/segmentation/TJ2201Split16'
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
