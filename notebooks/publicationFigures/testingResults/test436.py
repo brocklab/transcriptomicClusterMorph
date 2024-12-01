@@ -72,7 +72,7 @@ modelNames = [
   'classifySingleCellCrop-1715472070',
   'classifySingleCellCrop-1714106112',
   'classifySingleCellCrop-1714334242',
-  'classifySingleCellCrop-1715386736'
+  'classifySingleCellCrop-1715386736' # 55 px
 ]
 homePath = Path('../../../')
 resultsFile = homePath / 'results' / 'classificationResults' / 'modelResultsCoCulture.pickle'
@@ -96,6 +96,7 @@ for modelName in oldModelNames:
         resDict.pop(modelName)
 # %%
 aucs, nIncreases = [], []
+modelNameDetails = {}
 for modelName in modelNames:
     modelPath = Path.joinpath(homePath, 'models', 'classification', f'{modelName}.pth')
     outPath = Path.joinpath(homePath, 'results', 'classificationTraining', f'{modelName}.out')
@@ -110,6 +111,7 @@ for modelName in modelNames:
         continue
     aucs.append(resDict[modelName].auc)
     nIncreases.append(modelDetails['nIncrease'])
+    modelNameDetails[modelName] = modelDetails['nIncrease']
 # %%
 iA = list(zip(nIncreases, aucs))
 iA.sort()
