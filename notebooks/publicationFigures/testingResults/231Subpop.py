@@ -147,3 +147,9 @@ plt.title('Subpopulation Prediction\nImage Augmentation')
 plt.legend(fontsize=12, loc='lower right')
 plt.savefig(homePath / 'figures/publication/results/subPopulationAugmentation.png', dpi = 500, bbox_inches = 'tight')
 # %%
+model = 'classifySingleCellCrop-1707668614'
+res = modelRes[model]
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+cm = confusion_matrix(res.labels, res.preds)
+ConfusionMatrixDisplay(cm).plot()
+plt.show()
