@@ -20,5 +20,6 @@ Figure generation is located in `/notebooks/publicationFigures`. Recall that we 
 - Treated MDA-MB-231 and untreated MDA-MB-231 populations
 - MDA-MB-231 transcriptomic subpopulations
 - MDA-MB-436 transcriptomic subpopulations
+
 So testing results and figures will generally have subpop/treated or 231/436 in their title.
 
