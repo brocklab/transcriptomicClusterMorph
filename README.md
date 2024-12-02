@@ -1,59 +1,24 @@
-# cellMorph
-This is a repository to archive code to classify cells using their morphology. This respository can be used as a source to:
+# Deep Learning Identification of Heterogeneous Subpopulations 
+This is a repository to archive code from the paper [Deep learning identifies heterogeneous subpopulations in breast cancer cell lines](https://www.biorxiv.org/content/10.1101/2024.07.02.601576v1).
 
-1. Train an instance segmentation algorithm using small numbers of masks. 
-2. Predict cell identity (transcriptomic state, lineage, etc.) from information. 
+## Please note that these models will need to be updated for your dataset
 
-This is meant to be a comprehensive set of scripts and functions which can train on an increasing complexity of features:
-- [x] Morphology
-- [x] Textural Information
-- [x] Perimeter shapes
-- [x] Convolutional Neural Networks
-- [ ] Autoencoders
+Data and models are available upon request. 
 
-Instance segmentation is built on [detectron2](https://github.com/facebookresearch/detectron2). Only code is included, no data or trained model outputs. 
+The requirements for this repository are a bit complex, but in the following order:
+0. Make a conda environment for analysis
+1. Install PyTorch >= 1.8
+2. Build detectron2 from source - https://detectron2.readthedocs.io/en/latest/tutorials/install.html
+3. Install OpenCV. Verify proper installation by importing in Python. If you have trouble with this try installing with conda and making sure system dependencies are installed.
+4. Install the local package from this repository by calling `pip install -e .`
 
-If you want to run any of the analysis, you must build `detectron2` from source using the resources above. 
+Sorry that took so long, never lock yourself into using detectron2.
 
-Currently, the project is structured like so:
+Most notebooks in the primary `/notebook` folder center around prediction (training) or testing (validation). 
 
-```
-├── computerVisionMinimal.yml
-├── data
-├── explore
-├── output
-├── README.md
-├── results
-└── scripts
-```
-Where:
-* `data` is the image data for each experiment
-* `output` is the model output from the segmentation model
-* `results` are downstream analysis results
-* `scripts` are the finalized tools and classes
-* `explore` are the analysis scripts
+Figure generation is located in `/notebooks/publicationFigures`. Recall that we analyze:
+- Treated MDA-MB-231 and untreated MDA-MB-231 populations
+- MDA-MB-231 transcriptomic subpopulations
+- MDA-MB-436 transcriptomic subpopulations
+So testing results and figures will generally have subpop/treated or 231/436 in their title.
 
-Files in the `data` folder are organized like so:
-
-```
-├── data
-│   ├── experiment
-│   │   ├── composite
-│   │   └── phaseContrast
-```
-
-Where:
-* `composite` is the superimposed fluroescent and phase-contrast image
-* `phaseContrast` is the full sized "HD" phase contrast image
-
-Experiments 
-Files within experiment directories are named like so:
-
-`Directory_Base Information`
-
-Where `Directory` is the immediate directory, and `Base Information` is the output from the Incucyte (`Well_Im#_Date`). 
-
-## Envisioned Workflow
-A primary objective of this project is take code from Incucyte to analysis as soon as possible. When starting a new experiment on a trained model, data should be downloaded from the Incucyte and uploaded to the computing server/analysis computer. After this, the goal is to progressively test on increasing levels of complexity. 
-
-Most of this project should be considered a __template__ for designing, segmenting, and classifying high-throughput phase contrast and fluorescent images according to your own experiment. By their nature, these experiments are highly diverse and will likely have different requirements. 
