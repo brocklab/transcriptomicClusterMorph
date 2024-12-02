@@ -280,9 +280,9 @@ if resultsFile.exists():
     modelRes = pickle.load(open(resultsFile, "rb"))
 else:
     print(f'Results file not found {resultsFile}')
-
+# %%
+# %%
 for augName, modelName in tqdm(modelDict.items()):
-    
     modelPath = str(Path(homePath / 'models/classification') / f'{modelName}.pth')
     resPath =   str(Path(homePath / 'results/classificationTraining') / f'{modelName}.txt')
     modelInputs = testBB.getModelDetails(resPath)
@@ -293,13 +293,19 @@ for augName, modelName in tqdm(modelDict.items()):
     dataset_sizes = {x: len(image_datasets[x]) for x in phase}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=0)
                         for x in phase}
-
+    imgNames = dataloaders['test'].dataset.imgNames
     model = trainBB.getTFModel(modelInputs['modelType'], modelPath)
     probs, allLabels, scores = testBB.testModel(model, dataloaders, mode = 'test')
-    res = testBB.testResults(probs, allLabels, scores, modelName)
+    # def __init__(self, probs, allLabels, scores, modelName, imageNames = '', resultName = ''):
+    res = testBB.testResults(probs = probs,
+                             allLabels = allLabels,
+                             scores = scores,
+                             modelName = modelName,
+                             imageName = imgNames)
+    # res = testBB.testResults(probs = probs, allLabels, scores, modelName)
 
     modelRes[modelName] = res
-
+# %%
 pickle.dump(modelRes, open(resultsFile, "wb"))
 # %%
 modelNames = ['classifySingleCellCrop-1715810868']
