@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 from pathlib import Path
 # %%
-def plotTrainingRes(filePath, plot=True, title='', homePath = ''):
+def plotTrainingRes(filePath, plot=True, title='', homePath=''):
     """
     Plots results from slurm.out file
 
